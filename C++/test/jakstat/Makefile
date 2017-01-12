@@ -35,9 +35,9 @@ exec_prefix  = /home/knt/Programs/Sundials/cvodes-2.9.0-inst
 includedir   = /home/knt/Programs/Sundials/cvodes-2.9.0-inst/include
 libdir       = /home/knt/Programs/Sundials/cvodes-2.9.0-inst/lib
 
-CPP      = /usr/bin/cc
+CPP      = /usr/bin/g++
 CPPFLAGS = -g -O3 -DNDEBUG
-CC       = /usr/bin/cc
+CC       = /usr/bin/g++
 CFLAGS   = -g -O3 -DNDEBUG
 LDFLAGS  = 
 LIBS     =  -lm /usr/lib/x86_64-linux-gnu/librt.so
@@ -51,7 +51,7 @@ LIBRARIES_SLUMT =
 LIBRARIES_KLU = 
 LIBRARIES_PETSC = 
 
-EXAMPLES =  jakstat
+EXAMPLES =  jakstatRcpp
 EXAMPLES_DEPENDENCIES = 
 
 OBJECTS = ${EXAMPLES:=.o}
