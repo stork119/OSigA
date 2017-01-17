@@ -1,19 +1,16 @@
 library(Rcpp)
 library(data.table)
-install.packages("ggthemes")
+#install.packages("ggthemes")
 library(ggplot2)
-#setwd("D:/KN/ClustSense/ClustDesign/R")
 
-
-wd <- dirname(parent.frame(2)$ofile)
 
 ####TODO: Read from Makefile ####
   
   #### copmpiling static libraries
   source_cpp_filename <- "jakstatRcpp.cc"
   
-  PKG_CXXFLAGS="-I/home/knt/Programs/Sundials/cvodes-2.9.0-inst/include -L/home/knt/Programs/Sundials/cvodes-2.9.0-inst/lib"
-  PKG_LIBS="-I/home/knt/Programs/Sundials/cvodes-2.9.0-inst/include -L/home/knt/Programs/Sundials/cvodes-2.9.0-inst/lib  -lsundials_cvodes -lsundials_nvecserial -Wl,-rpath,/home/knt/Programs/Sundials/cvodes-2.9.0-inst/lib "
+  PKG_CXXFLAGS="-I/home/knt/Programs/Sundials/cvodes-2.9.0-inst/include -L/home/knt/Programs/Sundials/cvodes-2.9.0-inst/lib -mtune=core2 -std=c++11"
+  PKG_LIBS="-I/home/knt/Programs/Sundials/cvodes-2.9.0-inst/include -L/home/knt/Programs/Sundials/cvodes-2.9.0-inst/lib  -lsundials_cvodes -lsundials_nvecserial -Wl,-rpath,/home/knt/Programs/Sundials/cvodes-2.9.0-inst/lib -pthread"
   
   Sys.setenv("PKG_CXXFLAGS" = PKG_CXXFLAGS)
   Sys.setenv("PKG_LIBS" = PKG_LIBS)
@@ -35,4 +32,4 @@ wd <- dirname(parent.frame(2)$ofile)
     data <- rbind(data, data.tmp)
   }
   
-  ggplot(data.frame(data[data$y == 13,]), aes(x = t, y= val)) + geom_point() 
+  ggplot(data.frame(data[data$y == 13,]), aes(x = t, y= val)) + geom_line() 

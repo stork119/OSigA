@@ -35,6 +35,9 @@
 #include <time.h> 
 #include <math.h>
 #include <string.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <signal.h>
 
 /* CPP */
 
@@ -51,8 +54,8 @@
 #include <sundials/sundials_dense.h> /* definitions DlsMat DENSE_ELEM */
 #include <sundials/sundials_types.h> /* definition of type realtype */
 
-/* User-defined vector and matrix accessor macros: Ith, IJth */
-
+/* user */
+/* #include "model.h" */
 /* These macros are defined in order to write code which exactly matches
    the mathematical problem description given above.
 
@@ -68,6 +71,8 @@
 
 #define Ith(v,i)    NV_Ith_S(v,i-1)       /* Ith numbers components 1..NEQ */
 #define IJth(A,i,j) DENSE_ELEM(A,i-1,j-1) /* IJth numbers rows,cols 1..NEQ */
+
+
 
 
 /* Problem Constants */
@@ -90,8 +95,24 @@ static int Jac(long int N, realtype t,
                N_Vector y, N_Vector fy, DlsMat J, void *user_data,
                N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
 
-/* Private functions to output results */
+/* #include "stimulus.h" */
 
+int findNearestNeighbourIndex( double value, double *x, int len );
+
+void interp1(double *x, int x_tam, double *y, double *xx, int xx_tam, double *yy);
+
+
+double cosineInterpolation(double x1, double x2,
+  double y1, double y2, const realtype t);
+
+double stimulus(const realtype t);
+
+
+
+/* User-defined vector and matrix accessor macros: Ith, IJth */
+
+
+/* Private functions to output results */
 static void writeToFile(N_Vector y, FILE* outputFile);
 
 /* Private function to check function return values */
@@ -99,107 +120,15 @@ static void writeToFile(N_Vector y, FILE* outputFile);
 static int check_flag(void *flagvalue, const char *funcname, int opt);
 
 
-int findNearestNeighbourIndex( double value, double *x, int len )
-{
-    double dist;
-    int idx;
-    int i;
 
-    idx = -1;
-    dist = DBL_MAX;
-    for ( i = 0; i < len; i++ ) {
-        double newDist = value - x[i];
-        if ( newDist > 0 && newDist < dist ) {
-            dist = newDist;
-            idx = i;
-        }
-    }
+/* pthread */ 
 
-    return idx;
-}
-
-void interp1(double *x, int x_tam, double *y, double *xx, int xx_tam, double *yy)
-{
-    double dx, dy, *slope, *intercept;
-    int i, indiceEnVector;
-
-    slope=(double *)calloc(x_tam,sizeof(double));
-    intercept=(double *)calloc(x_tam,sizeof(double));
-
-    for(i = 0; i < x_tam; i++){
-        if(i<x_tam-1){
-            dx = x[i + 1] - x[i];
-            dy = y[i + 1] - y[i];
-            slope[i] = dy / dx;
-            intercept[i] = y[i] - x[i] * slope[i];
-        }else{
-            slope[i]=slope[i-1];
-            intercept[i]=intercept[i-1];
-        }
-    }
-
-    for (i = 0; i < xx_tam; i++) {
-        indiceEnVector = findNearestNeighbourIndex( xx[i], x, x_tam);
-        if (indiceEnVector != -1)
-            yy[i]=slope[indiceEnVector] * xx[i] + intercept[indiceEnVector];
-        else
-            yy[i]=DBL_MAX;
-    }
-    free(slope);
-    free(intercept);
-}
-
-double cosineInterpolation(double x1, double x2,
-  double y1, double y2, const realtype t){
-  
-  double mu = (t-x1)/(x2-x1);
-  double t2 = (1 - cos(mu*M_PI))/2;
-  double t1 = y1*(1-t2)+y2*t2;
-
-  return(t1);
-
-}
-
-double stimulus(const realtype t){
-  /*if(t > 0 && t < 16){ 
-    double yy[] = {0};
-    int stm_length = 100;
-    double x[stm_length];
-    double yi[];
-    double xx[]={t};
-    int x_tam= sizeof(x)/sizeof(x[0]); 
-    interp1(x, x_tam, yi, xx, 1, yy);
-    printif("scanf %lf \t %lf \n",t, yy[0]);
-    return yy[0];
-  } */
-  double stm = 0.0;
-  if(t >= 0 && t < 0.01){
-    stm = cosineInterpolation(0,0.01,0,1,t);
-  } else if( t >= 0.01 && t <= 4.99){
-     stm = 1;  
-  } else if( t > 4.99 && t < 5){
-     stm = cosineInterpolation(4.99,5,1,0,t);
-  }
- // printf("%lf \t %lf \n", t, stm);
-  return(stm);
-//  return(1);
-}
-
-
-/*void stimulus_test(char *folderPath)
-{
-  FILE *interOutputFile;
-  char interFilePath[100];
-  strcpy(interFilePath, folderPath);
-  strcat(interFilePath, "/");
-  strcat(interFilePath, "interpolation.csv");
-  interOutputFile = fopen(interFilePath, "w+");  
-  for(realtype t = 0.0; t < 5.0; t += 0.01){
-    fprintf(interOutputFile, "%lf,", stimulus(t));
-  }                    
-  fprintf(interOutputFile, "%lf", stimulus(5.0));
-  fclose(interOutputFile);
-}*/
+struct threadArgs {
+    double* parameters; 
+    double* variables;
+    std::vector< std::vector<double> > output;
+    sig_atomic_t *cancel_flag; 
+};
 
 /*
  *---------------------------------
@@ -315,6 +244,19 @@ std::vector< std::vector<double> > run_solver(
  
   return(results);
 }
+
+
+
+void *run_solver_pthread(void* thread_args_ptr){
+  struct threadArgs  *thread_args = (struct threadArgs  *) thread_args_ptr;
+  std::vector< std::vector<double> > output = run_solver(
+    thread_args->parameters,
+    thread_args->variables);
+  thread_args->output = output;	
+  *(thread_args->cancel_flag) = 1;	
+  pthread_exit((void *) thread_args);
+
+}
  
 /*
  *-------------------------------
@@ -323,12 +265,18 @@ std::vector< std::vector<double> > run_solver(
  */
 
 // [[Rcpp::export]] 
-std::vector< std::vector<double> > rmain(std::vector<double> parameters, std::vector<double> variables)
+Rcpp::List rmain(
+  std::vector<double> parameters,
+  std::vector<double> variables,
+  unsigned long time_interval,
+  unsigned long time_computation
+)
 {
 //  clock_t start = clock();
-  
+  Rcpp::List list;
+ 
   if( parameters.size() != NPAR ){
-    return(std::vector< std::vector<double> >());
+    return(list);
 
   }
   double parametersArray[NPAR + 1];
@@ -337,24 +285,57 @@ std::vector< std::vector<double> > rmain(std::vector<double> parameters, std::ve
   } 
 
   if( variables.size() != NEQ ){
-    return(std::vector< std::vector<double> >());
+    return(list);
   }
   double variablesArray[NEQ + 1];
   for(int i = 0; i < NEQ; ++i){
     variablesArray[i+1] = variables[i];
   } 
 
-    
   /* Run solver */
-  std::vector< std::vector<double> > result = run_solver(parametersArray, variablesArray);
-    
-  /*clock_t end = clock();
-  float seconds = (float)(end - start) / CLOCKS_PER_SEC;
-  printf("%f\n", seconds);*/
-  return(result);
-}
+  sig_atomic_t cancel_flag = 0;
 
-/*int main(){
+  try
+  {	
+    struct threadArgs thread_args;
+    thread_args.variables = variablesArray;
+    thread_args.parameters = parametersArray;
+    thread_args.cancel_flag = &cancel_flag;
+
+    pthread_t thread;
+    pthread_create(&thread, NULL, run_solver_pthread, (void *) &thread_args);
+
+    void *status = (void*) -1;
+
+    for(int i = 0; i <=  (int) (time_computation/time_interval); ++i)
+    {
+//      cout << i << '\t' << time_computation << '\t' << time_interval << endl;
+      if(cancel_flag != 1){
+        usleep(time_interval*1000);
+      } else {
+        pthread_join(thread, &status);
+        break;
+      }
+    }
+
+    if(cancel_flag != 1){
+      pthread_cancel(thread);
+      list["success"] = 0;
+      list["message"] = "Timeout";
+    } else {
+	list["success"] = 1;
+	list["output"] = thread_args.output;
+    }
+  } catch (char * message) {
+	std::string message_str =  message; 
+	list["message"] =   message_str;
+   }
+
+  return list;
+
+}
+/*
+int main(){
   std::vector<double> parameters;
   FILE *parFile;
   char *parFilePath = "par.txt";
@@ -396,6 +377,167 @@ std::vector< std::vector<double> > rmain(std::vector<double> parameters, std::ve
  */
 
 
+
+/*
+ *-------------------------------
+ * Private helper functions
+ *-------------------------------
+ */
+
+static void writeToFile(N_Vector y, FILE* outputFile)
+{
+  for(int i = 1; i < NEQ; ++i)
+  {
+    fprintf(outputFile, "%lf,", Ith(y, i) );
+  }
+  fprintf(outputFile, "%lf\n", Ith(y, NEQ));
+}
+
+/*
+ * Check function return value...
+ *   opt == 0 means SUNDIALS function allocates memory so check if
+ *            returned NULL pointer
+ *   opt == 1 means SUNDIALS function returns a flag so check if
+ *            flag >= 0
+ *   opt == 2 means function allocates memory so check if returned
+ *            NULL pointer 
+ */
+
+static int check_flag(void *flagvalue, const char *funcname, int opt)
+{
+  int *errflag;
+
+  /* Check if SUNDIALS function returned NULL pointer - no memory allocated */
+  if (opt == 0 && flagvalue == NULL) {
+    fprintf(stderr, "\nSUNDIALS_ERROR: %s() failed - returned NULL pointer\n\n",
+	    funcname);
+    return(1); }
+
+  /* Check if flag < 0 */
+  else if (opt == 1) {
+    errflag = (int *) flagvalue;
+    if (*errflag < 0) {
+      fprintf(stderr, "\nSUNDIALS_ERROR: %s() failed with flag = %d\n\n",
+	      funcname, *errflag);
+      return(1); }}
+
+  /* Check if function returned NULL pointer - no memory allocated */
+  else if (opt == 2 && flagvalue == NULL) {
+    fprintf(stderr, "\nMEMORY_ERROR: %s() failed - returned NULL pointer\n\n",
+	    funcname);
+    return(1); }
+
+  return(0);
+}
+
+
+
+/* stimulus.cc */
+
+int findNearestNeighbourIndex( double value, double *x, int len )
+{
+    double dist;
+    int idx;
+    int i;
+
+    idx = -1;
+    dist = DBL_MAX;
+    for ( i = 0; i < len; i++ ) {
+        double newDist = value - x[i];
+        if ( newDist > 0 && newDist < dist ) {
+            dist = newDist;
+            idx = i;
+        }
+    }
+
+    return idx;
+}
+
+void interp1(double *x, int x_tam, double *y, double *xx, int xx_tam, double *yy)
+{
+    double dx, dy, *slope, *intercept;
+    int i, indiceEnVector;
+
+    slope=(double *)calloc(x_tam,sizeof(double));
+    intercept=(double *)calloc(x_tam,sizeof(double));
+
+    for(i = 0; i < x_tam; i++){
+        if(i<x_tam-1){
+            dx = x[i + 1] - x[i];
+            dy = y[i + 1] - y[i];
+            slope[i] = dy / dx;
+            intercept[i] = y[i] - x[i] * slope[i];
+        }else{
+            slope[i]=slope[i-1];
+            intercept[i]=intercept[i-1];
+        }
+    }
+
+    for (i = 0; i < xx_tam; i++) {
+        indiceEnVector = findNearestNeighbourIndex( xx[i], x, x_tam);
+        if (indiceEnVector != -1)
+            yy[i]=slope[indiceEnVector] * xx[i] + intercept[indiceEnVector];
+        else
+            yy[i]=DBL_MAX;
+    }
+    free(slope);
+    free(intercept);
+}
+
+double cosineInterpolation(double x1, double x2,
+  double y1, double y2, const realtype t){
+  
+  double mu = (t-x1)/(x2-x1);
+  double t2 = (1 - cos(mu*M_PI))/2;
+  double t1 = y1*(1-t2)+y2*t2;
+
+  return(t1);
+
+}
+
+double stimulus(const realtype t){
+  /*if(t > 0 && t < 16){ 
+    double yy[] = {0};
+    int stm_length = 100;
+    double x[stm_length];
+    double yi[];
+    double xx[]={t};
+    int x_tam= sizeof(x)/sizeof(x[0]); 
+    interp1(x, x_tam, yi, xx, 1, yy);
+    printif("scanf %lf \t %lf \n",t, yy[0]);
+    return yy[0];
+  } */
+  double stm = 0.0;
+  if(t >= 0 && t < 0.01){
+    stm = cosineInterpolation(0,0.01,0,1,t);
+  } else if( t >= 0.01 && t <= 4.99){
+     stm = 1;  
+  } else if( t > 4.99 && t < 5){
+     stm = cosineInterpolation(4.99,5,1,0,t);
+  }
+ // printf("%lf \t %lf \n", t, stm);
+  return(stm);
+//  return(1);
+}
+
+/*void stimulus_test(char *folderPath)
+{
+  FILE *interOutputFile;
+  char interFilePath[100];
+  strcpy(interFilePath, folderPath);
+  strcat(interFilePath, "/");
+  strcat(interFilePath, "interpolation.csv");
+  interOutputFile = fopen(interFilePath, "w+");  
+  for(realtype t = 0.0; t < 5.0; t += 0.01){
+    fprintf(interOutputFile, "%lf,", stimulus(t));
+  }                    
+  fprintf(interOutputFile, "%lf", stimulus(5.0));
+  fclose(interOutputFile);
+}*/
+
+
+
+/* model.cc */
 
 /*
  * f routine. Compute function f(t,y). 
@@ -1359,54 +1501,4 @@ IJth(J, 170, 170) =  -p[8]-p[9]-p[10];
   return(0);
 }
 
-/*
- *-------------------------------
- * Private helper functions
- *-------------------------------
- */
 
-static void writeToFile(N_Vector y, FILE* outputFile)
-{
-  for(int i = 1; i < NEQ; ++i)
-  {
-    fprintf(outputFile, "%lf,", Ith(y, i) );
-  }
-  fprintf(outputFile, "%lf\n", Ith(y, NEQ));
-}
-
-/*
- * Check function return value...
- *   opt == 0 means SUNDIALS function allocates memory so check if
- *            returned NULL pointer
- *   opt == 1 means SUNDIALS function returns a flag so check if
- *            flag >= 0
- *   opt == 2 means function allocates memory so check if returned
- *            NULL pointer 
- */
-
-static int check_flag(void *flagvalue, const char *funcname, int opt)
-{
-  int *errflag;
-
-  /* Check if SUNDIALS function returned NULL pointer - no memory allocated */
-  if (opt == 0 && flagvalue == NULL) {
-    fprintf(stderr, "\nSUNDIALS_ERROR: %s() failed - returned NULL pointer\n\n",
-	    funcname);
-    return(1); }
-
-  /* Check if flag < 0 */
-  else if (opt == 1) {
-    errflag = (int *) flagvalue;
-    if (*errflag < 0) {
-      fprintf(stderr, "\nSUNDIALS_ERROR: %s() failed with flag = %d\n\n",
-	      funcname, *errflag);
-      return(1); }}
-
-  /* Check if function returned NULL pointer - no memory allocated */
-  else if (opt == 2 && flagvalue == NULL) {
-    fprintf(stderr, "\nMEMORY_ERROR: %s() failed - returned NULL pointer\n\n",
-	    funcname);
-    return(1); }
-
-  return(0);
-}
