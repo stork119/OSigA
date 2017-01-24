@@ -68,6 +68,13 @@ struct userData {
 };
 
 
+
+struct solverData {
+    std::vector< std::vector<double> > trajectory;  
+    int solver_flag;
+};
+
+
 static int f(realtype t, N_Vector y, N_Vector ydot, void *user_data);
 
 
@@ -107,6 +114,7 @@ struct threadArgs {
     double stm;
     std::vector< std::vector<double> > output;
     sig_atomic_t *cancel_flag; 
+    int solver_flag;
 };
 
 /*
@@ -114,9 +122,11 @@ struct threadArgs {
  * Run odesolver
  *---------------------------------
  */
-std::vector< std::vector<double> > run_solver(
+solverData run_solver(
   double* parameters, double* variables, double stm)
 {
+  struct solverData solver_results;
+  solver_results.solver_flag = 0;
   std::vector< std::vector<double> > results;
   realtype reltol, t, tout;
   N_Vector y, abstol;
@@ -129,11 +139,11 @@ std::vector< std::vector<double> > run_solver(
   /* Create serial vector of length NEQ for I.C. and abstol */
   y = N_VNew_Serial(NEQ);
   if (check_flag((void *)y, "N_VNew_Serial", 0)){
-    return(std::vector< std::vector<double> >());
+    return(solver_results);
   }
   abstol = N_VNew_Serial(NEQ); 
   if (check_flag((void *)abstol, "N_VNew_Serial", 0)){
-    return(std::vector< std::vector<double> >());
+    return(solver_results);
   }
   
   std::vector<double> yvector;  
@@ -152,7 +162,7 @@ std::vector< std::vector<double> > run_solver(
    * Backward Differentiation Formula and the use of a Newton iteration */
   cvode_mem = CVodeCreate(CV_BDF, CV_NEWTON);
   if (check_flag((void *)cvode_mem, "CVodeCreate", 0)){
-    return(std::vector< std::vector<double> >());
+    return(solver_results);
   }
 
   /* Call CVODESetuserdata */
@@ -161,7 +171,7 @@ std::vector< std::vector<double> > run_solver(
   user_data.stm = stm;
   flag = CVodeSetUserData(cvode_mem, (void *) &user_data);
   if (check_flag(&flag, "CVodeSetUserData", 1)){
-    return(std::vector< std::vector<double> >());
+    return(solver_results);
   }
   
   /* Call CVodeInit to initialize the integrator memory and specify the
@@ -169,30 +179,31 @@ std::vector< std::vector<double> > run_solver(
    * the initial dependent variable vector y. */
   flag = CVodeInit(cvode_mem, f, T0, y);
   if (check_flag(&flag, "CVodeInit", 1)){
-    return(std::vector< std::vector<double> >());
+    return(solver_results);
   }
 
   /* Call CVodeSVtolerances to specify the scalar relative tolerance
    * and vector absolute tolerances */
   flag = CVodeSVtolerances(cvode_mem, reltol, abstol);
   if (check_flag(&flag, "CVodeSVtolerances", 1)){
-    return(std::vector< std::vector<double> >());
+    return(solver_results);
   }
 
   /* Call CVDense to specify the CVDENSE dense linear solver */
   flag = CVDense(cvode_mem, NEQ);
   if (check_flag(&flag, "CVDense", 1)){
-    return(std::vector< std::vector<double> >());
+    return(solver_results);
   }
 
   /* Set the Jacobian routine to Jac (user-supplied) */
   flag = CVDlsSetDenseJacFn(cvode_mem, Jac);
   if (check_flag(&flag, "CVDlsSetDenseJacFn", 1)){
-    return(std::vector< std::vector<double> >());
+    return(solver_results);
   }
 
   /* In loop, call CVode, print results, and test for error.
      Break out of loop when NOUT preset output times have been reached.  */
+  solver_results.solver_flag = 1;
   iout = 0;
   tout = T1;
   while(1) {
@@ -205,7 +216,10 @@ std::vector< std::vector<double> > run_solver(
     results.push_back(yvector);
 //    printf("\n");
 
-    if (check_flag(&flag, "CVode", 1)) break;
+    if (check_flag(&flag, "CVode", 1)){
+      solver_results.solver_flag = 0;
+      break;
+    }
     if (flag == CV_SUCCESS) {
       iout++;
       tout = tout + TMULT;
@@ -223,19 +237,20 @@ std::vector< std::vector<double> > run_solver(
 
    /* Free integrator memory */
   CVodeFree(&cvode_mem);
- 
-  return(results);
+  solver_results.trajectory = results;
+  return(solver_results);
 }
 
 
 
 void *run_solver_pthread(void* thread_args_ptr){
   struct threadArgs  *thread_args = (struct threadArgs  *) thread_args_ptr;
-  std::vector< std::vector<double> > output = run_solver(
+  struct solverData output = run_solver(
     thread_args->parameters,
     thread_args->variables,
     thread_args->stm);
-  thread_args->output = output;	
+  thread_args->output = output.trajectory;	
+  thread_args->solver_flag = output.solver_flag;	
   *(thread_args->cancel_flag) = 1;	
   pthread_exit((void *) thread_args);
 
@@ -314,6 +329,9 @@ Rcpp::List rmain(
       pthread_cancel(thread);
       list["success"] = 0;
       list["message"] = "Timeout";
+    } else if(thread_args.solver_flag != 1){
+      list["success"] = 0;
+      list["message"] = "Solver error";
     } else {
 	list["success"] = 1;
 	list["output"] = thread_args.output;
@@ -321,6 +339,7 @@ Rcpp::List rmain(
   } catch (char * message) {
 	std::string message_str =  message; 
 	list["message"] =   message_str;
+        list["success"] = 0;
    }
 
   return list;
