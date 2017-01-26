@@ -46,15 +46,15 @@ data.exp <- rbind(data.exp,
 
 #### ####
 #data.exp$time <- data.exp$time + 5
-tmesh.exp <- unique(data.exp$time)
-data.exp$logintensity <- log(data.exp$intensity)
-
-data.exp.background <- mean(data.exp[data.exp$time == 5,]$intensity)
-
-data.exp.unique <- distinct(data.exp, priming, stimulation, time)
-
-
-data.exp.grouped <- data.exp %>% group_by(priming, stimulation, time)
+# tmesh.exp <- unique(data.exp$time)
+# data.exp$logintensity <- log(data.exp$intensity)
+# 
+# data.exp.background <- mean(data.exp[data.exp$time == 5,]$intensity)
+# 
+# data.exp.unique <- distinct(data.exp, priming, stimulation, time)
+# 
+# 
+# data.exp.grouped <- data.exp %>% group_by(priming, stimulation, time)
 # data.mean <- dplyr::summarise(data.exp.grouped, mean = mean(intensity), logmean = mean(logintensity))
 # dplyr::filter(data.exp.grouped, priming == 0, time == 5, stimulation ==0.01)
 

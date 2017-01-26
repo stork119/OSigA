@@ -1,0 +1,31 @@
+### ###
+### libraries 
+### ###
+
+setwd("~/Documents/modelling/")
+
+#### graphics ####
+library(ggplot2)
+library(ggthemes)
+library(grid)
+library(gridExtra)
+
+#### dev ####
+library(Rcpp)
+#install.packages("dtplyr")
+#library(dtplyr)
+library(dplyr)
+#library(plyr)
+library(data.table)
+
+#### optimisation ####
+#install.packages("GenSA")
+library(GenSA)
+
+
+#### SOURCES ####
+source("R/jakstat_data.R")
+source("R/jakstat_model.R")
+source("R/jakstat_estimation.R")
+source("R/theme_jetka.R")
+source("R/jakstat_plot.R")

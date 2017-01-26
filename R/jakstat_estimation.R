@@ -27,18 +27,24 @@ normalization <- function(data.model,
   return(data.model)
 }
 
-fun.likelihood <- function(logintensity, intensity, data.model.tmp){
-  return(((logintensity - data.model.tmp$mean.lmvn)^2)/data.model.tmp$sd.lmvn)
+fun.likelihood.lmvn <- function(logintensity, intensity, data.model.tmp){
+  return(log(sqrt(data.model.tmp$sd.lmvn)) +  ((logintensity - data.model.tmp$mean.lmvn)^2)/data.model.tmp$sd.lmvn)
 }
 
-fun.likelihood <- function(logintensity, intensity, data.model.tmp){
-  return(((intensity - data.model.tmp$m.norm)^2)/data.model.tmp$sd.norm)
+fun.likelihood.mvn <- function(logintensity, intensity, data.model.tmp){
+  return(log(sqrt(data.model.tmp$sd.norm)) + (((intensity - data.model.tmp$m.norm)^2)/data.model.tmp$sd.norm))
+}
+
+
+fun.likelihood.mvn.mean <- function(logintensity, intensity, data.model.tmp){
+  return((intensity - data.model.tmp$m.norm)^2)
 }
 
 #### model  ####
 
 run_model <- function(parameters, 
                       variables,
+                      variables.priming,
                       tmesh,
                       tmesh.list,
                       stimulation.list,
@@ -50,7 +56,7 @@ run_model <- function(parameters,
                            sd = numeric(),
                            priming = numeric(), 
                            stimulation = numeric())
-  print(par)
+  print(parameters)
   for(stm in stimulation.list){
     res <- rmain(parameters = parameters, 
                  variables = variables, 
@@ -58,14 +64,69 @@ run_model <- function(parameters,
                  tmesh = tmesh, 
                  time_interval = time_interval, 
                  time_computation = time_computation)
-    if(res$success){
+    res.priming <- rmain(parameters = parameters, 
+                             variables = variables.priming, 
+                             stm = stm, 
+                             tmesh = tmesh, 
+                             time_interval = time_interval, 
+                             time_computation = time_computation)
+    if(res$success & res.priming$success){
       for(tmesh.i in tmesh.list){
         data.model <- rbind(data.model,
                             data.table(time = c(tmesh[tmesh.i], tmesh[tmesh.i]),
                                        m = c(res$output[[tmesh.i]][14],
-                                             res$output[[tmesh.i]][31]),
-                                       sd =  c(res$output[[tmesh.i]][48],
-                                               res$output[[tmesh.i]][65]),
+                                             res.priming$output[[tmesh.i]][14]),
+                                       sd =  c(res$output[[tmesh.i]][31],
+                                               res.priming$output[[tmesh.i]][31]),
+                                       priming = c(0, 1000), 
+                                       stimulation = c(stm, stm))
+        )
+      }
+    } else {
+      return(list(error = TRUE))
+    }
+  }
+  data.model <- normalization(data.model, background = background)
+  data.model <- lmvn(data.model)
+  return(list(error = FALSE, data.model = data.model))
+}
+
+
+run_model_mean <- function(parameters, 
+                      variables,
+                      variables.priming,
+                      tmesh,
+                      tmesh.list,
+                      stimulation.list,
+                      background,
+                      time_interval = 100,
+                      time_computation = 1000*60*5){
+  data.model <- data.table(time = numeric(),
+                           m = numeric(),
+                           sd = numeric(),
+                           priming = numeric(), 
+                           stimulation = numeric())
+  print(parameters)
+  for(stm in stimulation.list){
+    res <- rmainmean(parameters = parameters, 
+                 variables = variables, 
+                 stm = stm, 
+                 tmesh = tmesh, 
+                 time_interval = time_interval, 
+                 time_computation = time_computation)
+    res.priming <- rmainmean(parameters = parameters, 
+                     variables = variables.priming, 
+                     stm = stm, 
+                     tmesh = tmesh, 
+                     time_interval = time_interval, 
+                     time_computation = time_computation)
+    if(res$success & res.priming$success){
+      for(tmesh.i in tmesh.list){
+        data.model <- rbind(data.model,
+                            data.table(time = c(tmesh[tmesh.i], tmesh[tmesh.i]),
+                                       m = c(res$output[[tmesh.i]][14],
+                                             res.priming$output[[tmesh.i]][14]),
+                                       sd =  c(0,0),
                                        priming = c(0, 1000), 
                                        stimulation = c(stm, stm))
         )
@@ -81,7 +142,8 @@ run_model <- function(parameters,
 #### ####
 
 likelihood <- function(data.model,
-                       data.exp.grouped
+                       data.exp.grouped,
+                       fun.likelihood
                        ){
   sapply(1:nrow(data.model),
          function(data.model.i){
@@ -91,9 +153,9 @@ likelihood <- function(data.model,
                             time == data.model.tmp$time,
                             stimulation == data.model.tmp$stimulation) %>%
                      mutate(likelihood = 
-                              fun.likelihood(logintensity, 
+                              do.call(fun.likelihood,list(logintensity, 
                                              intensity, 
-                                             data.model.tmp = data.model.tmp)) %>%
+                                             data.model.tmp = data.model.tmp))) %>%
                      summarise(likelihood.sum = 
                                  sum(likelihood)))$likelihood.sum)
          }
@@ -101,21 +163,29 @@ likelihood <- function(data.model,
 }
 
 #### optimisation ####
-optimisation <- function(par, 
+optimisation <- function(fun_run_model = run_model,
+                       par,
                        variables, 
+                       variables.priming, 
                        tmesh, 
                        tmesh.list,
                        stimulation.list,
                        background,
-                       data.exp.grouped
+                       data.exp.grouped,
+                       return.model = FALSE,
+                       ...
                        ){
   
-  model.simulation <- run_model(parameters = par,
+  model.simulation <- do.call(fun_run_model,
+                              list(
+                                parameters = par,
                                 variables = variables,
+                                variables.priming = variables.priming,
                                 tmesh = tmesh,
                                 tmesh.list = tmesh.list,
                                 stimulation.list = stimulation.list,
-                                background = background)
+                                background = background))
+  
   
   if(model.simulation$error){
     return(Inf)
@@ -123,7 +193,11 @@ optimisation <- function(par,
   result <- sum(
     likelihood(
       data.model = model.simulation$data.model, 
-      data.exp.grouped = data.exp.grouped))
+      data.exp.grouped = data.exp.grouped,
+      ...))
   print(result)
+  if(return.model){
+    return(c(model.simulation, list(optimisation = result)))
+  }
   return(result)
 }
