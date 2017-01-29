@@ -9,7 +9,10 @@ compare_models <- function(
   plot.title = "",
   filename,
   plot.save = TRUE,
-  plot.return = TRUE
+  plot.return = TRUE,
+  grid.nrow = 2,
+  grid.ncol = max(as.numeric(unique(data$stimulation)/grid.nrow),1),
+  ...
 ){
   data.model <- data.table(label = character(),
                            time  = numeric(),
@@ -69,46 +72,69 @@ compare_models <- function(
         width = 20,
         height = 12,
         useDingbats = FALSE)
-    print(marrangeGrob(g.list, ncol = 4, nrow = 2))
+    print(marrangeGrob(g.list, ncol = grid.ncol, nrow =  grid.nrow))
     dev.off()
   }
   
   if(plot.return){
-    return(g.list[[data.distinct.i]])
+    return(g.list)
   }
 }
 
 #### save results ####
-save_results <- function(path.opt = paste(path.cmaes, "2017-01-26", sep ="/"),
-                         par.opt = cma_es.res$xmin,
+save_results <- function(path.opt,
+                         data.model.opt,
+                         optimisation.opt,
+                         par.opt,
+                         par.exp.opt,
                          res.list,
                          data.exp.grouped,
-                         fun_run_model = run_model_mean,
-                         fun.likelihood = fun.likelihood.mvn.mean,
+                         error = FALSE,
+                         variables = matrix(),
+                         variables.priming = matrix(),
                          ...
 ){
   
-  res.opt <- optimisation(fun_run_model = fun_run_model,
-                          par = par.opt,
-                          return.model = TRUE,
-                          fun.likelihood = fun.likelihood,
-                          data.exp.grouped = data.exp.grouped,
-                          ...)
-  
   dir.create(path.opt, recursive = TRUE)
   
+  if(error){
+    write.table(x = matrix(1, ncol = 1), 
+              file = paste(path.opt, "error.txt", sep ="/"),
+              sep = ",",
+              row.names = FALSE,
+              col.names = FALSE)
+  }
+
+  write.table(x = matrix(variables, ncol = 1), 
+              file = paste(path.opt, "var.txt", sep ="/"),
+              sep = ",",
+              row.names = FALSE,
+              col.names = FALSE)
+  
+  write.table(x = matrix(variables.priming, ncol = 1), 
+              file = paste(path.opt, "var-priming.txt", sep ="/"),
+              sep = ",",
+              row.names = FALSE,
+              col.names = FALSE)
+    
   write.table(x = matrix(par.opt, ncol = 1), 
               file = paste(path.opt, "par.txt", sep ="/"),
               sep = ",",
               row.names = FALSE,
               col.names = FALSE)
   
-  write.table(x = matrix(res.opt$optimisation, ncol = 1), 
+  write.table(x = matrix(par.exp.opt, ncol = 1), 
+              file = paste(path.opt, "par_exp.txt", sep ="/"),
+              sep = ",",
+              row.names = FALSE,
+              col.names = FALSE)
+  
+  write.table(x = matrix(optimisation.opt, nrow = 1), 
               file = paste(path.opt, "optimisation.csv", sep ="/"),
               sep = ",",
               row.names = FALSE,
               col.names = FALSE)
-  write.table(x = res.opt$data.model,
+  write.table(x = data.model.opt,
               file = paste(path.opt, "data_model.csv", sep ="/"),
               sep = ",",
               row.names = FALSE,
@@ -116,12 +142,13 @@ save_results <- function(path.opt = paste(path.cmaes, "2017-01-26", sep ="/"),
   
   g <- compare_models(
     data = data.exp.grouped,
-    data.model.list = c(list(opt = res.opt$data.model),res.list),
+    data.model.list = c(list(optimisation = data.model.opt),
+                        res.list),
     plot.title = "Model compares",
     filename = paste(path.opt, "compare", sep ="/"),
     plot.save = TRUE,
-    plot.return = TRUE
+    plot.return = TRUE,
+    ...
   )
-  return(res.opt)
 }
 

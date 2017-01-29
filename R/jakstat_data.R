@@ -43,10 +43,13 @@ data.exp <- rbind(data.exp,
                              time = data.exp.ifnb$compare.1.1 + 5,
                              intensity = data.exp.ifnb$ShrinkedNuclei.Intensity))
 
+data.exp$logintensity <- log(data.exp$intensity)
+data.exp.unique <- distinct(data.exp, priming, stimulation, time)
+data.exp.grouped <- data.exp %>% group_by(priming, stimulation, time)
 
 #### ####
 #data.exp$time <- data.exp$time + 5
-# tmesh.exp <- unique(data.exp$time)
+#tmesh.exp <- unique(data.exp$time)
 # data.exp$logintensity <- log(data.exp$intensity)
 # 
 # data.exp.background <- mean(data.exp[data.exp$time == 5,]$intensity)

@@ -11,6 +11,8 @@ library(grid)
 library(gridExtra)
 
 #### dev ####
+library(doParallel)
+library(foreach)
 library(Rcpp)
 #install.packages("dtplyr")
 #library(dtplyr)
@@ -18,10 +20,13 @@ library(dplyr)
 #library(plyr)
 library(data.table)
 
+#### math ####
+library(lhs)
+
 #### optimisation ####
 #install.packages("GenSA")
 library(GenSA)
-
+library(adagio)
 
 #### SOURCES ####
 source("R/jakstat_data.R")
