@@ -46,7 +46,7 @@ data.exp <- rbind(data.exp,
 data.exp$logintensity <- log(data.exp$intensity)
 data.exp.unique <- distinct(data.exp, priming, stimulation, time)
 data.exp.grouped <- data.exp %>% group_by(priming, stimulation, time)
-
+data.exp.grouped.all <- data.exp %>% group_by(priming, stimulation, time)
 #### ####
 #data.exp$time <- data.exp$time + 5
 #tmesh.exp <- unique(data.exp$time)
@@ -62,3 +62,19 @@ data.exp.grouped <- data.exp %>% group_by(priming, stimulation, time)
 # dplyr::filter(data.exp.grouped, priming == 0, time == 5, stimulation ==0.01)
 
 #ggplot(data.mean, mapping = aes(x = time, y = logmean, color = factor(priming), group = interaction(priming, stimulation))) + geom_line()
+# 
+# data.exp.grouped.all$position
+# 
+# path <- paste(path.output, "data", sep = "/")
+# dir.create(path)
+# g <- ggplot(data.exp.grouped.all %>% filter(priming == 0), aes(x = factor(time - 5), y = intensity)) + 
+#   facet_grid(~stimulation) + 
+#   geom_boxplot() + 
+#   theme_jetka() + ggtitle("MEFs IFNG stimulation") + ylim(c(0,1000))
+# ggsave(filename = paste(path.output, "data", "control.pdf", sep = "/"), width = 24, height = 12, useDingbats = FALSE, plot = g  )
+# 
+# g <- ggplot(data.exp.grouped.all %>% filter(priming == 1000), aes(x = factor(time - 5), y = intensity)) + 
+#   facet_grid(~stimulation) + 
+#   geom_boxplot() + 
+#   theme_jetka() + ggtitle("MEFs IFNB priming IFNG stimulation") + ylim(c(0,1000))
+# ggsave(filename = paste(path.output, "data", "priming.pdf", sep = "/"), width = 24, height = 12, useDingbats = FALSE, plot = g  )

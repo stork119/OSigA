@@ -3,7 +3,7 @@
 ### ###
 source("R/parallel_computing.R")
 
-path.optimisation <- paste(path.output, "cmaes/mvn/2017-01-28-4-stm/", sep = "/")
+path.optimisation <- paste(path.output, "cmaes/mvn/2017-01-30/", sep = "/")
 dir.create(path.optimisation, recursive = TRUE)
 
 parameters.factor <- par.def
@@ -30,7 +30,7 @@ write.table(x = parameters.conditions,
              row.names = FALSE,
              col.names = TRUE)
 
-stimulation.list <- unique(data.exp.grouped$stimulation)[c(2,4,6,8)]
+stimulation.list <- unique(data.exp.grouped$stimulation)[c(4,7)]
 
 write.table(x = matrix(stimulation.list, ncol = 1),
             file = paste(path.optimisation, "stimulation_list.txt", sep ="/"),
@@ -40,7 +40,7 @@ write.table(x = matrix(stimulation.list, ncol = 1),
 
 
 write.table(x = data.table(maxit = 1000,
-                           fun.optimisation.likelihood = "fun.likelihood.mvn.mean",
+                           fun.optimisation.likelihood = "fun.likelihood.mvn.sd_const",
                            fun_run_model = "run_model_mean"),
             file = paste(path.optimisation, "optimisation_conditions.csv", sep = ""),
             sep = ",",

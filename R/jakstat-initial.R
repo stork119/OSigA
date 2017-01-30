@@ -49,7 +49,7 @@ result <- sapply(fun.likelihood.list,
                  })
 
 
-path.single <- paste(path.output, "single", sep = "/")
+path.single <- paste(path.optimisation, "single", sep = "/")
 dir.create(path.single, recursive = TRUE, showWarnings = FALSE)
 
 save_results(path.opt = path.single,
@@ -57,7 +57,7 @@ save_results(path.opt = path.single,
              optimisation.opt = result,
              par.opt = par.def, 
              res.list = list(),
-             data.exp.grouped = data.exp.grouped)
+             data.exp.grouped = data.exp.grouped.all)
 
 
 #### double ####
@@ -90,7 +90,7 @@ result <- sapply(fun.likelihood.list,
                  })
 
 
-path.receptors <- paste(path.output, "receptors", sep = "/")
+path.receptors <- paste(path.optimisation, "receptors", sep = "/")
 dir.create(path.receptors, recursive = TRUE, showWarnings = FALSE)
 
 save_results(path.opt = path.receptors,
@@ -98,4 +98,4 @@ save_results(path.opt = path.receptors,
              optimisation.opt = result,
              par.opt = par.def, 
              res.list = list(),
-             data.exp.grouped = data.exp.grouped)
+             data.exp.grouped = data.exp.grouped.all)

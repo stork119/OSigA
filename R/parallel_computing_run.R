@@ -4,13 +4,14 @@
 setwd("~/Documents/modelling/")
 source("R/parallel_computing.R")
 
-path.optimisation <- paste(path.output, "cmaes/mvn/2017-01-28/", sep = "/")
+path.optimisation <- paste(path.output, "cmaes/mvn/2017-01-28-4-stm/", sep = "/")
 
 data.exp.grouped <-  read.table(
   file = paste(path.optimisation, "data_exp_grouped.csv", sep = ""),
   sep = ",",
   header = TRUE)
 
+data.exp.grouped <- data.exp.grouped %>% group_by(priming, stimulation, time) %>% mutate(intensity_sd = var(intensity))
 run_parallel_computations(path.optimisation = path.optimisation,
                           data.exp.grouped = data.exp.grouped,
                           no_cores = 6,
@@ -20,7 +21,7 @@ run_parallel_computations(path.optimisation = path.optimisation,
 
 
 #### ####
-d <- data.exp.grouped %>% filter(stimulation %in% c(0.1,1))
+d <- data.exp.grouped %>% filter(stimulation %in% stimulation.list)
 d.distinct <- d %>% distinct(priming, stimulation, time) 
 
 d.i <- d.distinct[1,]

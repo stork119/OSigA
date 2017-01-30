@@ -15,7 +15,8 @@ read_optimisation <- function(path, id){
 }
 
 
-plot_results <- function(path.analysis,
+plot_results <- function(data = data.exp.grouped,
+                         path.analysis,
                          data.model.best.list = data.model.list,
                          optimisation.best,
                          grid.ncol = 2,
@@ -33,7 +34,7 @@ plot_results <- function(path.analysis,
         header = TRUE)
       plot.title.id <- paste(plot.title, "place:", i, ", id:", id, ",", sep = "")
       plot.list[[as.character(id)]] <- compare_models(
-        data = data.exp.grouped,
+        data = data,
         data.model.list = data.model.best.list[c("single", "double", as.character(id))],
         plot.title = paste(plot.title, "place:", i, ", id:", id, ",", sep = ""),
         filename = paste(path.analysis, plot.title, "_", i, ".pdf", sep = ""),
@@ -51,7 +52,7 @@ plot_results <- function(path.analysis,
   dev.off()
 }
 #### ####
-path.analysis <- paste(path.output, "cmaes/mvn/2017-01-27/", sep = "/")
+path.analysis <- aste(path.output, "cmaes/mvn/2017-01-28/", sep = "/")
 
 optimisation.table <- data.table(
   id = character(),
@@ -60,9 +61,9 @@ optimisation.table <- data.table(
   lmvn = numeric()
 )
 
-path.single <- paste(path.output, "single", sep = "/")
+path.single <- paste(path.optimisation, "single", sep = "/")
 optimisation.table <- rbind(optimisation.table, read_optimisation(path = path.single, id = "single"))
 
-path.receptors <- paste(path.output, "receptors", sep = "/")
+path.receptors <- paste(path.optimisation, "receptors", sep = "/")
 optimisation.table <- rbind(optimisation.table, read_optimisation(path = path.receptors, id = "receptors"))
 

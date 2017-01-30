@@ -30,17 +30,21 @@ normalization <- function(data.model,
 }
 
 #### likelihood functions ####
-fun.likelihood.lmvn <- function(logintensity, intensity, data.model.tmp){
+fun.likelihood.lmvn <- function(logintensity, intensity, data.model.tmp, ...){
   return(log(sqrt(data.model.tmp$sd.lmvn)) +  ((logintensity - data.model.tmp$mean.lmvn)^2)/data.model.tmp$sd.lmvn)
 }
 
-fun.likelihood.mvn <- function(logintensity, intensity, data.model.tmp){
+fun.likelihood.mvn <- function(logintensity, intensity, data.model.tmp, ...){
   return(log(sqrt(data.model.tmp$sd.norm)) + (((intensity - data.model.tmp$m.norm)^2)/data.model.tmp$sd.norm))
 }
 
 
-fun.likelihood.mvn.mean <- function(logintensity, intensity, data.model.tmp){
+fun.likelihood.mvn.mean <- function(logintensity, intensity, data.model.tmp, ...){
   return((intensity - data.model.tmp$m.norm)^2)
+}
+
+fun.likelihood.mvn.sd_const <- function(logintensity, intensity, data.model.tmp, intensity.sd, ...){
+  return((((intensity - data.model.tmp$m.norm)^2)/intensity.sd))
 }
 
 fun.likelihood.list <- list(fun.likelihood.mvn.mean,fun.likelihood.mvn, fun.likelihood.lmvn)
@@ -162,7 +166,8 @@ likelihood <- function(data.model,
                      mutate(likelihood = 
                               do.call(fun.likelihood,list(logintensity, 
                                                           intensity, 
-                                                          data.model.tmp = data.model.tmp))) %>%
+                                                          data.model.tmp = data.model.tmp,
+                                                          intensity_sd))) %>%
                      summarise(likelihood.sum = 
                                  sum(likelihood)))$likelihood.sum)
          }
