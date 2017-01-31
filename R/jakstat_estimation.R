@@ -47,7 +47,7 @@ fun.likelihood.mvn.sd_const <- function(logintensity, intensity, data.model.tmp,
   return((((intensity - data.model.tmp$m.norm)^2)/intensity.sd))
 }
 
-fun.likelihood.list <- list(fun.likelihood.mvn.mean,fun.likelihood.mvn, fun.likelihood.lmvn)
+fun.likelihood.list <- list(fun.likelihood.mvn.mean,fun.likelihood.mvn, fun.likelihood.lmvn, fun.likelihood.mvn.sd_const)
 
 #### model  ####
 

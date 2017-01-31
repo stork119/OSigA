@@ -20,6 +20,21 @@ background <- mean(data.exp[data.exp$time == 5,]$intensity)
 background.var <- var(data.exp[data.exp$time == 5,]$intensity)
 
 
+#### ####
+optimisation.conditions <- read.table(
+  file = paste(path.optimisation, "optimisation_conditions.csv", sep = ""),
+  sep = ",",
+  header = TRUE, stringsAsFactors = FALSE)
+fun.optimisation.likelihood <- get(optimisation.conditions$fun.optimisation.likelihood)
+fun_run_model <-  get(optimisation.conditions$fun_run_model)
+stimulation.list <- scan(paste(path.optimisation, "stimulation_list.txt", sep ="/"))
+data.exp.grouped <-  read.table(
+  file = paste(path.optimisation, "data_exp_grouped.csv", sep = ""),
+  sep = ",",
+  header = TRUE)
+data.exp.grouped <- data.exp.grouped %>% group_by(priming, stimulation, time) %>% mutate(intensity_sd = var(intensity))
+stimulation.list.all <- unique(data.exp$stimulation)[-1]
+
 #### default ####
 variables <- rep(0.0, times = 629)
 variables.priming <- rep(0.0, times = 629)
@@ -37,14 +52,14 @@ model.simulation.def <- do.call(run_model,
                                  variables.priming = variables.priming,
                                  tmesh = tmesh,
                                  tmesh.list = tmesh.list,
-                                 stimulation.list = stimulation.list,
+                                 stimulation.list = stimulation.list.all,
                                  background = background))
 
 result <- sapply(fun.likelihood.list, 
                  function(fun.likelihood){
                    sum( likelihood( 
                      fun.likelihood = fun.likelihood,
-                     data.model = model.simulation.def$data.model,
+                     data.model = model.simulation.def$data.model %>% filter(stimulation %in% stimulation.list),
                      data.exp.grouped = data.exp.grouped))
                  })
 
@@ -53,11 +68,15 @@ path.single <- paste(path.optimisation, "single", sep = "/")
 dir.create(path.single, recursive = TRUE, showWarnings = FALSE)
 
 save_results(path.opt = path.single,
+             variables = variables,
+             variables.priming = variables.priming,
              data.model.opt = model.simulation.def$data.model,
              optimisation.opt = result,
              par.opt = par.def, 
              res.list = list(),
-             data.exp.grouped = data.exp.grouped.all)
+             data.exp.grouped = data.exp.grouped.all,
+             grid.ncol = 4,
+             grid.nrow = 2)
 
 
 #### double ####
@@ -78,14 +97,14 @@ model.simulation.double <- do.call(run_model,
                                  variables.priming = variables.priming,
                                  tmesh = tmesh,
                                  tmesh.list = tmesh.list,
-                                 stimulation.list = stimulation.list,
+                                 stimulation.list = stimulation.list.all,
                                  background = background))
 
-result <- sapply(fun.likelihood.list, 
+result.double <- sapply(fun.likelihood.list, 
                  function(fun.likelihood){
                    sum( likelihood( 
                      fun.likelihood = fun.likelihood,
-                     data.model = model.simulation.double$data.model,
+                     data.model = model.simulation.double$data.model %>% filter(stimulation %in% stimulation.list),
                      data.exp.grouped = data.exp.grouped))
                  })
 
@@ -94,8 +113,13 @@ path.receptors <- paste(path.optimisation, "receptors", sep = "/")
 dir.create(path.receptors, recursive = TRUE, showWarnings = FALSE)
 
 save_results(path.opt = path.receptors,
+             variables = variables,
+             variables.priming = variables.priming,
              data.model.opt = model.simulation.double$data.model,
-             optimisation.opt = result,
+             optimisation.opt = result.double,
              par.opt = par.def, 
              res.list = list(),
-             data.exp.grouped = data.exp.grouped.all)
+             data.exp.grouped = data.exp.grouped.all,
+             grid.ncol = 4,
+             grid.nrow = 2)
+

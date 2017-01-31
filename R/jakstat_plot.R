@@ -14,6 +14,14 @@ compare_models <- function(
   grid.ncol = max(as.numeric(unique(data$stimulation)/grid.nrow),1),
   ...
 ){
+  
+  data <- data.exp.grouped.all
+  
+  data.summarise <- data %>% 
+    group_by(stimulation, priming, time) %>% 
+    summarise(intensity_mean = mean(intensity), 
+              intensity_sd = sd(intensity))
+  
   data.model <- data.table(label = character(),
                            time  = numeric(),
                            m     = numeric(),
@@ -57,6 +65,10 @@ compare_models <- function(
                                      stimulation == data.distinct.tmp$stimulation),
         mapping = aes(x = factor(time - 5), ymax = m.norm + sqrt(sd.norm), ymin=m.norm - sqrt(sd.norm), color = factor(label))) +
       ggtitle(paste(plot.title, data.distinct.tmp$priming, data.distinct.tmp$stimulation)) +
+      geom_point(data = data.summarise %>% 
+                   filter(priming == data.distinct.tmp$priming,
+                          stimulation == data.distinct.tmp$stimulation),
+                 aes(x = factor(time - 5), y = intensity_mean), shape = 23) +
       ylim(c(0,1000)) + 
       theme_jetka()
     if(plot.save){

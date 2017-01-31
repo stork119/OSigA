@@ -45,10 +45,13 @@ par.list <- lapply(1:nrow(lhs.res), function(i){(par.upper - par.lower)*lhs.res[
 
 ids <- list.dirs(path.optimisation, full.names = FALSE)
 ids <- as.numeric(ids[which(!is.na(as.numeric(ids)))])
-previous.computations <- max(c(ids,0)) + 1
+par.list.ids <- 1:length(par.list)
+if(length(ids) > 0){
+  par.list.ids <- par.list.ids[-which(ids %in% par.list.ids)]
+}
 #### ####
 registerDoParallel(no_cores)
-test <- foreach(i = previous.computations:length(par.list), .combine = list, .multicombine = TRUE ) %dopar%
+test <- foreach(i = par.list.ids, .combine = list, .multicombine = TRUE ) %dopar%
 {
   par <- as.numeric(par.list[[i]])
   optimisation.res <- do.call(

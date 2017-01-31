@@ -10,7 +10,8 @@ read_optimisation <- function(path, id){
     id = id,
     mvn.mean = optimisation[1,1],
     mvn = optimisation[1,2],
-    lmvn = optimisation[1,3]
+    lmvn = optimisation[1,3],
+    mvn.sd_const = optimisation[1,4]
   )
 }
 
@@ -35,7 +36,7 @@ plot_results <- function(data = data.exp.grouped,
       plot.title.id <- paste(plot.title, "place:", i, ", id:", id, ",", sep = "")
       plot.list[[as.character(id)]] <- compare_models(
         data = data,
-        data.model.list = data.model.best.list[c("single", "double", as.character(id))],
+        data.model.list = data.model.best.list[c("single", "receptors", as.character(id))],
         plot.title = paste(plot.title, "place:", i, ", id:", id, ",", sep = ""),
         filename = paste(path.analysis, plot.title, "_", i, ".pdf", sep = ""),
         plot.save = FALSE,
@@ -52,18 +53,34 @@ plot_results <- function(data = data.exp.grouped,
   dev.off()
 }
 #### ####
-path.analysis <- aste(path.output, "cmaes/mvn/2017-01-28/", sep = "/")
+path.optimisation<- paste(path.output, "cmaes/mvn/2017-01-31/", sep = "/")
+
+data.exp.grouped <-  read.table(
+  file = paste(path.optimisation, "data_exp_grouped.csv", sep = ""),
+  sep = ",",
+  header = TRUE)
+
+data.exp.grouped <- data.exp.grouped %>% group_by(priming, stimulation, time) %>% mutate(intensity_sd = var(intensity))
 
 optimisation.table <- data.table(
   id = character(),
   mvn.mean = numeric(),
   mvn = numeric(),
-  lmvn = numeric()
+  lmvn = numeric(),
+  mvn.sd_const = numeric()
 )
 
+data.model.list <- list()
 path.single <- paste(path.optimisation, "single", sep = "/")
 optimisation.table <- rbind(optimisation.table, read_optimisation(path = path.single, id = "single"))
+data.model.list[["single"]] <- read.table(
+  file = paste(path.single, "data_model.csv", sep = "/"),
+  sep = ",",
+  header = TRUE)
 
 path.receptors <- paste(path.optimisation, "receptors", sep = "/")
 optimisation.table <- rbind(optimisation.table, read_optimisation(path = path.receptors, id = "receptors"))
-
+data.model.list[["receptors"]] <- read.table(
+  file = paste(path.receptors, "data_model.csv", sep = "/"),
+  sep = ",",
+  header = TRUE)
