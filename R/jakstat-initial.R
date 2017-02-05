@@ -34,7 +34,7 @@ data.exp.grouped <-  read.table(
   header = TRUE)
 data.exp.grouped <- data.exp.grouped %>% group_by(priming, stimulation, time) %>% mutate(intensity_sd = var(intensity))
 stimulation.list.all <- unique(data.exp$stimulation)[-1]
-
+stimulation.list.all <- stimulation.list.all[1:6]
 #### default ####
 variables <- rep(0.0, times = 629)
 variables.priming <- rep(0.0, times = 629)
@@ -64,7 +64,7 @@ result <- sapply(fun.likelihood.list,
                  })
 
 
-path.single <- paste(path.optimisation, "single", sep = "/")
+path.single <- paste(path.optimisation.data, "single", sep = "/")
 dir.create(path.single, recursive = TRUE, showWarnings = FALSE)
 
 save_results(path.opt = path.single,
@@ -109,7 +109,7 @@ result.double <- sapply(fun.likelihood.list,
                  })
 
 
-path.receptors <- paste(path.optimisation, "receptors", sep = "/")
+path.receptors <- paste(path.optimisation.data, "receptors", sep = "/")
 dir.create(path.receptors, recursive = TRUE, showWarnings = FALSE)
 
 save_results(path.opt = path.receptors,

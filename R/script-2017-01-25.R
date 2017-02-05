@@ -24,7 +24,10 @@ cma_es.res <- pureCMAES(par = par,
                    fun.likelihood = fun.likelihood.mvn.mean)  
 
 par <- scan('')
+
+
 path.cmaes.opt <- paste(path.cmaes, "2017-01-26", sep ="/")
+
 
 #### ####
 res.par$data.model$likelihood <- likelihood(data.model = res.par$data.model,

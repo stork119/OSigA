@@ -19,7 +19,7 @@ lmvn <- function(data){
 
 #### data normalization ####
 normalization <- function(data.model,
-                          m.scale = 500,
+                          m.scale = 400,
                           sd.scale = m.scale^2,
                           background,
                           epsilon = 1){
@@ -47,7 +47,24 @@ fun.likelihood.mvn.sd_const <- function(logintensity, intensity, data.model.tmp,
   return((((intensity - data.model.tmp$m.norm)^2)/intensity.sd))
 }
 
-fun.likelihood.list <- list(fun.likelihood.mvn.mean,fun.likelihood.mvn, fun.likelihood.lmvn, fun.likelihood.mvn.sd_const)
+
+fun.likelihood.lmvn.data <- function(logintensity, intensity, data.model.tmp, intensity.sd, ...){
+  nu <- mean.lmvn(intensity, intensity.sd)
+  sd <- sd.lmvn(intensity, intensity.sd)
+  return((((nu - log(data.model.tmp$m.norm))^2)/sd))
+}
+
+
+fun.normalised <- function(logintensity, intensity, data.model.tmp, ...){
+  return(((intensity - data.model.tmp$m.norm)^2)/intensity^2)
+}
+
+fun.likelihood.list <- list(fun.likelihood.mvn.mean,
+                            fun.likelihood.mvn,
+                            fun.likelihood.lmvn, 
+                            fun.likelihood.mvn.sd_const,
+                            fun.likelihood.lmvn.data,
+                            fun.normalised)
 
 #### model  ####
 
@@ -187,10 +204,11 @@ optimisation <- function(fun_run_model = run_model,
                          background,
                          data.exp.grouped,
                          return.model = FALSE,
+                         par.optimised = rep(1, times = length(par)),
                          ...
 ){
-  
-  parameters <- parameters.factor*(parameters.base)^par
+  parameters <- parameters.factor
+  parameters[par.optimised] <- parameters.factor[par.optimised]*(parameters.base[par.optimised])^par
   model.simulation <- do.call(fun_run_model,
                               list(
                                 parameters = parameters,

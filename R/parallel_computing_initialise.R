@@ -1,9 +1,10 @@
 ### ###
 ### parallel_computing_initialise
 ### ###
+setwd("~/Documents/modelling/")
 source("R/parallel_computing.R")
 
-path.optimisation <- paste(path.output, "cmaes/mvn/2017-01-31/", sep = "/")
+path.optimisation <- paste(path.output, "cmaes/normalized/2017-02-04-2/", sep = "/")
 dir.create(path.optimisation, recursive = TRUE)
 
 parameters.filename <- paste(path.optimisation, "parameters_conditions.csv", sep = "")
@@ -33,8 +34,9 @@ write.table(x = parameters.conditions,
             row.names = FALSE,
             col.names = TRUE)
 }
+par.optimised   <- which(par.lower != par.upper)
 
-lhs.res <- randomLHS(10000, length(par.def))
+lhs.res <- randomLHS(1000, length(par.optimised))
 
 write.table(x = lhs.res,
             file = paste(path.optimisation, "parameters_list.csv", sep = ""),
@@ -42,7 +44,7 @@ write.table(x = lhs.res,
             row.names = FALSE,
             col.names = FALSE)
 
-stimulation.list <- unique(data.exp$stimulation)[c(4,7)]
+stimulation.list <- unique(data.exp$stimulation)[-1]
 
 write.table(x = matrix(stimulation.list, ncol = 1),
             file = paste(path.optimisation, "stimulation_list.txt", sep ="/"),
@@ -64,6 +66,8 @@ write.table(x = data.table(maxit = 1000,
 data.exp.grouped <- data.exp %>% group_by(priming, stimulation, time) %>% filter(stimulation %in% stimulation.list)
 data.exp.grouped <- get_equal_data(data.exp.grouped)
 data.exp.grouped <- data.exp.grouped %>% group_by(priming, stimulation, time) %>% mutate(intensity_sd = var(intensity))
+data.exp.grouped <- data.exp.grouped %>% summarise(intensity = mean(intensity), logintensity = mean(logintensity), intensity_sd = mean(intensity_sd))
+data.exp.grouped <- data.exp.grouped %>% filter(stimulation != 5)
 write.table(x = data.exp.grouped,
             file = paste(path.optimisation, "data_exp_grouped.csv", sep = ""),
             sep = ",",

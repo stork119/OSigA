@@ -75,8 +75,8 @@ genSA.res <- GenSA(par = par.def,
                    data.exp.grouped = data.exp.grouped,
                    fun.likelihood = fun.likelihood.mvn)  
 
-par.gensa <- scan(file = "resources/output/gensa/2017-01-26/par.txt")
-
+#par.gensa <- scan(file = "resources/output/gensa/2017-01-27/par.txt")
+par.gensa <- genSA.res$par
 res.opt <- optimisation(par = par.gensa,
                     variables = variables,
                     variables.priming  = variables.priming,
@@ -89,18 +89,18 @@ res.opt <- optimisation(par = par.gensa,
                     return.model = TRUE,
                     fun.likelihood = fun.likelihood.mvn)
 
-path.gensa <- paste("resources/output/extrinsic/gensa")
-dir.create(path.gensa)
+path.gensa <- paste("resources/output/extrinsic/gensa/2017-01-27/")
+dir.create(path.gensa, recursive = TRUE)
 g <- compare_models(
   data = data.exp.grouped,
   data.model.list = list(def = res.def$data.model, opt = res.opt$data.model),
   plot.title = "Model compares",
-  filename = paste(path.gensa, "2017-01-26-sd", sep ="/"),
+  filename = paste(path.gensa, sep ="/"),
   plot.save = TRUE,
   plot.return = TRUE
 )
 
-gensa.res <- save_results(path.opt = paste(path.gensa , "2017-01-26-2", sep ="/"),
+gensa.res <- save_results(path.opt = paste(path.gensa , "2017-01-27", sep ="/"),
                          par.opt = genSA.res$par,
                          res.list  = list(def = res.def$data.model),
                                           data.exp.grouped = data.exp.grouped,

@@ -3,21 +3,28 @@
 # source("R/initialise.R")
 
 #### ####
-read_optimisation <- function(path, id){
+optimisation.table <- data.table(
+  id = character(),
+  mvn.mean = numeric(),
+  mvn = numeric(),
+  lmvn = numeric(),
+  mvn.sd_const = numeric(),
+  lmvn.data = numeric(),
+  normalise = numeric()
+)
+
+read_optimisation <- function(path, id, names = colnames(optimisation.table)){
   optimisation <- read.table(file = paste(path, "optimisation.csv", sep = "/"),
                              sep = ",", header = FALSE)
-  data.table(
-    id = id,
-    mvn.mean = optimisation[1,1],
-    mvn = optimisation[1,2],
-    lmvn = optimisation[1,3],
-    mvn.sd_const = optimisation[1,4]
-  )
+  dt <- data.table(matrix(c(id,as.numeric(optimisation[1,])), nrow = 1))
+  colnames(dt) <- names
+  return(dt)
 }
 
 
 plot_results <- function(data = data.exp.grouped,
                          path.analysis,
+                         path.output = path.analysis,
                          data.model.best.list = data.model.list,
                          optimisation.best,
                          grid.ncol = 2,
@@ -45,7 +52,7 @@ plot_results <- function(data = data.exp.grouped,
       
     })
   }
-  pdf(file = paste(path.analysis, plot.title, ".pdf", sep = ""),
+  pdf(file = paste(path.output, plot.title, ".pdf", sep = ""),
       width = 20,
       height = 12,
       useDingbats = FALSE)
@@ -53,7 +60,10 @@ plot_results <- function(data = data.exp.grouped,
   dev.off()
 }
 #### ####
-path.optimisation<- paste(path.output, "cmaes/mvn/2017-01-31/", sep = "/")
+path.optimisation <- paste(path.output, "cmaes/mvn/2017-02-03/", sep = "/")
+path.optimisation.data <- paste(path.optimisation, "data/", sep = "/")
+
+stimulation.list.all <- ((data.exp %>%  distinct(stimulation))[-1])$stimulation
 
 data.exp.grouped <-  read.table(
   file = paste(path.optimisation, "data_exp_grouped.csv", sep = ""),
@@ -62,23 +72,18 @@ data.exp.grouped <-  read.table(
 
 data.exp.grouped <- data.exp.grouped %>% group_by(priming, stimulation, time) %>% mutate(intensity_sd = var(intensity))
 
-optimisation.table <- data.table(
-  id = character(),
-  mvn.mean = numeric(),
-  mvn = numeric(),
-  lmvn = numeric(),
-  mvn.sd_const = numeric()
-)
-
 data.model.list <- list()
-path.single <- paste(path.optimisation, "single", sep = "/")
-optimisation.table <- rbind(optimisation.table, read_optimisation(path = path.single, id = "single"))
+path.single <- paste(path.optimisation.data, "single", sep = "/")
+optimisation.table <- rbind(optimisation.table,
+                            read_optimisation(path = path.single,
+                                              id = "single",
+                                              names = colnames(optimisation.table)))
 data.model.list[["single"]] <- read.table(
   file = paste(path.single, "data_model.csv", sep = "/"),
   sep = ",",
   header = TRUE)
 
-path.receptors <- paste(path.optimisation, "receptors", sep = "/")
+path.receptors <- paste(path.optimisation.data, "receptors", sep = "/")
 optimisation.table <- rbind(optimisation.table, read_optimisation(path = path.receptors, id = "receptors"))
 data.model.list[["receptors"]] <- read.table(
   file = paste(path.receptors, "data_model.csv", sep = "/"),
