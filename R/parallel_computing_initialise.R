@@ -4,7 +4,7 @@
 setwd("~/Documents/modelling/")
 source("R/parallel_computing.R")
 
-path.optimisation <- paste(path.output, "cmaes/normalized/2017-02-04-2/", sep = "/")
+path.optimisation <- paste(path.output, "cmaes/normalized/2017-02-04-5/", sep = "/")
 dir.create(path.optimisation, recursive = TRUE)
 
 parameters.filename <- paste(path.optimisation, "parameters_conditions.csv", sep = "")

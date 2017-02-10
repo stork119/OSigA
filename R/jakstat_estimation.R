@@ -59,12 +59,20 @@ fun.normalised <- function(logintensity, intensity, data.model.tmp, ...){
   return(((intensity - data.model.tmp$m.norm)^2)/intensity^2)
 }
 
+fun.normalised.by_priming <- function(logintensity, intensity, data.model.tmp, data, ...){
+  return(((intensity - data.model.tmp$m.norm)^2)/ as.numeric( 
+    data %>% 
+      filter(priming == data.model.tmp$priming) %>%
+      summarise(intensity = mean(intensity)))^2)
+}
+
 fun.likelihood.list <- list(fun.likelihood.mvn.mean,
                             fun.likelihood.mvn,
                             fun.likelihood.lmvn, 
                             fun.likelihood.mvn.sd_const,
                             fun.likelihood.lmvn.data,
-                            fun.normalised)
+                            fun.normalised,
+                            fun.normalised.by_priming)
 
 #### model  ####
 
@@ -184,7 +192,8 @@ likelihood <- function(data.model,
                               do.call(fun.likelihood,list(logintensity, 
                                                           intensity, 
                                                           data.model.tmp = data.model.tmp,
-                                                          intensity_sd))) %>%
+                                                          intensity_sd,
+                                                          data = data.exp.grouped))) %>%
                      summarise(likelihood.sum = 
                                  sum(likelihood)))$likelihood.sum)
          }

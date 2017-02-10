@@ -4,7 +4,7 @@
 setwd("~/Documents/modelling/")
 source("R/parallel_computing.R")
 
-path.optimisation <- paste(path.output, "cmaes/mvn/2017-02-03/", sep = "/")
+path.optimisation <- paste(path.output, "cmaes/normalized/2017-02-04-5/", sep = "/")
 
 data.exp.grouped <-  read.table(
   file = paste(path.optimisation, "data_exp_grouped.csv", sep = ""),
@@ -14,7 +14,7 @@ data.exp.grouped <-  read.table(
 
 run_parallel_computations(path.optimisation = path.optimisation,
                           data.exp.grouped = data.exp.grouped,
-                          no_cores = 10,
+                          no_cores = 18,
                           #maxit.tmp   =  10,
                           fun.optimisation = pureCMAES,
                           optimisation.res.par = "xmin")

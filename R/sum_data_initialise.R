@@ -10,7 +10,8 @@ optimisation.table <- data.table(
   lmvn = numeric(),
   mvn.sd_const = numeric(),
   lmvn.data = numeric(),
-  normalise = numeric()
+  normalise = numeric(),
+  normalise_by_priming = numeric()
 )
 
 read_optimisation <- function(path, id, names = colnames(optimisation.table)){
@@ -60,7 +61,7 @@ plot_results <- function(data = data.exp.grouped,
   dev.off()
 }
 #### ####
-path.optimisation <- paste(path.output, "cmaes/mvn/2017-02-03/", sep = "/")
+path.optimisation <- paste(path.output, "cmaes/normalized/2017-02-04-5/", sep = "/")
 path.optimisation.data <- paste(path.optimisation, "data/", sep = "/")
 
 stimulation.list.all <- ((data.exp %>%  distinct(stimulation))[-1])$stimulation

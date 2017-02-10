@@ -1,7 +1,7 @@
 setwd("~/Documents/modelling/")
 source("R/parallel_computing.R")
 
-path.optimisation <- paste(path.output, "cmaes/normalized/2017-02-04-2/", sep = "/")
+path.optimisation <- paste(path.output, "cmaes/normalized/2017-02-04-5/", sep = "/")
 path.optimisation.data <- paste(path.optimisation, "data/", sep = "/")
 
 ids.list <- list.files(path.optimisation.data)
@@ -56,12 +56,12 @@ g.list[[id]] <- ggplot(data.model, aes(x = factor(time - 5), y = likelihood)) +
 
 st.likelihood <- st.likelihood[order(st.likelihood$all),]
 
-pdf(file = paste(path.optimisation, "likelihood", sep = "/"),
-    widt= 24,
-    height =12,
-    useDingbats = FALSE)
-print(g.list)
-dev.off()
+# pdf(file = paste(path.optimisation, "likelihood", sep = "/"),
+#     widt= 24,
+#     height =12,
+#     useDingbats = FALSE)
+# print(g.list)
+# dev.off()
 
 
 pdf(file = paste(path.optimisation, "likelihood_priming", sep = "/"),

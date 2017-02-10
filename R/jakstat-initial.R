@@ -32,9 +32,9 @@ data.exp.grouped <-  read.table(
   file = paste(path.optimisation, "data_exp_grouped.csv", sep = ""),
   sep = ",",
   header = TRUE)
-data.exp.grouped <- data.exp.grouped %>% group_by(priming, stimulation, time) %>% mutate(intensity_sd = var(intensity))
+#data.exp.grouped <- data.exp.grouped %>% group_by(priming, stimulation, time) %>% mutate(intensity_sd = var(intensity))
 stimulation.list.all <- unique(data.exp$stimulation)[-1]
-stimulation.list.all <- stimulation.list.all[1:6]
+stimulation.list.all <- stimulation.list.all
 #### default ####
 variables <- rep(0.0, times = 629)
 variables.priming <- rep(0.0, times = 629)

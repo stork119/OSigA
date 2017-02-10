@@ -40,7 +40,8 @@ for( id in ids[which(!ids %in% optimisation.table$id)] ){
 }
 
 #### ####
-optimisation.best <- c(optimisation.table[order(as.numeric(optimisation.table$normalise)[1:6]),]$id, "single", "receptors")
+optimisation.table <- optimisation.table[order(as.numeric(optimisation.table$normalise_by_priming) ),]
+optimisation.best <- c(optimisation.table[order(as.numeric(optimisation.table$normalise_by_priming)[1:6]),]$id, "single", "receptors")
 no_cores <- 4
 #stimulation.list <- (data.exp.grouped %>% ungroup() %>% distinct(stimulation))$stimulation
 data.exp.grouped.all <- data.exp.grouped.all %>% group_by(priming, stimulation, time) %>% mutate(intensity_sd = var(intensity))
@@ -91,12 +92,11 @@ optimisation.table.all <- foreach( i = 1:length(optimisation.best), .combine = r
 stopImplicitCluster()
 colnames(optimisation.table.all) <- colnames(optimisation.table)
 write.table(file = paste(path.optimisation, "optimisation_ranking_all.csv", sep = ""),
-            x = optimisation.table.all,
+            x = optimisation.table,
             sep = ",",
             row.names = FALSE,
             col.names = TRUE)
 
-optimisation.table <- optimisation.table[order(as.numeric(optimisation.table$normalise) ),]
 parameters.table.all <- foreach( i = 1:nrow(optimisation.table), .combine = rbind) %do% {
   id <- optimisation.table$id[i]
   try({
@@ -110,14 +110,18 @@ write.table(file = paste(path.optimisation, "parameters_ranking.csv", sep = ""),
             sep = ",",
             row.names = FALSE,
             col.names = TRUE)
-
+write.table(file = paste(path.optimisation, "optimisation_ranking.csv", sep = ""),
+            x = optimisation.table,
+            sep = ",",
+            row.names = FALSE,
+            col.names = TRUE)
 
 plot_results(data = data.exp.grouped.equal.all,
              path.analysis = path.optimisation.data,
              path.output = path.optimisation,
              data.model.best.list = data.model.list,
-             optimisation.best = optimisation.best,#st.likelihood[order(st.likelihood$priming),]$id[1:10],
-             plot.title = "all", 
+             optimisation.best = optimisation.best[2:6],#st.likelihood[order(st.likelihood$priming),]$id[1:10],
+             plot.title = "all_fullmodel", 
              filename.data_model = "data_model_all_stm.csv",
              grid.ncol = 4)
 
@@ -127,7 +131,7 @@ plot_results(data = data.exp.grouped.equal.all,
              path.output = path.optimisation,
              data.model.best.list = data.model.list,
              optimisation.best = optimisation.best,#st.likelihood[order(st.likelihood$priming),]$id[1:10],
-             plot.title = "all_part", 
+             plot.title = "all", 
              filename.data_model = "data_model.csv",
              grid.ncol = 4)
 
@@ -141,11 +145,7 @@ plot_results(data = data.exp.grouped.equal.all,
              filename.data_model = "data_model.csv",
              grid.ncol = 4)
 
-write.table(file = paste(path.optimisation, "optimisation_ranking.csv", sep = ""),
-            x = optimisation.table,
-            sep = ",",
-            row.names = FALSE,
-            col.names = TRUE)
+
 
 
 #### ####
