@@ -2,7 +2,19 @@
 ### jakstat_data_equal ####
 ###
 
+#### data normalization ####
+normalization <- function(data.model,
+                          m.scale = 400,
+                          sd.scale = m.scale^2,
+                          background,
+                          epsilon = 1){
+  data.model$m.norm <- data.model$m/m.scale + background
+  data.model$sd.norm <- data.model$sd/sd.scale
+  data.model$sd.norm <- sapply(data.model$sd.norm, function(sd.norm){ifelse(sd.norm < epsilon, epsilon, sd.norm)})
+  return(data.model)
+}
 
+#### get data equal ####
 get_equal_data  <- function(data){
 
 d.distinct <- data %>% distinct(priming, stimulation, time) 
