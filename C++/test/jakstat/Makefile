@@ -44,7 +44,7 @@ LIBS     =  -lm /usr/lib/x86_64-linux-gnu/librt.so
 
 LINKFLAGS = -Wl,-rpath,/home/knt/Programs/Sundials/cvodes-2.9.0-inst/lib
 
-INCLUDES = -I${includedir}
+INCLUDES = -I${includedir} 
 LIBRARIES = -lsundials_cvodes -lsundials_nvecserial ${LIBS}
 LIBRARIES_BL = 
 LIBRARIES_SLUMT = 
@@ -52,7 +52,7 @@ LIBRARIES_KLU =
 LIBRARIES_PETSC = 
 
 EXAMPLES =  jakstatRcpp
-EXAMPLES_DEPENDENCIES = 
+EXAMPLES_DEPENDENCIES =  
 
 OBJECTS = ${EXAMPLES:=.o}
 OBJECTS_DEPENDENCIES = ${EXAMPLES_DEPENDENCIES:=.o}
