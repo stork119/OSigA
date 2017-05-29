@@ -2,36 +2,66 @@
 ### libraries 
 ### ###
 
-setwd("~/Documents/modelling/")
 
-#### graphics ####
-library(ggplot2)
-library(ggthemes)
-library(grid)
-library(gridExtra)
+### ###
+### libraries install
+### ###
+packages.list <- c(
+  
+  #### graphics ####
+  "ggplot2",
+  "corrplot",
+  "Hmisc",
+  "reshape2",
+  "grid",
+  "gridExtra",
+  "ggthemes",
+  
+  #### optimisation algorithm ####
+  "adagio",
+  "cmaes",
+  "lhs",
+  
+  #### ####
+  "stringr",
+  
+  #### mathsstats ####
+  # "MASS",
+  # "GPfit",
+  # "kernlab",
+  # "FNN",
+  # "Hotelling",
+  # "MCMCpack", ### wishart distribution
+  # "invgamma",
+  # "akima",
+  # "psych",
+  # "mvtnorm",
+  
+  #### dev ####
+  "doParallel",
+  "parallel",
+  "foreach",
+  "Rcpp",
+  
+  #### data ####
+  "data.table",
+  "Matrix",
+  
+  #### data manipulation ####
+  "dplyr",
+  "lazyeval"
+  
+  #### channel capacity ####
+  # "caret",
+  # "glmnet",
+  # "nnet",
+  # "e1071"
+)
 
-#### dev ####
-library(doParallel)
-library(foreach)
-library(Rcpp)
-#install.packages("dtplyr")
-#library(dtplyr)
-library(dplyr)
-#library(plyr)
-library(data.table)
-
-#### math ####
-library(lhs)
-
-#### optimisation ####
-#install.packages("GenSA")
-library(GenSA)
-library(adagio)
-
-#### SOURCES ####
-source("R/jakstat_data.R")
-source("R/jakstat_model.R")
-source("R/jakstat_estimation.R")
-source("R/theme_jetka.R")
-source("R/jakstat_plot.R")
-source("R/jakstat_data_equal.R")
+packages.list.new <- packages.list[!(packages.list %in%
+                                       installed.packages()[,"Package"])]
+sapply(packages.list.new, remove.packages)
+if(length(packages.list.new)){
+  install.packages(packages.list.new)
+}
+sapply(packages.list, require, character.only = TRUE)
