@@ -4,7 +4,9 @@
 ### ### ###
 source("R/libraries.R")
 source("R/libraries/library_data_manipulation.R")
-source("R/graphics/boxplot.R")
+source("R/graphics/libraries.R")
+source("R/libraries/statistics/likelihood_lmvn.R")
+source("R/libraries/statistics/lmvn.R")
 
 #### initialise ###
 path.data.output <- "resources/output/data/"
@@ -15,7 +17,10 @@ dir.create(path = path.data.output,
            recursive = TRUE, 
            showWarnings = TRUE)
 plot.args <- list(theme.title_size = 9,
-                  theme.margins =  rep(x = 0, times = 4))
+                  theme.margins =  rep(x = 0, times = 4),
+                  width = 24, 
+                  height = 12, 
+                  useDingbats = FALSE)
 
 #### ####
 data.list <- read_data(path = path.data.input)
@@ -26,17 +31,21 @@ g.list <- list()
 g.list[["boxplots"]] <- list()
 for(prm in (data.list$data.exp %>% dplyr::distinct_("priming"))$priming){
   g.list[["boxplots"]][[as.character(prm)]] <- 
-    plot_boxplot_group(data = 
-                     data.list$data.exp %>% 
-                     dplyr::filter_("priming" != prm),
-                   save_plot = FALSE,
-                   x = "time",
-                   y = "intensity",
-                   boxplot_group = "position",
-                   facet_grid_group_y = "stimulation",
-                   ylim_max = 1500,
-                   ylab = "pSTAT1 in nucleus [u]",
-                   plot_title = paste("priming", prm))
+    do.call(what = plot_boxplot_group,
+            args = append(plot.args,
+                          list(
+                            data = 
+                              data.list$data.exp %>% 
+                              dplyr::filter_("priming" != prm),
+                            save_plot = FALSE,
+                            x = "time",
+                            y = "intensity",
+                            boxplot_group = "position",
+                            facet_grid_group_y = "stimulation",
+                            ylim_max = 1500,
+                            ylab = "pSTAT1 in nucleus [u]",
+                            plot_title = paste("priming", prm)
+                          )))
 }
 
 
@@ -143,6 +152,10 @@ data.list$data.exp.summarise <-
                   time) %>%
   summarise(mean = mean(intensity),
             sd   = var(intensity))
+data.list$data.exp.summarise<-
+  data.list$data.exp.summarise %>%
+  dplyr::mutate(lmvn.mean = lmvn.mean(m = mean, sd = sd),
+                lmvn.sd = lmvn.sd(m = mean, sd = sd))
 
 data.list$data.exp.summarise$likelihood <- 
   (data.list$data.exp.norm %>%
@@ -175,3 +188,100 @@ ggsave(plot = g.list[["data_likelihood"]],
        width = 24, 
        height = 12, 
        useDingbats = FALSE)
+
+#### plot mean and variance ####
+
+PlotMeanVariance <- function(
+  y,
+  yerror){
+  g.list.tmp <- list()
+  for(prm in 
+      (data.list$data.exp.summarise %>%
+       dplyr::ungroup() %>%
+       dplyr::distinct_("priming"))$priming){
+    
+    
+    g.list.tmp[[as.character(prm)]] <-
+      do.call(what = plot_points,
+              args = append(plot.args,
+                            list(
+                              data = data.list$data.exp.summarise %>% 
+                                dplyr::filter(priming == prm) %>%
+                                dplyr::mutate_(var_mutate = yerror) %>%
+                                dplyr::mutate(sqrt_yerror = sqrt(var_mutate)),
+                              x = "time",
+                              y = y,
+                              yerror = "sqrt_yerror",
+                              facet_grid_group_y = "stimulation",
+                              title = prm
+                            )))
+    
+    
+  }
+  return(g.list.tmp)
+}
+
+g.list[["mean_variance"]] <- PlotMeanVariance(y = "mean", yerror = "sd")
+ggsave(plot = marrangeGrob(grobs = g.list[["mean_variance"]], nrow = 1, ncol = 1),
+       filename = paste(path.data.output, 
+                        "mean_variance.pdf", 
+                        sep = "/" ),
+       width  = plot.args$width, 
+       height = plot.args$height, 
+       useDingbats = plot.args$useDingbats)
+
+g.list[["lmvn_mean_variance"]] <- PlotMeanVariance(y = "lmvn.mean", yerror = "lmvn.sd")
+ggsave(plot = marrangeGrob(grobs = g.list[["lmvn_mean_variance"]], nrow = 1, ncol = 1),
+       filename = paste(path.data.output, 
+                        "lmvn_mean_variance.pdf", 
+                        sep = "/" ),
+       width  = plot.args$width, 
+       height = plot.args$height, 
+       useDingbats = plot.args$useDingbats)
+
+#### LMVN ####
+y <- "lmvn.sd"
+g.list[["lmvn_variance"]] <- do.call(what = plot_points,
+          args = append(plot.args,
+                        list(
+                          data = data.list$data.exp.summarise %>%
+                            dplyr::mutate_(var_mutate = y) %>%
+                            dplyr::mutate(sqrt_y = sqrt(var_mutate)),
+                          x = "time",
+                          y = "sqrt_y",
+                          facet_grid_group_y = "stimulation",
+                          facet_grid_group_x = "priming",
+                          title = "variance"
+                        )))
+ggsave(plot = g.list[["lmvn_variance"]],
+       filename = paste(path.data.output, 
+                        "lmvn_variance.pdf", 
+                        sep = "/" ),
+       width  = plot.args$width, 
+       height = plot.args$height, 
+       useDingbats = plot.args$useDingbats)
+
+
+#### ####
+ggplot(data = data.list$data.exp.summarise %>% 
+         dplyr::mutate(likelihood = lmvn.mean^2/lmvn.mean), 
+       mapping = aes(x = time, y = likelihood)) 
+
+g.list[["data_likelihood_lmvn.mean_lmvn.sd"]] <- do.call(what = plot_points,
+        args = append(plot.args,
+                      list(
+                        data.list$data.exp.summarise %>% 
+                          dplyr::mutate(likelihood = lmvn.mean^2/lmvn.mean),
+                        x = "time",
+                        y = "likelihood",
+                        facet_grid_group_y = "stimulation",
+                        facet_grid_group_x = "priming",
+                        title = "lmvn.mean^2/lmvn.sd"
+                      )))
+ggsave(plot = g.list[["data_likelihood_lmvn.mean_lmvn.sd"]],
+       filename = paste(path.data.output, 
+                        "data_likelihood_lmvn.mean_lmvn.sd.pdf", 
+                        sep = "/" ),
+       width  = plot.args$width, 
+       height = plot.args$height, 
+       useDingbats = plot.args$useDingbats)

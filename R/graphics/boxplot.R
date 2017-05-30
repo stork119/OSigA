@@ -38,7 +38,6 @@ plot_boxplot_group <- function(data,
   plot_height <- as.integer(plot_height)
   xlab_angle <- as.integer(xlab_angle)
   xlab_hjust <- as.integer(xlab_hjust)
-  theme_text_size <- as.integer(theme_text_size)
   normalize_data <- as.integer(normalize_data)
   normalize_factor <- as.integer(normalize_factor)
   ylim_max_const <- as.integer(ylim_max_const)
