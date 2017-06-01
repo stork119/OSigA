@@ -29,7 +29,7 @@ data.exp <- rbind(data.exp,
                              cell = data.exp.c$ObjectNumber,
                              priming = data.exp.c$group.1.1,
                              stimulation = data.exp.c$group.2.1,
-                             time = data.exp.c$compare.1.1 + 5,
+                             time = data.exp.c$compare.1.1,
                              intensity = data.exp.c$ShrinkedNuclei.Intensity))
 
 data.exp.ifnb <- read.table(file = paste(path.data, "KA10_IFNB.csv", sep = "/"),
@@ -40,7 +40,7 @@ data.exp <- rbind(data.exp,
                              cell = data.exp.ifnb$ObjectNumber,
                              priming = data.exp.ifnb$group.1.1,
                              stimulation = data.exp.ifnb$group.2.1,
-                             time = data.exp.ifnb$compare.1.1 + 5,
+                             time = data.exp.ifnb$compare.1.1,
                              intensity = data.exp.ifnb$ShrinkedNuclei.Intensity))
 
 data.exp$logintensity <- log(data.exp$intensity)

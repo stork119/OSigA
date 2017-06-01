@@ -2,23 +2,70 @@
 ### likelihood functions
 ### ###
 
-fun.likelihood.normal <- function(m,
-                                  sd, 
-                                  model.m,
-                                  model.sd,
-                                  ...){
-  
-}
+# fun.likelihood.normal <- function(m,
+#                                   sd, 
+#                                   model.m,
+#                                   model.sd,
+#                                   ...){
+#   
+# }
 
-fun.likelihood.lmvn.data <- function(m,
-                                     sd, 
-                                     model.m,
-                                     model.sd,
-                                     ...){
+ComputeLikelihood.lmvn <- function(m,
+                                sd, 
+                                X,
+                                ... ){
   nu    <- lmvn.mean(m, sd)
   sigma <- lmvn.sd(m, sd)
-  return((((nu - log(model.m))^2)/sd))
+  return((((nu - log(X))^2)/sigma))
 }
+
+ComputeLikelihood.lmvn.nusigma <- function(nu, # lmvn.mean(m, sd)
+                                   sigma, # lmvn.sd(m, sd)
+                                   X,
+                                ... ){
+  return((((nu - log(X))^2)/sigma))
+}
+
+ComputeLikelihood.lmvn.rse <- function(nu, # lmvn.mean(m, sd)
+                                    sigma, # lmvn.sd(m, sd)
+                                    X,
+                                    ... ){
+  return((((nu - log(X))^2)/nu^{2}))
+}
+
+
+ComputeLikelihood.lmvn.bias <- function(nu, # lmvn.mean(m, sd)
+                                       sigma, # lmvn.sd(m, sd)
+                                       X,
+                                       ... ){
+  return(abs(nu - log(X)))
+}
+
+
+fun.likelihood.list.sd_data <- function(logintensity = logintensity, 
+                                        data.model.tmp = data.model.tmp,
+                                        data.exp.summarise = data.exp.summarise,
+                                        ...){
+  intensity.sd <- (data.exp.summarise %>% dplyr::filter(
+    stimulation == data.model.tmp$stimulation,
+    priming == data.model.tmp$priming,
+    time == data.model.tmp$time))$sd.norm
+  
+  nu <- mean.lmvn(data.model.tmp$m.norm, intensity.sd)
+  sd <- sd.lmvn(data.model.tmp$m.norm, intensity.sd)
+  return(((nu - logintensity)^2)/sd)
+}
+
+fun.likelihood.list <- list(
+  sd_data = fun.likelihood.list.sd_data 
+)
+
+# ComputeLikelihood.lmvn.bias <- function(nu, # lmvn.mean(m, sd)
+#                                         sigma, # lmvn.sd(m, sd)
+#                                         X,
+#                                         ... ){
+#   return(abs(nu - log(X)))
+# }
 
 #### likelihood functions ####
 # fun.likelihood.lmvn <- function(logintensity, intensity, data.model.tmp, ...){
