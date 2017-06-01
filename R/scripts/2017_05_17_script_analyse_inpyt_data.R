@@ -26,6 +26,40 @@ plot.args <- list(theme.title_size = 9,
 data.list <- read_data(path = path.data.input)
 
 data.list$data.exp %>% dplyr::distinct(file)
+
+data.list$data.exp.norm <- get_equal_data(data = data.list$data.exp,
+                                          sample_size = 1000)
+
+data.list$data.exp.summarise <- 
+  data.list$data.exp.norm %>% 
+  dplyr::group_by(priming,
+                  stimulation,
+                  time) %>%
+  summarise(m.norm = mean(intensity),
+            sd.norm   = var(intensity))
+
+data.list$data.exp.summarise<-
+  data.list$data.exp.summarise %>%
+  dplyr::mutate(mean.lmvn = lmvn.mean(m = m.norm, sd = sd.norm),
+                sd.lmvn = lmvn.sd(m = m.norm, sd = sd.norm))
+
+data.list$data.exp.summarise$likelihood <- 
+  (data.list$data.exp.norm %>%
+     left_join(data.list$data.exp.summarise,
+               by = c("priming",
+                      "stimulation",
+                      "time")) %>%
+     dplyr::mutate(likelihood =
+                     do.call(ComputeLikelihood.lmvn,
+                             args = list(m = m.norm,
+                                         sd = sd.norm,
+                                          X  = intensity
+                             ))) %>%
+     dplyr::group_by(priming,
+                     stimulation,
+                     time) %>%
+     summarise(likelihood = sum(likelihood)))$likelihood
+
 g.list <- list()
 #### boxplots all ####
 g.list[["boxplots"]] <- list()
@@ -140,40 +174,7 @@ ggsave(plot = marrangeGrob(grobs = g.list[["boxplots"]],
        width = 24, 
        height = 12, 
        useDingbats = FALSE)
-#### #### 
-
-data.list$data.exp.norm <- get_equal_data(data = data.list$data.exp,
-                                sample_size = 1000)
-
-data.list$data.exp.summarise <- 
-  data.list$data.exp.norm %>% 
-  dplyr::group_by(priming,
-                  stimulation,
-                  time) %>%
-  summarise(mean = mean(intensity),
-            sd   = var(intensity))
-data.list$data.exp.summarise<-
-  data.list$data.exp.summarise %>%
-  dplyr::mutate(lmvn.mean = lmvn.mean(m = mean, sd = sd),
-                lmvn.sd = lmvn.sd(m = mean, sd = sd))
-
-data.list$data.exp.summarise$likelihood <- 
-  (data.list$data.exp.norm %>%
-     left_join(data.list$data.exp.summarise,
-               by = c("priming",
-                      "stimulation",
-                      "time")) %>%
-     dplyr::mutate(likelihood =
-                     do.call(fun.likelihood.lmvn.data,
-                             args = list(m = mean,
-                                         sd = sd,
-                                         model.m = intensity
-                             ))) %>%
-     dplyr::group_by(priming,
-                     stimulation,
-                     time) %>%
-     summarise(likelihood = sum(likelihood)))$likelihood
-    
+#### likelihood plots #### 
 
 g.list[["data_likelihood"]] <- 
   ggplot(data = data.list$data.exp.summarise, 
@@ -190,7 +191,6 @@ ggsave(plot = g.list[["data_likelihood"]],
        useDingbats = FALSE)
 
 #### plot mean and variance ####
-
 PlotMeanVariance <- function(
   y,
   yerror){
@@ -220,8 +220,8 @@ PlotMeanVariance <- function(
   }
   return(g.list.tmp)
 }
-
-g.list[["mean_variance"]] <- PlotMeanVariance(y = "mean", yerror = "sd")
+#### mean variance ####
+g.list[["mean_variance"]] <- PlotMeanVariance(y = "m.norm", yerror = "sd.norm")
 ggsave(plot = marrangeGrob(grobs = g.list[["mean_variance"]], nrow = 1, ncol = 1),
        filename = paste(path.data.output, 
                         "mean_variance.pdf", 
@@ -230,7 +230,7 @@ ggsave(plot = marrangeGrob(grobs = g.list[["mean_variance"]], nrow = 1, ncol = 1
        height = plot.args$height, 
        useDingbats = plot.args$useDingbats)
 
-g.list[["lmvn_mean_variance"]] <- PlotMeanVariance(y = "lmvn.mean", yerror = "lmvn.sd")
+g.list[["lmvn_mean_variance"]] <- PlotMeanVariance(y = "mean.lmvn", yerror = "sd.lmvn")
 ggsave(plot = marrangeGrob(grobs = g.list[["lmvn_mean_variance"]], nrow = 1, ncol = 1),
        filename = paste(path.data.output, 
                         "lmvn_mean_variance.pdf", 
@@ -240,7 +240,7 @@ ggsave(plot = marrangeGrob(grobs = g.list[["lmvn_mean_variance"]], nrow = 1, nco
        useDingbats = plot.args$useDingbats)
 
 #### LMVN ####
-y <- "lmvn.sd"
+y <- "sd.lmvn"
 g.list[["lmvn_variance"]] <- do.call(what = plot_points,
           args = append(plot.args,
                         list(
@@ -263,24 +263,24 @@ ggsave(plot = g.list[["lmvn_variance"]],
 
 
 #### ####
-ggplot(data = data.list$data.exp.summarise %>% 
-         dplyr::mutate(likelihood = lmvn.mean^2/lmvn.mean), 
-       mapping = aes(x = time, y = likelihood)) 
+# ggplot(data = data.list$data.exp.summarise %>% 
+#          dplyr::mutate(likelihood = mean.lmvn^2/mean.lmvn), 
+#        mapping = aes(x = time, y = likelihood)) 
 
-g.list[["data_likelihood_lmvn.mean_lmvn.sd"]] <- do.call(what = plot_points,
+g.list[["data_likelihood_mean.lmvn_sd.lmvn"]] <- do.call(what = plot_points,
         args = append(plot.args,
                       list(
                         data.list$data.exp.summarise %>% 
-                          dplyr::mutate(likelihood = lmvn.mean^2/lmvn.mean),
+                          dplyr::mutate(likelihood = mean.lmvn^2/mean.lmvn),
                         x = "time",
                         y = "likelihood",
                         facet_grid_group_y = "stimulation",
                         facet_grid_group_x = "priming",
-                        title = "lmvn.mean^2/lmvn.sd"
+                        title = "mean.lmvn^2/sd.lmvn"
                       )))
-ggsave(plot = g.list[["data_likelihood_lmvn.mean_lmvn.sd"]],
+ggsave(plot = g.list[["data_likelihood_mean.lmvn_sd.lmvn"]],
        filename = paste(path.data.output, 
-                        "data_likelihood_lmvn.mean_lmvn.sd.pdf", 
+                        "data_likelihood_mean.lmvn_sd.lmvn.pdf", 
                         sep = "/" ),
        width  = plot.args$width, 
        height = plot.args$height, 
