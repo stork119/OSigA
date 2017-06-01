@@ -2,7 +2,9 @@
 ### 2017-05-30-script-run_model
 ### ###
 
+source("R/jakstat_data.R")
 source("R/initialise.R")
+source("R/jakstat_estimation.R")
 source("R/graphics/libraries.R")
 # 2017_05_17 initialise
 #### read parameters from command line ####
