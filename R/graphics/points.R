@@ -16,7 +16,11 @@ plot_points <- function(data,
                         ylim_max = NULL
 ){
   if(x.as_factor){
-    data[,x] <- factor(x = data[,x][[1]])
+    if(is.data.table(data)){
+      data[,x] <- factor(x = data[,x, with = FALSE][[1]])
+    } else{
+      data[,x] <- factor(x = data[,x][[1]])
+    }
   }
   
   gplot <- ggplot(data = data,
@@ -39,15 +43,17 @@ plot_points <- function(data,
                                          ymax = paste(y, "+", yerror)))
   }
   
-  if(is.null(ylim_max)){
-    ylim_max <- max(data[,y])
-    if(yerror != ""){
-      ylim_max <- ylim_max + max(data[,yerror])
+  if(!(is.null(ylim_min))){
+    if(is.null(ylim_max)){
+      ylim_max <- max(data[,y])
+      if(yerror != ""){
+        ylim_max <- ylim_max + max(data[,yerror])
+      }
+      ylim_max <- 1.1*ylim_max
     }
-    ylim_max <- 1.1*ylim_max
+    
+    gplot <- gplot + ylim(c(ylim_min, ylim_max))
   }
-  
-  gplot <- gplot + ylim(c(ylim_min, ylim_max))
   
   return(gplot)
 }

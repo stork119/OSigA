@@ -10,28 +10,28 @@ source("R/graphics/libraries.R")
 #### read parameters from command line ####
 parameters <- scan()
 write.table(x = parameters,
-            file = "/media/knt/D/KN/ClustSense/Modelling/lib/StochSense/StochSens_Ver2.3/models/JAKSTAT/parameters.csv", 
+            file = "/media/knt/D/KN/ClustSense/Modelling/lib/StochSense/StochSens_Ver2.3/models/JAKSTAT/Input/parameters.csv", 
             sep =",", 
             col.names =FALSE, 
             row.names = FALSE)
 write.table(x = paste("p", 1:length(parameters), sep = ""),
-            file = "/media/knt/D/KN/ClustSense/Modelling/lib/StochSense/StochSens_Ver2.3/models/JAKSTAT/parameters-names.csv", 
+            file = "/media/knt/D/KN/ClustSense/Modelling/lib/StochSense/StochSens_Ver2.3/models/JAKSTAT/Input/parameters-names.csv", 
             sep =",", 
             col.names =FALSE, 
             row.names = FALSE)
 write.table(x = variables[1:17],
-            file = "/media/knt/D/KN/ClustSense/Modelling/lib/StochSense/StochSens_Ver2.3/models/JAKSTAT/variables.csv", 
+            file = "/media/knt/D/KN/ClustSense/Modelling/lib/StochSense/StochSens_Ver2.3/models/JAKSTAT/Input/variables.csv", 
             sep =",", 
             col.names =FALSE, 
             row.names = FALSE)
 
 write.table(x = variables.priming[1:17],
-            file = "/media/knt/D/KN/ClustSense/Modelling/lib/StochSense/StochSens_Ver2.3/models/JAKSTAT/variables-priming.csv", 
+            file = "/media/knt/D/KN/ClustSense/Modelling/lib/StochSense/StochSens_Ver2.3/models/JAKSTAT/Input/variables-priming.csv", 
             sep =",", 
             col.names =FALSE, 
             row.names = FALSE)
 write.table(x = paste("y", 1:length(parameters), sep = ""),
-            file = "/media/knt/D/KN/ClustSense/Modelling/lib/StochSense/StochSens_Ver2.3/models/JAKSTAT/variables-names.csv", 
+            file = "/media/knt/D/KN/ClustSense/Modelling/lib/StochSense/StochSens_Ver2.3/models/JAKSTAT/Input/variables-names.csv", 
             sep =",", 
             col.names =FALSE, 
             row.names = FALSE)
@@ -139,3 +139,52 @@ ggsave(plot = marrangeGrob(grobs = g.list[["model_likelihood"]], ncol = 1, nrow 
        width  = plot.args$width, 
        height = plot.args$height, 
        useDingbats = plot.args$useDingbats)
+#### optimisation ####
+
+data.model.list[["model_lmvn"]]$data.model$likelihood  <- 
+  likelihood(data.model = data.model.list[["model_lmvn"]]$data.model,
+             data.exp.grouped = data.list$data.exp.norm,
+             data.exp.summarise =  data.list$data.exp.summarise,
+             fun.likelihood = fun.likelihood.list$sd_data)
+                                               
+
+data.model.list$single$likelihood  <- 
+  likelihood(data.model = data.model.list$single,
+             data.exp.grouped = data.list$data.exp.norm,
+             data.exp.summarise =  data.list$data.exp.summarise,
+             fun.likelihood = fun.likelihood.list$sd_data)
+
+
+data.model.list$double$likelihood  <- 
+  likelihood(data.model = data.model.list$double,
+             data.exp.grouped = data.list$data.exp.norm,
+             data.exp.summarise =  data.list$data.exp.summarise,
+             fun.likelihood = fun.likelihood.list$sd_data)
+
+sum(data.model.list[["model_lmvn"]]$data.model$likelihood )
+sum(data.model.list$single$likelihood)
+sum(data.model.list$double$likelihood)
+
+data.model.list[["model_lmvn"]]$data.model$type <- "model_lmvn"
+data.model.list$single$type <- "single"
+data.model.list$double$type <- "double"
+
+data <- rbind(data.model.list[["model_lmvn"]]$data.model, data.model.list$single)
+data <- rbind(data, data.model.list$double)
+
+
+ggplot(data = data %>% dplyr::filter(stimulation != 5),
+       mapping = aes(x = factor(time), y = likelihood, color = type)) +
+  geom_point() + 
+  do.call(theme_jetka, args = plot.args) + 
+  facet_grid(priming ~ stimulation)
+#### ####
+saveRDS(object = 
+          list(
+            data.model.list = data.model.list, 
+            data.list = data.list,
+            g.list = g.list),
+        file = paste(path.output,
+                     "rds",
+                     "2017-06-01.rds",
+                     sep = "/"))

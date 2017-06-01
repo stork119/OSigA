@@ -97,6 +97,7 @@ compare_models <- function(
 save_results <- function(path.opt,
                          data.model.opt,
                          optimisation.opt,
+                         optimisation.opt.colnames = FALSE,
                          par.opt,
                          par.exp.opt = par.opt,
                          res.list,
@@ -145,7 +146,8 @@ save_results <- function(path.opt,
               file = paste(path.opt, "optimisation.csv", sep ="/"),
               sep = ",",
               row.names = FALSE,
-              col.names = FALSE)
+              col.names = optimisation.opt.colnames)
+  
   write.table(x = data.model.opt,
               file = paste(path.opt, "data_model.csv", sep ="/"),
               sep = ",",
