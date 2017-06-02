@@ -108,7 +108,8 @@ run_model_mean <- function(parameters,
 likelihood <- function(data.model,
                        data.exp.grouped,
                        data.exp.summarise,
-                       fun.likelihood
+                       fun.likelihood,
+                       ...
 ){
     sapply(1:nrow(data.model),
            function(data.model.i){
@@ -121,7 +122,6 @@ likelihood <- function(data.model,
                                 do.call(fun.likelihood,list(logintensity = logintensity, 
                                                             intensity = intensity, 
                                                             data.model.tmp = data.model.tmp,
-                                                            data.exp = data.exp.grouped,
                                                             data.exp.summarise = data.exp.summarise))) %>%
                        summarise(likelihood.sum = 
                                    sum(likelihood)))$likelihood.sum)
@@ -144,7 +144,8 @@ optimisation <- function(fun_run_model = run_model,
                          data.exp.summarise,
                          return.model = FALSE,
                          fun.likelihood,
-                         par.optimised = rep(1, times = length(par),...)
+                         par.optimised = rep(1, times = length(par)),
+                         ...
                          
 ){
   parameters <- parameters.factor

@@ -6,7 +6,10 @@ source("R/parallel_computing.R")
 
 path.optimisation <- paste(path.output, "optimisation/2017-06-01/", sep = "/")
 path.optimisation.data <- paste(path.optimisation, "data/", sep = "/")
+path.optimisation.results <- paste(path.optimisation, "results/", sep = "/")
+#### initialise ####
 dir.create(path.optimisation, recursive = TRUE)
+dir.create(path.optimisation.results, recursive = TRUE)
 
 parameters.filename <- paste(path.optimisation, "parameters_conditions.csv", sep = "")
 if(file.exists(parameters.filename)){
@@ -65,7 +68,7 @@ write.table(x = data.table(maxit = 1000,
             col.names = TRUE)
 
 
-#### prepare data ####
+### prepare data ###
 data.exp.grouped <- data.list$data.exp.norm
 # data.exp.grouped <- data.exp %>% group_by(priming, stimulation, time) %>% filter(stimulation %in% stimulation.list)
 # data.exp.grouped <- get_equal_data(data.exp.grouped)
@@ -78,28 +81,31 @@ write.table(x = data.exp.grouped,
             row.names = FALSE,
             col.names = TRUE)
 
-data.exp.summarise <- data.exp.grouped %>%
-  dplyr::group_by(priming, stimulation, time) %>% 
-  dplyr::summarise(m.morm = mean(intensity),
-                   mean.lmvn = mean(logintensity),
-                   sd.norm = var(intensity),
-                   sd.lmvn = var(logintensity))
+#### load ####
+# optimisation.conditions <- read.table(
+#   file = paste(path.optimisation, "optimisation_conditions.csv", sep = ""),
+#   sep = ",",
+#   header = TRUE, stringsAsFactors = FALSE)
+# fun.optimisation.likelihood <- get(optimisation.conditions$fun.optimisation.likelihood)
+# fun_run_model <-  get(optimisation.conditions$fun_run_model)
+# stimulation.list <- scan(paste(path.optimisation, "stimulation_list.txt", sep ="/"))
+# data.exp.grouped <-  read.table(
+#   file = paste(path.optimisation, "data_exp_grouped.csv", sep = ""),
+#   sep = ",",
+#   header = TRUE)
+# #data.exp.grouped <- data.exp.grouped %>% group_by(priming, stimulation, time) %>% mutate(intensity_sd = var(intensity))
+# # stimulation.list.all <- unique(data.exp$stimulation)[-1]
+# # stimulation.list.all <- stimulation.list.all
+# 
+# data.exp.summarise <- data.exp.grouped %>%
+#   dplyr::group_by(priming, stimulation, time) %>% 
+#   dplyr::summarise(m.morm = mean(intensity),
+#                    mean.lmvn = mean(logintensity),
+#                    sd.norm = var(intensity),
+#                    sd.lmvn = var(logintensity))
 
-#### ####
-optimisation.conditions <- read.table(
-  file = paste(path.optimisation, "optimisation_conditions.csv", sep = ""),
-  sep = ",",
-  header = TRUE, stringsAsFactors = FALSE)
-fun.optimisation.likelihood <- get(optimisation.conditions$fun.optimisation.likelihood)
-fun_run_model <-  get(optimisation.conditions$fun_run_model)
-stimulation.list <- scan(paste(path.optimisation, "stimulation_list.txt", sep ="/"))
-data.exp.grouped <-  read.table(
-  file = paste(path.optimisation, "data_exp_grouped.csv", sep = ""),
-  sep = ",",
-  header = TRUE)
-#data.exp.grouped <- data.exp.grouped %>% group_by(priming, stimulation, time) %>% mutate(intensity_sd = var(intensity))
-# stimulation.list.all <- unique(data.exp$stimulation)[-1]
-# stimulation.list.all <- stimulation.list.all
+attach(LoadOptimisationConditions(path.optimisation = path.optimisation,
+                                   path.optimisation.data = paste(path.optimisation, "data", sep = "/")))
 #### default ####
 variables <- rep(0.0, times = 629)
 variables.priming <- rep(0.0, times = 629)
@@ -124,7 +130,7 @@ model.simulation.def$data.model$likelihood  <-
   likelihood(data.model =model.simulation.def$data.model,
              data.exp.grouped = data.exp.grouped,
              data.exp.summarise =  data.exp.summarise,
-             fun.likelihood = fun.optimisation.likelihood)
+             fun.likelihood = fun.likelihood.list.sd_data)
 
 data.model.likelihood <- model.simulation.def$data.model %>% filter(stimulation %in% stimulation.list)
 result.likelihood.list <-
@@ -133,8 +139,8 @@ result.likelihood.list <-
                     likelihood( 
                      fun.likelihood = fun.likelihood,
                      data.model  = data.model.likelihood,
-                     data.exp.summarise = data.exp.summarise,
-                     data.exp.grouped = data.exp.grouped)
+                     data.exp.summarise = data.exp.summarise.optimisation,
+                     data.exp.grouped = data.exp.grouped.optimisation)
                  })
 result <- sapply(result.likelihood.list, sum)
 
@@ -154,7 +160,7 @@ save_results(path.opt = path.single,
              variables.priming = variables.priming,
              data.model.opt = model.simulation.def$data.model,
              optimisation.opt = result,
-             optimisation.opt.colnames = names(fun.likelihood.list),
+             optimisation.opt.colnames = TRUE,
              par.opt = par.def, 
              res.list = list(),
              data.exp.grouped = data.exp.grouped.all,
@@ -185,10 +191,10 @@ model.simulation.double <- do.call(run_model,
 
 model.simulation.double$data.model$type <- "double"
 model.simulation.double$data.model$likelihood  <- 
-  likelihood(data.model =model.simulation.double$data.model,
-             data.exp.grouped = data.exp.grouped,
-             data.exp.summarise =  data.exp.summarise,
-             fun.likelihood = fun.optimisation.likelihood)
+  likelihood( data.model =model.simulation.double$data.model,
+             data.exp.grouped = data.exp.grouped.optimisation,
+             data.exp.summarise =  data.exp.summarise.optimisation,
+             fun.likelihood = fun.likelihood.list.sd_data)
 
 data.model.double.likelihood <- model.simulation.double$data.model %>% filter(stimulation %in% stimulation.list)
 result.double.likelihood.list <-
@@ -197,8 +203,8 @@ result.double.likelihood.list <-
            likelihood( 
              fun.likelihood = fun.likelihood,
              data.model = data.model.double.likelihood,
-             data.exp.summarise = data.exp.summarise,
-             data.exp.grouped = data.exp.grouped)
+             data.exp.summarise = data.exp.summarise.optimisation,
+             data.exp.grouped = data.exp.grouped.optimisation)
          })
 result.double <- sapply(result.double.likelihood.list, sum)
 
@@ -209,13 +215,17 @@ for(likelihood.name in names(result.double.likelihood.list)){
 path.receptors <- paste(path.optimisation.data, "receptors", sep = "/")
 dir.create(path.receptors, recursive = TRUE, showWarnings = FALSE)
 
-write.table(x = data.model.double.likelihood, file = paste(path.receptors, "data_model_likelihood.csv", sep = "/"), sep = ",", row.names = FALSE, col.names = TRUE)
+write.table(x = data.model.double.likelihood, 
+            file = paste(path.receptors, "data_model_likelihood.csv", sep = "/"), 
+            sep = ",", 
+            row.names = FALSE, 
+            col.names = TRUE)
 save_results(path.opt = path.receptors,
              variables = variables,
              variables.priming = variables.priming,
              data.model.opt = model.simulation.double$data.model,
              optimisation.opt = result.double,
-             optimisation.opt.colnames = names(fun.likelihood.list),
+             optimisation.opt.colnames = TRUE,
              par.opt = par.def, 
              res.list = list(),
              data.exp.grouped = data.exp.grouped.all,
@@ -224,3 +234,11 @@ save_results(path.opt = path.receptors,
 
 #### ####
 data.model.list <- list(single = model.simulation.def$data.model, double = model.simulation.double$data.model)
+optimisation.table <- read_optimisation(path = path.single,
+                                              id = "single",
+                                              names = names(fun.likelihood.list))
+optimisation.table <- rbind(optimisation.table,
+                            read_optimisation(
+                              path = path.receptors,
+                              id = "receptors",
+                              names(fun.likelihood.list)))

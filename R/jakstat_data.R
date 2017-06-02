@@ -10,6 +10,9 @@ path.data         <- paste(path.resources, "input/data/", sep = "")
 path.output       <- paste(path.resources, "output/", sep = "")
 dir.create(path.output, recursive = TRUE, showWarnings = TRUE)
 
+path.data.output <- "resources/output/data/"
+path.data.input  <- "resources/input/data"
+
 #### ####
 
 data.exp <- data.table(position = character(),
@@ -47,6 +50,27 @@ data.exp$logintensity <- log(data.exp$intensity)
 data.exp.unique <- distinct(data.exp, priming, stimulation, time)
 data.exp.grouped <- data.exp %>% group_by(priming, stimulation, time)
 data.exp.grouped.all <- data.exp %>% group_by(priming, stimulation, time)
+#### ####
+data.list <- read_data(path = path.data.input)
+
+data.list$data.exp %>% dplyr::distinct(file)
+
+data.list$data.exp.norm <- get_equal_data(data = data.list$data.exp,
+                                          sample_size = 1000)
+
+data.list$data.exp.summarise <- 
+  data.list$data.exp.norm %>% 
+  dplyr::group_by(priming,
+                  stimulation,
+                  time) %>%
+  summarise(m.norm = mean(intensity),
+            sd.norm   = var(intensity))
+
+data.list$data.exp.summarise<-
+  data.list$data.exp.summarise %>%
+  dplyr::mutate(mean.lmvn = lmvn.mean(m = m.norm, sd = sd.norm),
+                sd.lmvn = lmvn.sd(m = m.norm, sd = sd.norm))
+
 #### ####
 #data.exp$time <- data.exp$time + 5
 #tmesh.exp <- unique(data.exp$time)

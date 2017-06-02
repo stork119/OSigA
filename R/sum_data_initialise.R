@@ -1,25 +1,28 @@
-# setwd("~/Documents/modelling/")
-# source("R/libraries.R")
-# source("R/initialise.R")
+setwd("~/Documents/modelling/")
+source("R/libraries.R")
+source("R/initialise.R")
 
 #### ####
-optimisation.table <- data.table(
-  id = character(),
-  mvn.mean = numeric(),
-  mvn = numeric(),
-  lmvn = numeric(),
-  mvn.sd_const = numeric(),
-  lmvn.data = numeric(),
-  normalise = numeric(),
-  normalise_by_priming = numeric()
-)
+# optimisation.table <- data.table(
+#   id = character(),
+#   mvn.mean = numeric(),
+#   mvn = numeric(),
+#   lmvn = numeric(),
+#   mvn.sd_const = numeric(),
+#   lmvn.data = numeric(),
+#   lmvn.data.norm = numeric(),
+#   normalise = numeric(),
+#   normalise_by_priming = numeric()
+# )
 
 read_optimisation <- function(path, id, names = colnames(optimisation.table)){
   optimisation <- read.table(file = paste(path, "optimisation.csv", sep = "/"),
-                             sep = ",", header = FALSE)
-  dt <- data.table(matrix(c(id,as.numeric(optimisation[1,])), nrow = 1))
-  colnames(dt) <- names
-  return(dt)
+                             sep = ",", header = TRUE)
+  colnames(optimisation) <- names
+  optimisation$id <- id
+  
+  optimisation <- optimisation[,c(ncol(optimisation), 1:(ncol(optimisation)-1))]
+  return(optimisation)
 }
 
 
@@ -61,32 +64,31 @@ plot_results <- function(data = data.exp.grouped,
   dev.off()
 }
 #### ####
-path.optimisation <- paste(path.output, "cmaes/normalized/2017-02-04-5/", sep = "/")
-path.optimisation.data <- paste(path.optimisation, "data/", sep = "/")
+# path.optimisation <- paste(path.output, "cmaes/normalize/", sep = "/")
+# path.optimisation.data <- paste(path.optimisation, "data/", sep = "/")
 
-stimulation.list.all <- ((data.exp %>%  distinct(stimulation))[-1])$stimulation
-
-data.exp.grouped <-  read.table(
-  file = paste(path.optimisation, "data_exp_grouped.csv", sep = ""),
-  sep = ",",
-  header = TRUE)
-
-data.exp.grouped <- data.exp.grouped %>% group_by(priming, stimulation, time) %>% mutate(intensity_sd = var(intensity))
-
-data.model.list <- list()
-path.single <- paste(path.optimisation.data, "single", sep = "/")
-optimisation.table <- rbind(optimisation.table,
-                            read_optimisation(path = path.single,
-                                              id = "single",
-                                              names = colnames(optimisation.table)))
-data.model.list[["single"]] <- read.table(
-  file = paste(path.single, "data_model.csv", sep = "/"),
-  sep = ",",
-  header = TRUE)
-
-path.receptors <- paste(path.optimisation.data, "receptors", sep = "/")
-optimisation.table <- rbind(optimisation.table, read_optimisation(path = path.receptors, id = "receptors"))
-data.model.list[["receptors"]] <- read.table(
-  file = paste(path.receptors, "data_model.csv", sep = "/"),
-  sep = ",",
-  header = TRUE)
+# stimulation.list.all <- ((data.exp %>%  distinct(stimulation))[-1])$stimulation
+# 
+# data.exp.grouped <-  read.table(
+#   file = paste(path.optimisation, "data_exp_grouped.csv", sep = ""),
+#   sep = ",",
+#   header = TRUE)
+# 
+# data.exp.grouped <- data.exp.grouped %>% group_by(priming, stimulation, time) %>% mutate(intensity_sd = var(intensity))
+# 
+# data.model.list <- list()
+# path.single <- paste(path.optimisation.data, "single", sep = "/")
+# optimisation.table <- read_optimisation(path = path.single,
+#                                               id = "single",
+#                                               names = names(fun.likelihood.list))
+# data.model.list[["single"]] <- read.table(
+#   file = paste(path.single, "data_model.csv", sep = "/"),
+#   sep = ",",
+#   header = TRUE)
+# 
+# path.receptors <- paste(path.optimisation.data, "receptors", sep = "/")
+# optimisation.table <- rbind(optimisation.table, read_optimisation(path = path.receptors, id = "receptors", names(fun.likelihood.list)))
+# data.model.list[["receptors"]] <- read.table(
+#   file = paste(path.receptors, "data_model.csv", sep = "/"),
+#   sep = ",",
+#   header = TRUE)

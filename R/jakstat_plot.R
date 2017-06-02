@@ -1,7 +1,7 @@
 ### ### ###
 ### plot compare
 ### ### ###
-source("R/theme_jetka.R")
+source("R/graphics/libraries.R")
 
 compare_models <- function(
   data = data.exp.grouped,
