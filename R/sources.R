@@ -5,7 +5,6 @@
 #### SOURCES ####
 source("R/jakstat_data.R")
 source("R/jakstat_model.R")
-source("R/lmvn_library.R")
 source("R/likelihood_library.R")
 source("R/jakstat_estimation.R")
 source("R/graphics/libraries.R")
