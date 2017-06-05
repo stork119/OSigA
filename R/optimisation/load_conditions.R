@@ -31,7 +31,7 @@ LoadOptimisationConditions <- function(path.optimisation,
   
   data.exp.summarise.optimisation <- data.exp.grouped.optimisation %>%
     dplyr::group_by(priming, stimulation, time) %>% 
-    dplyr::summarise(m.morm = mean(intensity),
+    dplyr::summarise(m.norm = mean(intensity),
                      mean.lmvn = mean(logintensity),
                      sd.norm = var(intensity),
                      sd.lmvn = var(logintensity))
