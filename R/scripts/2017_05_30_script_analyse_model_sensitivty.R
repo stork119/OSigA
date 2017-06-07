@@ -14,8 +14,9 @@ delimeter <- ","
 directory.models <- '/media/knt/D/KN/ClustSense/Modelling/lib/StochSense/StochSens_Ver2.3/models/JAKSTAT_means/'
 #### NFKB EXAMPLE ####
 directory.folder <- paste(directory.models,
-                          'Output/2017-05-30/',
+                          'Output/2017-05-30-priming/',
                           sep = "")
+
 directory.SM     <- paste(directory.folder, 'sense.csv', sep = "")
 #directory.FIM     <- paste(directory.folder, 'FIM.csv', sep = "")
 directory.output <- paste(directory.folder,
@@ -145,3 +146,124 @@ ggsave(filename = "sensitivity.stat1.pdf",
        useDingbats = plot.args$useDingbats)
 
 
+#### primig vs single ####
+
+return_SM_pstat1 <- function(path = '2017-05-30-priming', output.path = "pstat1/"){
+directory.folder <- paste(directory.models,
+                          'Output',
+                          path,
+                          "/",
+                          sep = "/")
+
+directory.SM     <- paste(directory.folder, 'sense.csv', sep = "")
+#directory.FIM     <- paste(directory.folder, 'FIM.csv', sep = "")
+directory.output <- paste(directory.folder,
+                          output.path,
+                          '/', 
+                          sep = "")
+
+
+directory.params <- paste(directory.models,
+                          'Input/parameters-names.csv',
+                          sep = "")
+directory.dendrogram <- paste(directory.output, "dendrogram", ".pdf", sep = "")
+dir.create(path = directory.output, recursive = TRUE, showWarnings = FALSE)
+
+params <- read.csv(directory.params, header = FALSE, sep = delimeter)[-5,] ## HORIZONTAL
+
+SM.priming <- as.matrix(read.csv(directory.SM, sep = delimeter, header = FALSE))
+
+SM.priming <- SM.priming[,-5]
+SM.priming.pstat1 <- SM.priming[seq(from = 13, to = nrow(SM.priming), by = 17),]
+time.list <- seq(0,120,5)
+time.list.ind <- which(time.list %in% tmesh[tmesh.list])
+SM.priming.pstat1 <- SM.priming.pstat1[time.list.ind,]
+SM.priming.pstat1 <- do.call(rbind, list(SM.priming.pstat1,SM.priming.pstat1,SM.priming.pstat1,SM.priming.pstat1,SM.priming.pstat1))
+SM.priming.pstat1 <- do.call(rbind, list(SM.priming.pstat1,SM.priming.pstat1,SM.priming.pstat1,SM.priming.pstat1,SM.priming.pstat1))
+SM.priming.pstat1 <- do.call(rbind, list(SM.priming.pstat1,SM.priming.pstat1,SM.priming.pstat1,SM.priming.pstat1,SM.priming.pstat1))
+
+
+x.priming.pstat1 <- SMC(S = SM.priming.pstat1, 
+               labels = params,
+               names = params,
+               zeta = zeta,
+               delta = delta,
+               dir.output = directory.output )
+
+df <- data.frame(params = params, sens =  diag(x.priming.pstat1$FIM_all))
+
+g.list<- list()
+g.list[["sensitivity"]] <- 
+  ggplot(data = df, mapping = aes(x = params, y = sens)) + geom_bar(stat = "identity") + 
+  do.call(what = theme_jetka, args = plot.args) +
+  ggtitle("Sensitivty analysis pSTAT1")
+ggsave(filename = "sensitivity-pstat.pdf",
+       path = directory.output, 
+       plot = g.list[["sensitivity"]],width  = plot.args$width, 
+       height = plot.args$height, 
+       useDingbats = plot.args$useDingbats)
+
+cluster.priming.pstat1 <- clusterident.SMC(x.priming.pstat1)
+
+
+pdf(directory.dendrogram, width = 12, height = 6)
+print(plotDendogram.SMC(x.priming.pstat1,
+                  cluster = cluster.priming.pstat1,
+                  fig      = c(0,1,0,1),
+                  new      = FALSE,
+                  labels.args = list(cex = 0.5)
+))
+dev.off()
+return(SM.priming.pstat1)
+}
+##### ####
+SM.list <-list(priming = return_SM_pstat1(path = '2017-05-30-priming'),
+               single = return_SM_pstat1(path = '2017-05-30-single'))
+
+
+SM <- rbind(SM.list$priming,SM.list$single)
+path = '2017-05-30'
+directory.folder <- paste(directory.models,
+                          'Output',
+                          path,
+                          "/",
+                          sep = "/")
+directory.output <- paste(directory.folder,
+                          output.path,
+                          '/', 
+                          sep = "")
+directory.dendrogram <- paste(directory.output, "dendrogram", ".pdf", sep = "")
+
+dir.create(directory.output, recursive = TRUE)
+
+x.pstat1 <- SMC(S = SM, 
+                        labels = params,
+                        names = params,
+                        zeta = zeta,
+                        delta = delta,
+                        dir.output = directory.output )
+
+df <- data.frame(params = params, sens =  diag(x.pstat1$FIM_all))
+
+g.list<- list()
+g.list[["sensitivity"]] <- 
+  ggplot(data = df, mapping = aes(x = params, y = sens)) + geom_bar(stat = "identity") + 
+  do.call(what = theme_jetka, args = plot.args) +
+  ggtitle("Sensitivty analysis pSTAT1")
+ggsave(filename = "sensitivity-pstat.pdf",
+       path = directory.output, 
+       plot = g.list[["sensitivity"]],width  = plot.args$width, 
+       height = plot.args$height, 
+       useDingbats = plot.args$useDingbats)
+
+cluster.pstat1 <- clusterident.SMC(x.pstat1)
+
+
+pdf(directory.dendrogram, width = 12, height = 6)
+print(plotDendogram.SMC(x.pstat1,
+                        cluster = cluster.pstat1,
+                        fig      = c(0,1,0,1),
+                        new      = FALSE,
+                        labels.args = list(cex = 0.5)
+))
+dev.off()

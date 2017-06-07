@@ -285,3 +285,145 @@ ggsave(plot = g.list[["data_likelihood_mean.lmvn_sd.lmvn"]],
        width  = plot.args$width, 
        height = plot.args$height, 
        useDingbats = plot.args$useDingbats)
+
+#### normalisation testing ####
+attach(LoadOptimisationConditions(path.optimisation,
+                                       path.optimisation.data,
+                                       maxit.tmp = Inf))
+
+data.exp.summarise.optimisation$likelihood <-
+  likelihood(data.model = data.exp.summarise.optimisation,
+          data.exp.grouped = data.exp.grouped.optimisation,
+          data.exp.summarise = data.exp.summarise.optimisation,
+           fun.likelihood = fun.likelihood.list.sd_data
+)
+
+
+data.model.list[[1]]$likelihood_2 <- likelihood(data.model = data.model.list[[1]],
+           data.exp.grouped = data.exp.grouped.optimisation,
+           data.exp.summarise = data.exp.summarise.optimisation,
+           fun.likelihood = fun.likelihood.list.sd_data
+)
+
+
+
+
+sum(data.exp.summarise.optimisation$likelihood)
+sum(data.model.list[[1]]$likelihood)
+gplot.list.likelihood <- list()
+gplot.list.likelihood[["likelihood_model_vs_data"]] <- ggplot(data = rbind(data.frame(data.exp.summarise.optimisation %>%
+         dplyr::mutate(type = "data")),
+         data.model.list[[1]][,c(colnames(data.exp.summarise.optimisation), "type")]),
+       mapping = aes(x = factor(time), y = likelihood, colour = type)) +
+  geom_point() +
+  #geom_line() +
+  facet_grid(priming ~ stimulation) + do.call(what = theme_jetka, args = plot.args) +
+  #geom_point(data = data.exp.summarise.optimisation %>% mutate(type = "data"), color = "black") +
+  #geom_line(data = data.exp.summarise.optimisation %>% mutate(type = "data"), color = "black") +
+  #geom_errorbar(data = data.exp.summarise.optimisation %>% mutate(type = "data"),
+  #              mapping = aes(ymin = mean.lmvn - sqrt(sd.lmvn),
+  #                            ymax = mean.lmvn + sqrt(sd.lmvn)),
+  #              color = "black") +
+  ggtitle(paste("Compare best model with data means", collapse = " "))
+
+do.call(what = ggsave,
+        args = append(plot.args.ggsave,
+                      list(filename = paste(path.data.output, "likelihood_lmvn_compare_data_with_best_model.pdf", sep = ""),
+                           plot = gplot.list.likelihood[["likelihood_model_vs_data"]])))
+
+
+# data.model.list[[1]]$likelihood_2 <-
+#   likelihood(data.model = data.model.list[[1]],
+#              data.exp.grouped = data.exp.grouped.optimisation,
+#              data.exp.summarise = data.exp.summarise.optimisation,
+#              fun.likelihood = fun.likelihood.list.sd_data
+#   )
+# 
+# sum(data.model.list[[1]]$likelihood)
+# # data.exp.grouped.optimisation %>%
+# #   dplyr::group_by(priming, stimulation, time) %>%
+# #   dplyr::filter(priming == 1000, stimulation == 1, time == 30) %>%
+# #   dplyr::summarise(m.norm = mean(intensity),
+# #                    mean.lmvn = mean(logintensity),
+# #                    sd.norm = var(intensity),
+# #                    sd.lmvn = var(logintensity))
+# 
+# model.tmp <- data.exp.grouped.optimisation %>%
+#   dplyr::filter(priming == 1000, stimulation == 1, time == 30) %>%
+#   mutate(data = (logintensity - 6.09351)^2,
+#          model = ((logintensity - 5.986634)^2)/0.1249113) %>%
+#   summarise(sum_data = sum(data)/0.1249113, sum_model = sum(model))
+# 
+# 
+# fun.likelihood.list.sd_data(logintensity = (data.list$data.exp.norm %>%
+#                                               dplyr::filter(priming == 1000, stimulation == 1, time == 30))$logintensity, data.model.tmp = tmp.model, data.exp.summarise = data.exp.summarise.optimisation)
+# 
+# tmp.data <- data.exp.summarise.optimisation %>% dplyr::filter(priming == 1000, stimulation == 1, time == 30)
+# tmp.model <- data.model.list[[1]] %>% dplyr::filter(priming == 1000, stimulation == 1, time == 30)
+# mean.lmvn(m.norm = tmp.model$m.norm, sd.norm = tmp.data$sd.norm)
+# sd.lmvn(m.norm = tmp.model$m.norm, sd.norm = tmp.data$sd.norm)
+
+gplot.list.likelihood[["density"]] <- list()
+for(i in 1:nrow(data.exp.summarise.optimisation)){
+  prm <- data.exp.summarise.optimisation[i,]$priming
+  t <- data.exp.summarise.optimisation[i,]$time
+  stm <- data.exp.summarise.optimisation[i,]$stimulation
+  data <- data.exp.grouped.optimisation %>%
+    data.table() %>%
+    dplyr::filter(priming == prm &
+                  stimulation == stm &
+                  time == t
+    )
+  
+  
+  title <- paste("prm", data.exp.summarise.optimisation[i,]$priming,
+                 "stm", data.exp.summarise.optimisation[i,]$stimulation,
+                 "time", data.exp.summarise.optimisation[i,]$time,
+                 sep = " ")
+
+  x <- "intensity"
+  group <- "position"
+#  xlim_max <- quantile(data$intensity, probs = 0.99)
+
+  data.rand <- data.frame(logintensity =
+                            rnorm(n = 500,
+                                  mean = data.exp.summarise.optimisation[i,]$mean.lmvn,
+                                  sd = data.exp.summarise.optimisation[i,]$sd.lmvn))
+  data.rand <- cbind(data.rand, data.frame(data.exp.summarise.optimisation[i,]))
+  data.rand <- data.rand %>% dplyr::mutate(intensity = exp(logintensity), position = "rand") %>% data.table()
+  data.rand$cell <- 1:nrow(data.rand)
+  data.rand$file <- ""
+  data <- rbind(data.frame(data), data.frame(data.rand)[,colnames(data)]) %>% data.table()
+  # g.list[["normal"]][[as.character(i)]] <-
+  #   do.call(what = plot_density,
+  #           args = append(plot.args,
+  #                         list(data = data,
+  #                              x = "intensity",
+  #                              group = group,
+  #                              title = title,
+  #                              xlim_max = xlim_max,
+  #                              compare_to_all = TRUE)
+  #           ))
+
+  gplot.list.likelihood[["density"]][[as.character(i)]] <-
+    do.call(what = plot_density,
+            args = append(plot.args,
+                          list(
+                            data = data,
+                            x = "logintensity",
+                            group = group,
+                            title = title,
+                            xlim_max = NULL,
+                            compare_to_all = FALSE
+                          )))
+
+}
+do.call(what = ggsave,
+        args = append(plot.args.ggsave,
+                      list(filename = paste(path.data.output, "likelihood_lmvn_compare_data_with_rand.pdf", sep = ""),
+                           plot = marrangeGrob(grobs = gplot.list.likelihood[["density"]], ncol = 1, nrow = 1))))
+
+do.call(what = ggsave,
+        args = append(plot.args.ggsave,
+                      list(filename = paste(path.data.output, "likelihood_lmvn_compare_data_with_rand_twopages.pdf", sep = ""),
+                           plot = marrangeGrob(grobs = gplot.list.likelihood[["density"]], ncol = 4, nrow = 2))))
