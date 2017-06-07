@@ -27,6 +27,10 @@ LoadOptimisationConditions <- function(path.optimisation,
   par.optimised   <- which(par.lower != par.upper)
   
   stimulation.list <- scan(paste(path.optimisation, "stimulation_list.txt", sep ="/"))
+  data.exp.grouped <- read.table(
+    file = paste(path.optimisation, "data_exp_grouped.csv", sep = ""),
+    sep = ",",
+    header = TRUE)
   data.exp.grouped.optimisation <- data.exp.grouped %>% filter(stimulation %in% stimulation.list)
   
   data.exp.summarise.optimisation <- data.exp.grouped.optimisation %>%
@@ -61,6 +65,7 @@ LoadOptimisationConditions <- function(path.optimisation,
               par.upper = par.upper,
               par.optimised = par.optimised,
               stimulation.list = stimulation.list,
+              data.exp.grouped = data.exp.grouped,
               data.exp.grouped.optimisation = data.exp.grouped.optimisation,
               data.exp.summarise.optimisation = data.exp.summarise.optimisation,
               lhs.res = lhs.res,
