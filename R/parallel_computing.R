@@ -20,9 +20,8 @@ source("R/initialise.R")
 #### ####
 run_parallel_computations <- function(path.optimisation,
                                       path.optimisation.data = paste(path.optimisation, "data", sep = "/"),
-                                      data.exp.grouped,
-                                      no_cores = 1,
-                                      stopfitness = 0,
+                                      no_cores = 18,
+                                      stopfitness = 55363.1,
                                       #fun.optimisation = pureCMAES,
                                       #optimisation.res.par = "xmin"
                                       fun.optimisation = cma_es,
@@ -34,6 +33,7 @@ run_parallel_computations <- function(path.optimisation,
                                       
   ### initialization ###
   dir.create(path.optimisation.data, showWarnings = FALSE, recursive = TRUE)
+  print(path.optimisation.data)
   attach(LoadOptimisationConditions(path.optimisation = path.optimisation,
                                      path.optimisation.data = path.optimisation.data,
                                      ...))
@@ -119,8 +119,8 @@ run_parallel_computations <- function(path.optimisation,
       
       model.simulation$data.model$likelihood  <- 
         likelihood(data.model = model.simulation$data.model,
-                   data.exp.grouped = data.exp.grouped,
-                   data.exp.summarise =  data.exp.summarise,
+                   data.exp.grouped = data.exp.grouped.optimisation,
+                   data.exp.summarise =  data.exp.summarise.optimisation,
                    fun.likelihood = fun.optimisation.likelihood)
       
       model.simulation$data.model$type <- "optimised"
