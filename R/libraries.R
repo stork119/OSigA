@@ -49,6 +49,7 @@ packages.list <- c(
   
   #### data manipulation ####
   "dplyr",
+  "tidyr",
   "lazyeval"
   
   #### channel capacity ####

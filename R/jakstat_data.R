@@ -15,41 +15,41 @@ path.data.input  <- "resources/input/data"
 
 #### ####
 
-data.exp <- data.table(position = character(),
-                       cell  = numeric(),
-                       priming = numeric(),
-                       stimulation = numeric(),
-                       time = numeric(),
-                       intensity = numeric())
+# data.exp <- data.table(position = character(),
+#                        cell  = numeric(),
+#                        priming = numeric(),
+#                        stimulation = numeric(),
+#                        time = numeric(),
+#                        intensity = numeric())
 
 #### KA10 ####
-data.exp.c <- read.table(file = paste(path.data, "KA10_C.csv", sep = "/"),
-                         header = TRUE,
-                         sep = "\t")
-
-data.exp <- rbind(data.exp,
-                  data.table(position = data.exp.c$PositionName,
-                             cell = data.exp.c$ObjectNumber,
-                             priming = data.exp.c$group.1.1,
-                             stimulation = data.exp.c$group.2.1,
-                             time = data.exp.c$compare.1.1,
-                             intensity = data.exp.c$ShrinkedNuclei.Intensity))
-
-data.exp.ifnb <- read.table(file = paste(path.data, "KA10_IFNB.csv", sep = "/"),
-                            header = TRUE,
-                            sep = "\t")
-data.exp <- rbind(data.exp,
-                  data.frame(position = data.exp.ifnb$PositionName,
-                             cell = data.exp.ifnb$ObjectNumber,
-                             priming = data.exp.ifnb$group.1.1,
-                             stimulation = data.exp.ifnb$group.2.1,
-                             time = data.exp.ifnb$compare.1.1,
-                             intensity = data.exp.ifnb$ShrinkedNuclei.Intensity))
-
-data.exp$logintensity <- log(data.exp$intensity)
-data.exp.unique <- distinct(data.exp, priming, stimulation, time)
-data.exp.grouped <- data.exp %>% group_by(priming, stimulation, time)
-data.exp.grouped.all <- data.exp %>% group_by(priming, stimulation, time)
+# data.exp.c <- read.table(file = paste(path.data, "KA10_C.csv", sep = "/"),
+#                          header = TRUE,
+#                          sep = "\t")
+# 
+# data.exp <- rbind(data.exp,
+#                   data.table(position = data.exp.c$PositionName,
+#                              cell = data.exp.c$ObjectNumber,
+#                              priming = data.exp.c$group.1.1,
+#                              stimulation = data.exp.c$group.2.1,
+#                              time = data.exp.c$compare.1.1,
+#                              intensity = data.exp.c$ShrinkedNuclei.Intensity))
+# 
+# data.exp.ifnb <- read.table(file = paste(path.data, "KA10_IFNB.csv", sep = "/"),
+#                             header = TRUE,
+#                             sep = "\t")
+# data.exp <- rbind(data.exp,
+#                   data.frame(position = data.exp.ifnb$PositionName,
+#                              cell = data.exp.ifnb$ObjectNumber,
+#                              priming = data.exp.ifnb$group.1.1,
+#                              stimulation = data.exp.ifnb$group.2.1,
+#                              time = data.exp.ifnb$compare.1.1,
+#                              intensity = data.exp.ifnb$ShrinkedNuclei.Intensity))
+# 
+# data.exp$logintensity <- log(data.exp$intensity)
+# data.exp.unique <- distinct(data.exp, priming, stimulation, time)
+# data.exp.grouped <- data.exp %>% group_by(priming, stimulation, time)
+# data.exp.grouped.all <- data.exp %>% group_by(priming, stimulation, time)
 #### ####
 data.list <- read_data(path = path.data.input)
 

@@ -10,14 +10,14 @@ par.def <- scan(file = paste(path.parameters, "par.txt", sep = ""))
 varscale <- 0.15
 
 tmesh <- seq(from = 0, to = 100, by = 5)
-tmesh.list <- which(tmesh %in% (unique(data.exp$time) + 5))
+tmesh.list <- which(tmesh %in% (unique(data.list$data.exp$time) + 5))
 
-stimulation.list <- (data.exp %>% 
+stimulation.list <- (data.list$data.exp %>% 
                        dplyr::distinct(stimulation) %>% 
                        dplyr::filter(stimulation != 0))$stimulation
 
-background     <- mean(data.exp[data.exp$time == 0,]$intensity)
-background.var <- var(data.exp[data.exp$time == 0,]$intensity)
+background     <- mean(data.list$data.exp[data.list$data.exp$time == 0,]$intensity)
+background.var <- var(data.list$data.exp[data.list$data.exp$time == 0,]$intensity)
 
 
 variables <- rep(0.0, times = 629)
