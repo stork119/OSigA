@@ -4,11 +4,12 @@
 setwd("~/Documents/modelling/")
 source("R/parallel_computing.R")
 
-path.optimisation <- paste(path.output, "optimisation/2017-06-06/", sep = "/")
+path.optimisation <- paste(path.output, "optimisation/2017-06-07-variables_mean/", sep = "/")
 path.optimisation.data <- paste(path.optimisation, "data/", sep = "/")
 path.optimisation.results <- paste(path.optimisation, "results/", sep = "/")
 #### initialise ####
 dir.create(path.optimisation, recursive = TRUE)
+dir.create(path.optimisation.data, recursive = TRUE)
 dir.create(path.optimisation.results, recursive = TRUE)
 
 parameters.filename <- paste(path.optimisation, "parameters_conditions.csv", sep = "")

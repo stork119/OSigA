@@ -154,13 +154,28 @@ stopImplicitCluster()
 data.parameters <- do.call(rbind, data.parameters.list)
 
 data.parameters.opt <- data.parameters[,par.optimised]
-data.parameters.opt$p16 <- data.parameters.opt$p1/data.parameters.opt$p6
+#data.parameters.opt$p16 <- data.parameters.opt$p1/data.parameters.opt$p6
 data.parameters.opt$id <- data.parameters.opt$type
 
 data.parameters.opt.melt <- data.parameters.opt %>% 
   melt(id.vares = id) %>% 
   left_join(optimisation.table.results)
+#### save best parameter conditions #####
 
+parameters[par.optimised] <- parameters.factor[par.optimised]*(parameters.base[par.optimised])^par
+
+par <- (data.parameters %>% dplyr::filter(type == optimisation.table[1,"id"]))$opt
+par[which(is.na(par))] <- 0
+write.table(x = data.frame(factor = parameters.factor*(parameters.base^par),
+                           base   = parameters.base,
+                           lower  = par.lower,
+                           upper  = par.upper),
+            file = paste(path.optimisation.results, "parameters_condition.csv", sep = ""),
+            col.names = TRUE,
+            row.names = FALSE,
+            sep = ",")
+            
+  
 #### ####
 gplot.list[["parameters_optimisation"]] <- ggplot( 
   data.parameters.opt.melt %>% 
