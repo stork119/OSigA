@@ -1,7 +1,6 @@
 setwd("~/Documents/modelling/")
 source("R/libraries.R")
-source("R/initialise.R")
-
+source("R/parallel_computing.R")
 #### ####
 # optimisation.table <- data.table(
 #   id = character(),
@@ -15,6 +14,8 @@ source("R/initialise.R")
 #   normalise_by_priming = numeric()
 # )
 
+
+#### ####
 read_optimisation <- function(path, id, names = colnames(optimisation.table)){
   optimisation <- read.table(file = paste(path, "optimisation.csv", sep = "/"),
                              sep = ",", header = TRUE)
@@ -63,6 +64,8 @@ plot_results <- function(data = data.exp.grouped,
   print(marrangeGrob(unlist(plot.list, recursive = FALSE), ncol = grid.ncol, nrow =  grid.nrow))
   dev.off()
 }
+#### ####
+
 #### ####
 # path.optimisation <- paste(path.output, "cmaes/normalize/", sep = "/")
 # path.optimisation.data <- paste(path.optimisation, "data/", sep = "/")
