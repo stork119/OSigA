@@ -4,7 +4,7 @@
 source("R/graphics/libraries.R")
 
 compare_models <- function(
-  data = data.exp.grouped,
+  data,
   data.model.list = list(def = res$data.model),
   plot.title = "",
   filename,
@@ -14,8 +14,6 @@ compare_models <- function(
   grid.ncol = max(as.numeric(unique(data$stimulation)/grid.nrow),1),
   ...
 ){
-  
-  data <- data.exp.grouped.all
   
   data.summarise <- data %>% 
     group_by(stimulation, priming, time) %>% 
