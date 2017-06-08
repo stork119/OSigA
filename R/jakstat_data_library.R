@@ -11,7 +11,7 @@ normalization <- function(data.model,
   data.model$m.norm <- data.model$m/m.scale + background
   data.model$sd.norm <- data.model$sd/sd.scale
   data.model$sd.norm <- sapply(data.model$sd.norm, function(sd.norm){ifelse(sd.norm < epsilon, epsilon, sd.norm)})
-  data.model$time <- data.model$time - 5
+  data.model$time <- data.model$time
   return(data.model)
 }
 

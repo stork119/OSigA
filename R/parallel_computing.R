@@ -80,7 +80,7 @@ run_parallel_computations <- function(path.optimisation,
       par.exp.opt <- rep(0, times = length(parameters)) 
       par.exp.opt[par.optimised] <-  optimisation.res[[optimisation.res.par]]
       
-      model.simulation <- do.call(run_model,
+      model.simulation <- do.call(run_model_mean,
                                   list(parameters = parameters,
                                     variables = variables,
                                     variables.priming = variables.priming,
@@ -90,17 +90,17 @@ run_parallel_computations <- function(path.optimisation,
                                     background = background))
       
       error <- model.simulation$error
-      if(model.simulation$error){
-        model.simulation <- do.call(run_model_mean,
-                                    list(parameters = parameters,
-                                         variables = variables,
-                                         variables.priming = variables.priming,
-                                         tmesh = tmesh,
-                                         tmesh.list = tmesh.list,
-                                         stimulation.list = stimulation.list,
-                                         background = background))
-        
-      }
+      # if(model.simulation$error){
+      #   model.simulation <- do.call(run_model_mean,
+      #                               list(parameters = parameters,
+      #                                    variables = variables,
+      #                                    variables.priming = variables.priming,
+      #                                    tmesh = tmesh,
+      #                                    tmesh.list = tmesh.list,
+      #                                    stimulation.list = stimulation.list,
+      #                                    background = background))
+      #   
+      # }
       
       result <- sapply(fun.likelihood.list, 
                        function(fun.likelihood){

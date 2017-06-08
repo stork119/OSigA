@@ -70,6 +70,7 @@ LoadOptimisationConditions <- function(path.optimisation,
               data.exp.summarise.optimisation = data.exp.summarise.optimisation,
               lhs.res = lhs.res,
               par.list = par.list,
-              par.list.ids = par.list.ids
+              par.list.ids = par.list.ids,
+              ids = ids
               ))
 }

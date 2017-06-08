@@ -1,5 +1,4 @@
 setwd("~/Documents/modelling/")
-source("R/libraries.R")
 source("R/parallel_computing.R")
 #### ####
 # optimisation.table <- data.table(

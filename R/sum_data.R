@@ -32,11 +32,11 @@
 source("R/sum_data_initialise.R")
 
 
-path.optimisation <- paste(path.output, "optimisation/2017-06-06/", sep = "/")
+path.optimisation <- paste(path.output, "optimisation/2017-06-08/", sep = "/")
 path.optimisation.data <- paste(path.optimisation, "data/", sep = "/")
 path.optimisation.results <- paste(path.optimisation, "results/", sep = "/")
 dir.create(path.optimisation.results, showWarnings = FALSE, recursive = TRUE)
-
+gplot.list <- list()
 attach(LoadOptimisationConditions(path.optimisation = path.optimisation,
                            path.optimisation.data = path.optimisation.data))
 optimisation.table <- InitiOptimisationTable(path.optimisation = path.optimisation,
@@ -138,7 +138,7 @@ write.table(file = paste(path.optimisation.results, "optimisation_ranking_all.cs
             col.names = TRUE)
 
 registerDoParallel(no_cores)
-data.parameters.list <- foreach( i = 1:length(optimisation.table$sd_data)) %dopar% {
+data.parameters.list.df <- foreach( i = 1:length(optimisation.table$sd_data)) %dopar% {
   id <- optimisation.table$id[i]
   try({
     filename <- paste(path.optimisation.data, id, "par_exp.txt", sep = "/")
@@ -151,26 +151,26 @@ data.parameters.list <- foreach( i = 1:length(optimisation.table$sd_data)) %dopa
   })
 }
 stopImplicitCluster()
-data.parameters <- do.call(rbind, data.parameters.list)
+data.parameters.df <- do.call(rbind, data.parameters.list.df)
 
-data.parameters.opt <- data.parameters[,par.optimised]
+data.parameters.opt <- data.parameters.df[,par.optimised]
 #data.parameters.opt$p16 <- data.parameters.opt$p1/data.parameters.opt$p6
-data.parameters.opt$id <- data.parameters.opt$type
+data.parameters.opt$id <- data.parameters.df$id
 
 data.parameters.opt.melt <- data.parameters.opt %>% 
   melt(id.vares = id) %>% 
   left_join(optimisation.table.results)
 #### save best parameter conditions #####
 
-parameters[par.optimised] <- parameters.factor[par.optimised]*(parameters.base[par.optimised])^par
+#parameters[par.optimised] <- parameters.factor[par.optimised]*(parameters.base[par.optimised])^par
 
-par <- (data.parameters %>% dplyr::filter(type == optimisation.table[1,"id"]))$opt
+par <- as.numeric((data.parameters.df %>% dplyr::filter(id == optimisation.table[1,"id"]))[1,1:10])
 par[which(is.na(par))] <- 0
 write.table(x = data.frame(factor = parameters.factor*(parameters.base^par),
                            base   = parameters.base,
                            lower  = par.lower,
                            upper  = par.upper),
-            file = paste(path.optimisation.results, "parameters_condition.csv", sep = ""),
+            file = paste(path.optimisation.results, "parameters_conditions.csv", sep = ""),
             col.names = TRUE,
             row.names = FALSE,
             sep = ",")

@@ -11,7 +11,7 @@ source("R/parallel_computing.R")
 #   sep = ",",
 #   header = TRUE)
 
-path.optimisation <- paste(path.output, "optimisation/2017-06-06/", sep = "/")
+path.optimisation <- paste(path.output, "optimisation/2017-06-08-2/", sep = "/")
 data.model.list <- LoadInitialModels(path.optimisation = path.optimisation)
 no_cores <- 16
 
