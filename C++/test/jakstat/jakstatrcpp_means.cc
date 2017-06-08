@@ -86,9 +86,9 @@ static int Jac(long int N, realtype t,
 
 int findNearestNeighbourIndex( double value, double *x, int len );
 
-void interp1(double *x, int x_tam, double *y,
+/*void interp1(double *x, int x_tam, double *y,
   double *xx, int xx_tam, double *yy);
-
+*/
 double cosineInterpolation(double x1, double x2,
   double y1, double y2, const realtype t);
 
@@ -96,7 +96,7 @@ double stimulus(const realtype t);
 
 
 
-/* Private functions to output results */
+/* Private functions to output5results */
 static void writeToFile(N_Vector y, FILE* outputFile);
 
 /* Private function to check function return values */
@@ -209,12 +209,13 @@ solverData run_solver(
   while(1) {
     flag = CVode(cvode_mem, tout, y, &t, CV_NORMAL);
     std::vector<double> yvector;  
+//    printf("%lf\t", t);
     for(int i = 0; i < NEQ; ++i){
       yvector.push_back(Ith(y, i+1));
-//      printf("%lf\t", Ith(y, i+1));
+    //  printf("%lf\t", Ith(y, i+1));
     } 
     results.push_back(yvector);
-//    printf("\n");
+    //printf("\n");
 
     if (check_flag(&flag, "CVode", 1)){
       solver_results.solver_flag = 0;
@@ -465,7 +466,7 @@ int findNearestNeighbourIndex( double value, double *x, int len )
     return idx;
 }
 
-void interp1(double *x, int x_tam, double *y, double *xx, int xx_tam, double *yy)
+/*void interp1(double *x, int x_tam, double *y, double *xx, int xx_tam, double *yy)
 {
     double dx, dy, *slope, *intercept;
     int i, indiceEnVector;
@@ -494,7 +495,7 @@ void interp1(double *x, int x_tam, double *y, double *xx, int xx_tam, double *yy
     }
     free(slope);
     free(intercept);
-}
+}*/
 
 double cosineInterpolation(double x1, double x2,
   double y1, double y2, const realtype t){
