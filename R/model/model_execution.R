@@ -1,7 +1,7 @@
 ### ###
 ### model_execution
 ### ###
-source("R/jakstat_model.R")
+
 #### ####
 normalization_simulation <- function(data.model,
                           m.scale = 400,

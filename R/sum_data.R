@@ -1,6 +1,6 @@
 # #### ####
 # 
-# ids <- list.dirs(path.optimisation, full.names = FALSE)
+# ids <- list.dirs(path.list$optimisation, full.names = FALSE)
 # ids <- ids[which(!is.na(as.numeric(ids)))]
 # 
 # registerDoParallel(no_cores)
@@ -8,7 +8,7 @@
 #   try({
 #     
 #     data.model <-  read.table(
-#       file = paste(path.optimisation, id, "data_model.csv", sep = "/"),
+#       file = paste(path.list$optimisation, id, "data_model.csv", sep = "/"),
 #       sep = ",",
 #       header = TRUE)
 # 
@@ -20,7 +20,7 @@
 #                          data.exp.grouped = data.exp.grouped))
 #                      })
 # 
-#     write.table(x = matrix(result, nrow = 1), paste(path.optimisation, id, "optimisation.csv", sep = "/"), sep = ",", row.names = FALSE, col.names = FALSE)
+#     write.table(x = matrix(result, nrow = 1), paste(path.list$optimisation, id, "optimisation.csv", sep = "/"), sep = ",", row.names = FALSE, col.names = FALSE)
 # 
 #   })
 # }
@@ -28,26 +28,23 @@
 # 
 
 #### ####
-
+setwd("~/Documents/modelling/")
+source("R/optimisation/initialise_optimisation.R")
 source("R/sum_data_initialise.R")
 
 
-path.optimisation <- paste(path.output, "optimisation/2017-06-08/", sep = "/")
-path.optimisation.data <- paste(path.optimisation, "data/", sep = "/")
-path.optimisation.results <- paste(path.optimisation, "results/", sep = "/")
-dir.create(path.optimisation.results, showWarnings = FALSE, recursive = TRUE)
 gplot.list <- list()
-attach(LoadOptimisationConditions(path.optimisation = path.optimisation,
-                           path.optimisation.data = path.optimisation.data))
-optimisation.table <- InitiOptimisationTable(path.optimisation = path.optimisation,
-                                             path.optimisation.data = path.optimisation.data)
+attach(LoadOptimisationConditions(path.optimisation = path.list$optimisation,
+                           path.optimisation.data = path.list$optimisation.data))
+optimisation.table <- InitiOptimisationTable(path.optimisation = path.list$optimisation,
+                                             path.optimisation.data = path.list$optimisation.data)
 
 no_cores <- 16
 
 for( id  in ids[which(!ids  %in% optimisation.table$id)] ){
   try({
         optimisation.table <- rbind(optimisation.table,
-                                read_optimisation(path = paste(path.optimisation.data, id, sep = "/"),
+                                read_optimisation(path = paste(path.list$optimisation.data, id, sep = "/"),
                                                   id = id, 
                                                   names = names(fun.likelihood.list)))
   })
@@ -64,10 +61,10 @@ optimisation.best <- c(optimisation.table[order(as.numeric(optimisation.table[,f
 # optimisation.table.all <- foreach( i = 1:length(optimisation.best), .combine = rbind) %dopar% {
 #   id <- optimisation.best[i]
 #   try({
-#     parameters <- scan(paste(path.optimisation.data, id, "par.txt", sep = "/"))
-#     variables <- scan(paste(path.optimisation.data, id, "var.txt", sep = "/"))
-#     variables.priming <- scan(paste(path.optimisation.data, id, "var-priming.txt", sep = "/"))
-#     filename <- paste(path.optimisation.data, id, "data_model_all_stm.csv", sep = "/")
+#     parameters <- scan(paste(path.list$optimisation.data, id, "par.txt", sep = "/"))
+#     variables <- scan(paste(path.list$optimisation.data, id, "var.txt", sep = "/"))
+#     variables.priming <- scan(paste(path.list$optimisation.data, id, "var-priming.txt", sep = "/"))
+#     filename <- paste(path.list$optimisation.data, id, "data_model_all_stm.csv", sep = "/")
 #     model.simulation <- list()
 #     if(file.exists(filename)){
 #       model.simulation$data.model <- read.table(
@@ -99,7 +96,7 @@ optimisation.best <- c(optimisation.table[order(as.numeric(optimisation.table[,f
 #                      })
 #     
 #     write.table(x = matrix(result, nrow = 1), 
-#                 paste(path.optimisation.data, id, "optimisation_all.csv", sep = "/"),
+#                 paste(path.list$optimisation.data, id, "optimisation_all.csv", sep = "/"),
 #                 sep = ",", row.names = FALSE, col.names = FALSE)
 #     return( matrix(c(id,result), nrow = 1))
 #   })
@@ -110,7 +107,7 @@ registerDoParallel(no_cores)
 data.model.list <- foreach( i = 1:length(optimisation.table$sd_data)) %dopar% {
   id <- optimisation.table$id[i]
   try({
-    filename <- paste(path.optimisation.data, id, "data_model.csv", sep = "/")
+    filename <- paste(path.list$optimisation.data, id, "data_model.csv", sep = "/")
     if(file.exists(filename)){
       data.model <- read.table(
                   file = filename,
@@ -131,7 +128,7 @@ optimisation.table.results <- data.model %>%
   mutate(id = type) %>%
   arrange(likelihood)
 #colnames(optimisation.table.all) <- colnames(optimisation.table)
-write.table(file = paste(path.optimisation.results, "optimisation_ranking_all.csv", sep = ""),
+write.table(file = paste(path.list$optimisation.results, "optimisation_ranking_all.csv", sep = ""),
             x = optimisation.table.results,
             sep = ",",
             row.names = FALSE,
@@ -141,7 +138,7 @@ registerDoParallel(no_cores)
 data.parameters.list.df <- foreach( i = 1:length(optimisation.table$sd_data)) %dopar% {
   id <- optimisation.table$id[i]
   try({
-    filename <- paste(path.optimisation.data, id, "par_exp.txt", sep = "/")
+    filename <- paste(path.list$optimisation.data, id, "par_exp.txt", sep = "/")
     if(file.exists(filename)){
       parameters.id <- scan(file = filename)
       data.parameters <- matrix(parameters.id, nrow = 1)
@@ -170,12 +167,29 @@ write.table(x = data.frame(factor = parameters.factor*(parameters.base^par),
                            base   = parameters.base,
                            lower  = par.lower,
                            upper  = par.upper),
-            file = paste(path.optimisation.results, "parameters_conditions.csv", sep = ""),
+            file = paste(path.list$optimisation.results, "parameters_conditions.csv", sep = ""),
             col.names = TRUE,
             row.names = FALSE,
             sep = ",")
             
+#### ####
+
+gplot.list[["parameters_p1p6"]]  <- ggplot(data = data.parameters %>% 
+         dplyr::filter(par %in% c("p1")) %>% 
+         left_join((data.parameters %>% dplyr::filter(par %in% c("p6"))), by = "type") %>%
+         dplyr::mutate(opt = opt.x/opt.y, id = type) %>%
+         left_join(optimisation.table, by = "id"),
+       mapping = aes(y = opt, x = sd_data)) + 
+  geom_point() + 
+  do.call(theme_jetka, args = plot.args)+ 
+  ggtitle("p1/p6")
   
+do.call(what = ggsave, 
+        args = append(plot.args.ggsave, 
+                      list(filename = paste(path.list$optimisation.results, "parameters_p1p6.pdf", sep = ""),
+                           plot = gplot.list[["parameters_p1p6"]] )))
+
+
 #### ####
 gplot.list[["parameters_optimisation"]] <- ggplot( 
   data.parameters.opt.melt %>% 
@@ -194,7 +208,7 @@ gplot.list[["parameters_optimisation"]] <- ggplot(
 
 do.call(what = ggsave, 
         args = append(plot.args.ggsave, 
-                      list(filename = paste(path.optimisation.results, "estimated_parameters.pdf", sep = ""),
+                      list(filename = paste(path.list$optimisation.results, "estimated_parameters.pdf", sep = ""),
                            plot = gplot.list[["parameters_optimisation"]])))
 
 #### all estiamtes ####
@@ -237,14 +251,14 @@ for(conditions.grid.i in 1:nrow(conditions.grid)){
 
 do.call(what = ggsave, 
         args = append(plot.args.ggsave, 
-                      list(filename = paste(path.optimisation.results, "local_minima.pdf", sep = ""),
+                      list(filename = paste(path.list$optimisation.results, "local_minima.pdf", sep = ""),
                            plot = marrangeGrob(grobs = gplot.list[["optimisation"]], ncol = 1, nrow = 1))))
 #### parameters table ####
 registerDoParallel(no_cores)
 data.parameters.list <- foreach( i = 1:length(optimisation.table$sd_data)) %dopar% {
   id <- optimisation.table$id[i]
   try({
-    filename <- paste(path.optimisation.data, id, "parameters.csv", sep = "/")
+    filename <- paste(path.list$optimisation.data, id, "parameters.csv", sep = "/")
     if(file.exists(filename)){
       data.parameters <- read.table(
         file = filename,
@@ -275,7 +289,7 @@ data.parameters.init_opt <-
 
 data.parameters.init_opt <- data.parameters.init_opt %>% left_join(optimisation.table, by = "id") %>% dplyr::arrange(sd_data)
 
-write.table(file = paste(path.optimisation.results, "parameters.csv", sep = ""),
+write.table(file = paste(path.list$optimisation.results, "parameters.csv", sep = ""),
             x = data.parameters.init_opt,
             sep = ",",
             row.names = FALSE,
@@ -301,7 +315,7 @@ for(par in
 
 do.call(what = ggsave, 
         args = append(plot.args.ggsave, 
-                      list(filename = paste(path.optimisation.results, "parameters.pdf", sep = ""),
+                      list(filename = paste(path.list$optimisation.results, "parameters.pdf", sep = ""),
                            plot = marrangeGrob(grobs = gplot.list[["parameters"]], ncol = 1, nrow = 1))))
 #### ####
 
@@ -325,32 +339,32 @@ for(id in optimisation.table$id[1:10]){
 }
 do.call(what = ggsave, 
         args = append(plot.args.ggsave, 
-                      list(filename = paste(path.optimisation.results, "models_compare.pdf", sep = ""),
+                      list(filename = paste(path.list$optimisation.results, "models_compare.pdf", sep = ""),
                            plot = marrangeGrob(grobs = gplot.list[["models.compare"]], ncol = 1, nrow = 1))))
 
 #### archive ####
 # parameters.table.all <- foreach( i = 1:nrow(optimisation.table), .combine = rbind) %do% {
 #   id <- optimisation.table$id[i]
 #   try({
-#     parameters <- scan(paste(path.optimisation.data, id, "par.txt", sep = "/"))
+#     parameters <- scan(paste(path.list$optimisation.data, id, "par.txt", sep = "/"))
 #     return( matrix(c(id,parameters), nrow = 1))
 #   })
 # }
 # colnames(parameters.table.all) <- c("id", 1:10)
-# write.table(file = paste(path.optimisation, "parameters_ranking.csv", sep = ""),
+# write.table(file = paste(path.list$optimisation, "parameters_ranking.csv", sep = ""),
 #             x = parameters.table.all,
 #             sep = ",",
 #             row.names = FALSE,
 #             col.names = TRUE)
-# write.table(file = paste(path.optimisation, "optimisation_ranking.csv", sep = ""),
+# write.table(file = paste(path.list$optimisation, "optimisation_ranking.csv", sep = ""),
 #             x = optimisation.table,
 #             sep = ",",
 #             row.names = FALSE,
 #             col.names = TRUE)
 # 
 # plot_results(data = data.exp.grouped.equal.all,
-#              path.analysis = path.optimisation.data,
-#              path.output = path.optimisation,
+#              path.analysis = path.list$optimisation.data,
+#              path.output = path.list$optimisation,
 #              data.model.best.list = data.model.list,
 #              optimisation.best = optimisation.best[1:5],#st.likelihood[order(st.likelihood$priming),]$id[1:10],
 #              plot.title = "all_fullmodel", 
@@ -359,8 +373,8 @@ do.call(what = ggsave,
 # 
 # 
 # plot_results(data = data.exp.grouped.equal.all,
-#              path.analysis = path.optimisation.data,
-#              path.output = path.optimisation,
+#              path.analysis = path.list$optimisation.data,
+#              path.output = path.list$optimisation,
 #              data.model.best.list = data.model.list,
 #              optimisation.best = optimisation.best[1:5],#st.likelihood[order(st.likelihood$priming),]$id[1:10],
 #              plot.title = "all", 
@@ -369,8 +383,8 @@ do.call(what = ggsave,
 # 
 # 
 # plot_results(data = data.exp.grouped.equal.all,
-#              path.analysis = path.optimisation.data,
-#              path.output = path.optimisation,
+#              path.analysis = path.list$optimisation.data,
+#              path.output = path.list$optimisation,
 #              data.model.best.list = data.model.list,
 #              optimisation.best = st.likelihood[order(st.likelihood$priming),]$id[1:10],
 #              plot.title = "priming", 
@@ -382,7 +396,7 @@ do.call(what = ggsave,
 # 
 # #### ####
 # # plot_results(data = data.exp.grouped,
-# #              path.optimisation = path.optimisation,
+# #              path.optimisation = path.list$optimisation,
 # #              data.model.best.list = data.model.list,
 # #              optimisation.best =  optimisation.table[order(optimisation.table$mvn.mean)[1:5],]$id,
 # #              plot.title = "mvn_mean_all", 
@@ -390,7 +404,7 @@ do.call(what = ggsave,
 # #              grid.ncol = 4)
 # # 
 # # plot_results(data = data.exp.grouped,
-# #              path.optimisation = path.optimisation,
+# #              path.optimisation = path.list$optimisation,
 # #              data.model.best.list = data.model.list,
 # #              optimisation.best = optimisation.table[order(optimisation.table$lmvn)[1:5],]$id,
 # #              plot.title = "lmvn")
@@ -401,7 +415,7 @@ do.call(what = ggsave,
 # # for( i in 1:length(optimisation.best)){
 # #   id <- optimisation.best[i]
 # #   try({
-# #     parameters.matrix <- rbind(parameters.matrix, scan(paste(path.optimisation, id, "par.txt", sep = "/")))
+# #     parameters.matrix <- rbind(parameters.matrix, scan(paste(path.list$optimisation, id, "par.txt", sep = "/")))
 # # 
 # #   })
 # # }

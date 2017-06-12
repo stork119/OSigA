@@ -1,48 +1,24 @@
 ### ###
 ### 2017-06-07 Fit variables and parameters
 ### ###
-source("R/parallel_computing.R")
+source("R/optimisation/initialise_optimisation.R")
+
 source("R/model/model_visualisation.R")
 source("R/model/model_execution.R")
 
-path.optimisation <- paste(path.output, "optimisation/2017-06-08-byhand/", sep = "/")
-path.optimisation.data <- paste(path.optimisation, "data/", sep = "/")
-path.optimisation.results <- paste(path.optimisation, "results/", sep = "/")
-path.optimisation. <- paste(path.optimisation, "results/", sep = "/")
-
-path.optimisation.analysis <- paste(path.optimisation, "analysis/", sep = "/")
-
 attach(LoadOptimisationConditions(
-  path.optimisation = path.optimisation,
-  path.optimisation.data = path.optimisation.data))
-
-dm.list <- list()
-
-
-
-variables.factor <- rep(x = 1, times = 17) 
-variables.factor[1] <- 1.5
-parameters.model <- parameters.factor[1:10]
-parameters.model[c(1)] <-1.2*parameters.model[c(1)]
-parameters.model[2] <- 1*parameters.model[2]
-parameters.model[c(6)] <- 1.5*parameters.model[c(6)]
-parameters.model[7] <- 1*parameters.model[7]
-parameters.model[c(10)] <- 1*parameters.model[c(10)]
-variables.model <- variables.factor*variables[1:17]
-variables.priming.model <- variables.factor*variables.priming[1:17]
-
-dm.list[[1]] <- analyse_model(parameters.model = parameters.model,
-            variables.model  = variables.model,
-            variables.priming.model = variables.priming.model,plot =FALSE, save = FALSE)
+  path.optimisation = path.list$optimisation,
+  path.optimisation.data = path.list$optimisation.data))
 #### analyse_model ####
 analyse_model <- function(parameters.model,
                           variables.model,
                           variables.priming.model,
                           save = TRUE,
-                          plot = TRUE){
+                          plot = TRUE,
+                          title = ""){
   results <- list()
   if(save){
-    path <- paste(path.optimisation.analysis, Sys.time(), sep = "/")
+    path <- paste(path.list$optimisation.analysis, Sys.time(), sep = "/")
     dir.create(path,recursive = TRUE, showWarnings = FALSE)
     print(path)
   }
@@ -80,14 +56,14 @@ analyse_model <- function(parameters.model,
                     mapping = aes(ymin = mean.lmvn - sqrt(sd.lmvn), 
                                   ymax = mean.lmvn + sqrt(sd.lmvn)),
                     color = "black") +
-      ggtitle(paste("Compare", type.list, collapse = " "))
+      ggtitle(paste(title, collapse = " "))
     
     print(gplot)
     results[["gplot"]] <- gplot
     
     gplot.raw <- ggplot(data.model %>%  
-                      dplyr::mutate(type = "model"),
-                    mapping = aes(x = factor(time), y = m.norm, group = type, color = type)) +
+                          dplyr::mutate(type = "model"),
+                        mapping = aes(x = factor(time), y = m.norm, group = type, color = type)) +
       geom_point() +
       geom_line() +
       facet_grid(priming ~ stimulation) + do.call(what = theme_jetka, args = plot.args) +
@@ -97,7 +73,7 @@ analyse_model <- function(parameters.model,
                     mapping = aes(ymin = m.norm - sqrt(sd.norm), 
                                   ymax = m.norm + sqrt(sd.norm)),
                     color = "black") +
-      ggtitle(paste("Compare", type.list, collapse = " "))
+      ggtitle(paste(title, collapse = " "))
     
     results[["gplot.raw"]] <- gplot.raw
     # print(gplot.raw)
@@ -149,11 +125,80 @@ analyse_model <- function(parameters.model,
   }
   return(append(results,
                 list(likelihood = optimisation.opt,
-                  data.model = data.model,
-                  data.trajectory = data.trajectory)))
+                     data.model = data.model,
+                     data.trajectory = data.trajectory)))
 }
 
 
+
+#### ####
+dm.list <- list()
+
+variables.factor <- rep(x = 1, times = 17) 
+variables.factor[1] <- 1
+parameters.model <- parameters.factor[1:10]
+parameters.model[c(1)] <-1*parameters.model[c(1)]
+parameters.model[2] <- 1*parameters.model[2]
+parameters.model[c(6)] <- 1*parameters.model[c(6)]
+parameters.model[7] <- 1*parameters.model[7]
+parameters.model[8] <- 1*parameters.model[8]
+parameters.model[9] <- 1*parameters.model[9]
+parameters.model[c(10)] <- 1*parameters.model[c(10)]
+variables.model <- variables.factor*variables[1:17]
+variables.priming.model <- variables.factor*variables.priming[1:17]
+
+dm.list[[1]] <- analyse_model(parameters.model = parameters.model,
+            variables.model  = variables.model,
+            variables.priming.model = variables.priming.model,plot =TRUE, save = TRUE)
+data.model <- dm.list[[1]]$data.model
+#### losowanie danych  ####
+
+no_cores <- 16
+registerDoParallel(no_cores)
+likelihood.list <- foreach(i = 1:1000) %dopar% {
+  data.exp.grouped.optimisation <- get_equal_data(data = data.list$data.exp,
+                                            sample_size = 1000)
+  data.exp.summarise.optimisation <- 
+    data.exp.grouped.optimisation %>% 
+    dplyr::group_by(priming,
+                    stimulation,
+                    time) %>%
+    summarise(m.norm = mean(intensity),
+              sd.norm   = var(intensity))
+  data.exp.summarise.optimisation<-
+    data.exp.summarise.optimisation %>%
+    dplyr::mutate(mean.lmvn = lmvn.mean(m = m.norm, sd = sd.norm),
+                  sd.lmvn = lmvn.sd(m = m.norm, sd = sd.norm))
+  
+  data.model$likelihood  <- 
+    likelihood(data.model = data.model,
+               data.exp.grouped = data.exp.grouped.optimisation,
+               data.exp.summarise =   data.exp.summarise.optimisation,
+               fun.likelihood = fun.likelihood.list$sd_data)
+  optimisation.opt <- sum(data.model$likelihood)
+  return(optimisation.opt)
+}
+stopImplicitCluster()
+
+data.sample <- data.frame(likelihood = unlist(likelihood.list), sample = 1:length(likelihood.list))
+write.table(x = data.sample,
+            file = paste(path.list$optimisation.analysis,
+                         "likelihood_data_sampling.csv", sep = "/"),
+            col.names = TRUE,
+            row.names = FALSE)
+            
+plot.args.tmp <- plot.args
+plot.args.tmp$theme.title_size <- 24
+gplot.list[["sampling"]] <- ggplot(data = data.sample, aes(x = likelihood)) + 
+  geom_density() +
+  do.call(what = theme_jetka, args = plot.args.tmp)  +
+  ggtitle("Dependence of models likelihood on experimental data sample")
+
+
+do.call(what = ggsave,
+        args = append(plot.args.ggsave,
+                      list(filename = paste(path.list$optimisation.analysis, "likelihood_data_sampling.pdf", sep = "/"),
+                           plot = gplot.list[["sampling"]])))
 #### ####
 
 # dm.list$small$type <- "small"
@@ -179,47 +224,36 @@ analyse_model <- function(parameters.model,
 #   facet_grid(priming ~ stimulation) + do.call(what = theme_jetka, args = plot.args) +
 #   ggtitle(paste("Likelihood", collapse = " "))
 
-#### ####
-
-pars <- randomLHS(1000, 3)
+#### Comparison of p7 p8 p9 p10 ####
+pars <- randomLHS(1000, 4)
 pars.i <- 1
 pars
 parameters.model <- parameters.factor
 variables.model <- variables[1:17]
 variables.priming.model <-variables.priming[1:17]
-no_cores <- 12
+no_cores <- 16
 registerDoParallel(no_cores)
 likelihood.list <- foreach(pars.i = 1:nrow(pars)) %dopar% {
   pars.factor <- 2^(pars[pars.i,]*2 - 1)
-  parameters.model[1] <- pars.factor[1]*parameters.factor[c(1)]
-  parameters.model[6] <- pars.factor[2]*parameters.factor[c(6)]
-  var.factor <- pars.factor[3]
-  variables.model[1] <- var.factor*variables[1]
-  variables.priming.model[1] <- var.factor*variables.priming[1]
+  parameters.model[7] <- pars.factor[1]*parameters.factor[7]
+  parameters.model[8] <- pars.factor[1]*parameters.factor[8]
+  parameters.model[9] <- pars.factor[1]*parameters.factor[9]
+  parameters.model[10] <- pars.factor[1]*parameters.factor[10]
   results <- analyse_model(parameters.model = parameters.model,
-                                variables.model  = variables.model,
-                                variables.priming.model = variables.priming.model,plot =FALSE, save = FALSE)
+                           variables.model  = variables.model,
+                           variables.priming.model = variables.priming.model,
+                           plot =FALSE, 
+                           save = FALSE)
   df <- matrix(c(results$likelihood, pars.factor), nrow = 1)
   return(df)
 }
 stopImplicitCluster()
 df.likelihood <- do.call(rbind,likelihood.list)
-colnames(df.likelihood) <- c("likelihood", "p1", "p6", "stat1")
+colnames(df.likelihood) <- c("likelihood", "p7", "p8", "p9", "p10")
+df.likelihood <- df.likelihood %>% data.table() %>% dplyr::arrange(likelihood)
 
-
-pars.factor <- c(1.2665865, 1.3256071, 1.0317962)
-parameters.model[1] <- pars.factor[1]*parameters.factor[c(1)]
-parameters.model[6] <- pars.factor[2]*parameters.factor[c(6)]
-var.factor <- pars.factor[3]
-variables.model[1] <- var.factor*variables[1]
-variables.priming.model[1] <- var.factor*variables.priming[1]
-results <- analyse_model(parameters.model = parameters.model,
-                         variables.model  = variables.model,
-                         variables.priming.model = variables.priming.model,
-                         plot = TRUE,
-                         save = TRUE)
-write.table(x = df.likelihood %>% data.table() %>% arrange(likelihood),
-            file = paste(path.optimisation.analysis, "likelihood.csv", sep = "/"), 
-            sep = ",",
-            row.names = FALSE,
-            col.names = TRUE)
+g <- scatterplot_lieklihood(data = df.likelihood, 
+                       colnames.list = c("p7", "p8", "p9", "p10"),
+                       path.list = path.list, 
+                       filename = "likelihood_p7p8p9p10.pdf")
+print(g)
