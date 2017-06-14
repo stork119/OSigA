@@ -24,8 +24,12 @@ simulate_model <- function(parameters,
                            background,
                            time_interval = 100,
                            time_computation = 1000*60*5,
+                           tmesh.list.tmp = NULL,
                            ...){
   
+  if(is.null(tmesh.list.tmp)){
+    tmesh.list.tmp <- tmesh.list 
+  }
   data.model <- data.table(
     time = numeric(),
     m = numeric(),
@@ -57,7 +61,7 @@ simulate_model <- function(parameters,
     
     
     if(res$success & res.priming$success){
-      for(tmesh.i in tmesh.list){
+      for(tmesh.i in tmesh.list.tmp){
         data.model <- rbind(data.model,
                             data.table(time = c(tmesh[tmesh.i], tmesh[tmesh.i]),
                                        m = c(res$output[[tmesh.i]][14],

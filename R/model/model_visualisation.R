@@ -7,7 +7,8 @@ plot_trajectories <- function(path,
                               data.trajectory,
                               plot.args = list(),
                               plot.args.ggsave = list(),
-                              save = TRUE
+                              save = TRUE,
+                              filename = "trajectories.pdf"
 ){
   var.list <- list()
   for(var in (data.trajectory %>% 
@@ -32,15 +33,15 @@ plot_trajectories <- function(path,
       geom_line() +
       facet_grid(priming ~ stimulation) + 
       do.call(what = theme_jetka, args = append(plot.args, list(theme.text_size = 18))) +
-      ggtitle(labels(var.list)[var.i])
+      ggtitle(labels(var.list)[var.i]) +
+      expand_limits(y= 0)
   }
   if(save){
     do.call(what = ggsave,
             args = append(plot.args.ggsave,
-                          list(filename = paste(path, "trajectories.pdf", sep = "/"),
+                          list(filename = paste(path, filename, sep = "/"),
                                plot = marrangeGrob(grobs = gplot.trajectory.list, nrow = 1, ncol = 1))))
   }
   return(gplot.trajectory.list)
 }
-
 #### compare model with experimental data ####
