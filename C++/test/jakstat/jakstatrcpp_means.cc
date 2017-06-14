@@ -52,11 +52,11 @@
 /* Problem Constants */
 
 #define NEQ   17                /* number of equations  */
-#define NPAR  10                /* number of equations  */
+#define NPAR  11                /* number of equations  */
 #define T0    RCONST(0.0)      /* initial time           */
-#define T1    RCONST(5.0)      /* first output time      */
-#define TMULT RCONST(5.0)     /* output time factor     */
-#define NOUT  20               /* number of output times */
+#define T1    RCONST(1.0)      /* first output time      */
+#define TMULT RCONST(1.0)     /* output time factor     */
+#define NOUT  100               /* number of output times */
 #define RTOL  RCONST(1.0e-4)   /* scalar relative tolerance            */
 #define ATOL RCONST(1.0e-4) 
 
@@ -568,6 +568,7 @@ static int f(realtype t, N_Vector yith, N_Vector ydot, void *_user_data)
     y[i] = Ith(yith,i); 
   }
 
+/*
 Ith(ydot, 1) =  p[4]*y[13]*2.0-((y[16]+y[17])*p[1]*y[1])/(p[6]+y[1]);
 Ith(ydot, 2) =  p[2]*(y[2]*y[2])*-2.0+((y[16]+y[17])*p[1]*y[1])/(p[6]+y[1]);
 Ith(ydot, 3) =  -p[3]*y[3]+p[2]*(y[2]*y[2]);
@@ -584,6 +585,26 @@ Ith(ydot, 13) =  p[4]*y[12]-p[4]*y[13];
 Ith(ydot, 14) =  p[3]*y[3]-p[4]*y[13];
 Ith(ydot, 15) =  p[8]*y[16]-stm*p[5]*p[7]*y[15];
 Ith(ydot, 16) =  -p[8]*y[16]-p[9]*y[16]+stm*p[5]*p[7]*y[15];
+Ith(ydot, 17) =  p[9]*y[16]-p[10]*y[17];
+*/
+
+/*hill receptor */
+Ith(ydot, 1) =  p[4]*y[13]*2.0-((y[16]+y[17])*p[1]*y[1])/(p[6]+y[1]);
+Ith(ydot, 2) =  p[2]*(y[2]*y[2])*-2.0+((y[16]+y[17])*p[1]*y[1])/(p[6]+y[1]);
+Ith(ydot, 3) =  -p[3]*y[3]+p[2]*(y[2]*y[2]);
+Ith(ydot, 4) =  p[3]*y[3]-p[4]*y[4];
+Ith(ydot, 5) =  p[4]*y[4]-p[4]*y[5];
+Ith(ydot, 6) =  p[4]*y[5]-p[4]*y[6];
+Ith(ydot, 7) =  p[4]*y[6]-p[4]*y[7];
+Ith(ydot, 8) =  p[4]*y[7]-p[4]*y[8];
+Ith(ydot, 9) =  p[4]*y[8]-p[4]*y[9];
+Ith(ydot, 10) =  p[4]*y[9]-p[4]*y[10];
+Ith(ydot, 11) =  p[4]*y[10]-p[4]*y[11];
+Ith(ydot, 12) =  p[4]*y[11]-p[4]*y[12];
+Ith(ydot, 13) =  p[4]*y[12]-p[4]*y[13];
+Ith(ydot, 14) =  p[3]*y[3]-p[4]*y[13];
+Ith(ydot, 15) =  p[8]*y[16]-(stm*p[5]*p[7]*(y[15]*y[15]))/(y[15]*y[15]+p[11]);
+Ith(ydot, 16) =  -p[8]*y[16]-p[9]*y[16]+(stm*p[5]*p[7]*(y[15]*y[15]))/(y[15]*y[15]+p[11]);
 Ith(ydot, 17) =  p[9]*y[16]-p[10]*y[17];
 
   return(0);
@@ -613,7 +634,7 @@ static int Jac(long int N, realtype t,
     }
   }
   
-
+/*
 IJth(J, 1, 1) =  -((y[16]+y[17])*p[1])/(p[6]+y[1])+1.0/pow(p[6]+y[1],2.0)*(y[16]+y[17])*p[1]*y[1];
 IJth(J, 1, 13) =  p[4]*2.0;
 IJth(J, 1, 16) =  -(p[1]*y[1])/(p[6]+y[1]);
@@ -652,6 +673,48 @@ IJth(J, 16, 15) =  stm*p[5]*p[7];
 IJth(J, 16, 16) =  -p[8]-p[9];
 IJth(J, 17, 16) =  p[9];
 IJth(J, 17, 17) =  -p[10];
+*/
+
+/*hill receptor */
+IJth(J, 1, 1) =  -((y[16]+y[17])*p[1])/(p[6]+y[1])+1.0/pow(p[6]+y[1],2.0)*(y[16]+y[17])*p[1]*y[1];
+IJth(J, 1, 13) =  p[4]*2.0;
+IJth(J, 1, 16) =  -(p[1]*y[1])/(p[6]+y[1]);
+IJth(J, 1, 17) =  -(p[1]*y[1])/(p[6]+y[1]);
+IJth(J, 2, 1) =  ((y[16]+y[17])*p[1])/(p[6]+y[1])-1.0/pow(p[6]+y[1],2.0)*(y[16]+y[17])*p[1]*y[1];
+IJth(J, 2, 2) =  p[2]*y[2]*-4.0;
+IJth(J, 2, 16) =  (p[1]*y[1])/(p[6]+y[1]);
+IJth(J, 2, 17) =  (p[1]*y[1])/(p[6]+y[1]);
+IJth(J, 3, 2) =  p[2]*y[2]*2.0;
+IJth(J, 3, 3) =  -p[3];
+IJth(J, 4, 3) =  p[3];
+IJth(J, 4, 4) =  -p[4];
+IJth(J, 5, 4) =  p[4];
+IJth(J, 5, 5) =  -p[4];
+IJth(J, 6, 5) =  p[4];
+IJth(J, 6, 6) =  -p[4];
+IJth(J, 7, 6) =  p[4];
+IJth(J, 7, 7) =  -p[4];
+IJth(J, 8, 7) =  p[4];
+IJth(J, 8, 8) =  -p[4];
+IJth(J, 9, 8) =  p[4];
+IJth(J, 9, 9) =  -p[4];
+IJth(J, 10, 9) =  p[4];
+IJth(J, 10, 10) =  -p[4];
+IJth(J, 11, 10) =  p[4];
+IJth(J, 11, 11) =  -p[4];
+IJth(J, 12, 11) =  p[4];
+IJth(J, 12, 12) =  -p[4];
+IJth(J, 13, 12) =  p[4];
+IJth(J, 13, 13) =  -p[4];
+IJth(J, 14, 3) =  p[3];
+IJth(J, 14, 13) =  -p[4];
+IJth(J, 15, 15) =  (stm*p[5]*p[7]*y[15]*-2.0)/(y[15]*y[15]+p[11])+stm*1.0/pow(y[15]*y[15]+p[11],2.0)*p[5]*p[7]*(y[15]*y[15]*y[15])*2.0;
+IJth(J, 15, 16) =  p[8];
+IJth(J, 16, 15) =  (stm*p[5]*p[7]*y[15]*2.0)/(y[15]*y[15]+p[11])-stm*1.0/pow(y[15]*y[15]+p[11],2.0)*p[5]*p[7]*(y[15]*y[15]*y[15])*2.0;
+IJth(J, 16, 16) =  -p[8]-p[9];
+IJth(J, 17, 16) =  p[9];
+IJth(J, 17, 17) =  -p[10];
+
 
   return(0);
 }

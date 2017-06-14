@@ -9,7 +9,7 @@ path.parameters <- "resources/input/"
 par.def <- scan(file = paste(path.parameters, "par.txt", sep = ""))
 varscale <- 0.15
 
-tmesh <- seq(from = 0, to = 100, by = 5)
+tmesh <- seq(from = 0, to = 100, by = 1)
 tmesh.list <- which(tmesh %in% (unique(data.list$data.exp$time)))
 
 stimulation.list <- (data.list$data.exp %>% 
