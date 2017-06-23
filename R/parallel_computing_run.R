@@ -14,10 +14,12 @@ source(file = "R/optimisation/initialise_optimisation.R")
 
 run_parallel_computations(path.optimisation = path.list$optimisation,
                           # data.exp.grouped = data.exp.grouped,
-                          no_cores = 16,
+                          no_cores = 12,
                           maxit.tmp   =  Inf,
                           # fun.optimisation = pureCMAES,
                           # optimisation.res.par = "xmin",
-                          data.model.list = 
-                            LoadInitialModels(path.optimisation = path.list$optimisation,
-                                              path.optimisation.data = path.list$optimisation.data))
+                          data.model.list = list(),
+                            # LoadInitialModels(path.optimisation = path.list$optimisation,
+                            #                   path.optimisation.data = path.list$optimisation.data),
+                          fun_modify_input = PrepareModelArguments.pSTAT
+                          )

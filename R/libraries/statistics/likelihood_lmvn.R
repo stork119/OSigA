@@ -46,16 +46,20 @@ fun.likelihood.list.sd_data <- function(logintensity = logintensity,
                                         data.model.tmp = data.model.tmp,
                                         data.exp.summarise = data.exp.summarise,
                                         ...){
+
   intensity.sd <- (data.exp.summarise %>% dplyr::filter(
     stimulation == data.model.tmp$stimulation,
     priming == data.model.tmp$priming,
     time == data.model.tmp$time))$sd.norm
-  
+
   nu <- mean.lmvn(data.model.tmp$m.norm, intensity.sd)
   sd <- sd.lmvn(data.model.tmp$m.norm, intensity.sd)
-  return(((nu - logintensity)^2)/sd)
+  res <- ((nu - logintensity)^2)/sd
+#print(res)
+  return(res)
 }
 
+fun.optimisation.likelihood  <- fun.likelihood.list.sd_data
 fun.likelihood.list <- list(
   sd_data = fun.likelihood.list.sd_data 
 )

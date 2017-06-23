@@ -73,7 +73,8 @@ run_parallel_computations <- function(path.optimisation,
             data.exp.grouped = data.exp.grouped.optimisation,
             data.exp.summarise = data.exp.summarise.optimisation,
             fun.likelihood = fun.optimisation.likelihood,
-            par.optimised = par.optimised))
+            par.optimised = par.optimised,#fun_modify_input = fun_modify_input))
+           ...))
       
       parameters <- parameters.factor
       parameters[par.optimised] <- parameters.factor[par.optimised]*(parameters.base[par.optimised])^(optimisation.res[[optimisation.res.par]])

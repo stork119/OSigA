@@ -116,14 +116,15 @@ likelihood <- function(data.model,
                        fun.likelihood,
                        ...
 ){
-    sapply(1:nrow(data.model),
+    res <- sapply(1:nrow(data.model),
            function(data.model.i){
              data.model.tmp <- data.model[data.model.i,]
-             return((data.exp.grouped %>%
-                       filter(priming == data.model.tmp$priming,
-                              time == data.model.tmp$time,
-                              stimulation == data.model.tmp$stimulation) %>%
-                       mutate(likelihood = 
+             zosia <-data.exp.grouped %>%
+               dplyr::filter(priming == data.model.tmp$priming,
+                             time == data.model.tmp$time,
+                             stimulation == data.model.tmp$stimulation) 
+             return((zosia%>%
+                       dplyr::mutate(likelihood = 
                                 do.call(fun.likelihood,list(logintensity = logintensity, 
                                                             intensity = intensity, 
                                                             data.model.tmp = data.model.tmp,
@@ -132,6 +133,8 @@ likelihood <- function(data.model,
                                    sum(likelihood)))$likelihood.sum)
            }
     )
+
+    return(res)
 }
 
 #### optimisation ####
@@ -150,11 +153,28 @@ optimisation <- function(fun_run_model = run_model,
                          return.model = FALSE,
                          fun.likelihood,
                          par.optimised = rep(1, times = length(par)),
-                         ...
-                         
-){
+                         fun_modify_input = 
+                           function(parameters,
+                                    parameters.priming = parameters,
+                                    variables,
+                                    variables.priming) {
+                             return(list(parameters = parameters,
+                                         parameters.priming = parameters.priming,
+                                         variables = variables,
+                                         variables.priming = variables.priming
+                             ))},
+                         ...)
+{
   parameters <- parameters.factor
   parameters[par.optimised] <- parameters.factor[par.optimised]*(parameters.base[par.optimised])^par
+  
+  input <- fun_modify_input(parameters = parameters,
+                            variables = variables,
+                            variables.priming = variables.priming)
+  parameters <- input$parameters
+  variables  <- input$variables
+  variables.priming <- input$variables.priming
+  
   model.simulation <- do.call(fun_run_model,
                               list(
                                 parameters = parameters,
@@ -167,14 +187,17 @@ optimisation <- function(fun_run_model = run_model,
   
   
   if(model.simulation$error){
+ #   print("kupa")
     return(Inf)
   }
+#  print("hurrra")
+
   result <- sum(
     likelihood(fun.likelihood = fun.likelihood,
       data.model = model.simulation$data.model, 
       data.exp.grouped = data.exp.grouped,
       data.exp.summarise = data.exp.summarise))
-  # print(result)
+  print(result)
   if(return.model){
     return(c(model.simulation, list(optimisation = result)))
   }

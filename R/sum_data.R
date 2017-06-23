@@ -43,10 +43,14 @@ no_cores <- 16
 
 for( id  in ids[which(!ids  %in% optimisation.table$id)] ){
   try({
-        optimisation.table <- rbind(optimisation.table,
-                                read_optimisation(path = paste(path.list$optimisation.data, id, sep = "/"),
-                                                  id = id, 
-                                                  names = names(fun.likelihood.list)))
+        optimisation.table.tmp <-  read_optimisation(path = paste(path.list$optimisation.data, id, sep = "/"),
+                                                     id = id, 
+                                                     names = names(fun.likelihood.list))
+        if(is.null(optimisation.table)){
+          optimisation.table <- optimisation.table.tmp
+        } else {
+          optimisation.table <- rbind(optimisation.table,optimisation.table.tmp)
+        }
   })
 }
 

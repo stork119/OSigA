@@ -28,6 +28,7 @@ theme_jetka <-  function (theme.base_size = 12,
                           theme.title_size = 18,
                           theme.text_size = 3*theme.title_size/4,
                           theme.margins = c(1,1, 1, 1),
+                          legend.position="right",
                           ...) 
 {
   (theme_foundation(base_size = theme.base_size, base_family = theme.base_family) + 
@@ -48,7 +49,7 @@ theme_jetka <-  function (theme.base_size = 12,
            axis.ticks = element_blank(),
            axis.line.x = element_line(),
            axis.line.y = element_blank(), 
-           legend.position="right",
+           legend.position=legend.position,
            legend.background = element_rect(fill = "white"),
            panel.grid = element_line(colour = NULL), 
            panel.grid.major = 

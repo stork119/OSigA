@@ -6,7 +6,7 @@
 #data.exp.grouped <- data.exp.grouped %>% filter(stimulation == 0.1 | stimulation == 1)
 
 path.parameters <- "resources/input/"
-par.def <- scan(file = paste(path.parameters, "par.txt", sep = ""))
+par.def <- c(scan(file = paste(path.parameters, "par.txt", sep = "")), 100000)
 varscale <- 0.15
 
 tmesh <- seq(from = 0, to = 100, by = 1)

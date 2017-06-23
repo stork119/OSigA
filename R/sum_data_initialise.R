@@ -14,13 +14,15 @@
 
 #### ####
 read_optimisation <- function(path, id, names = colnames(optimisation.table)){
-  optimisation <- read.table(file = paste(path, "optimisation.csv", sep = "/"),
-                             sep = ",", header = TRUE)
-  colnames(optimisation) <- names
-  optimisation$id <- id
-  
-  optimisation <- optimisation[,c(ncol(optimisation), 1:(ncol(optimisation)-1))]
-  return(optimisation)
+  if(file.exists(paste(path, "optimisation.csv", sep = "/"))){
+    optimisation <- read.table(file = paste(path, "optimisation.csv", sep = "/"),
+                           sep = ",", header = TRUE)
+    colnames(optimisation) <- names
+    optimisation$id <- id
+    
+    optimisation <- optimisation[,c(ncol(optimisation), 1:(ncol(optimisation)-1))]
+    return(optimisation)
+  }
 }
 
 
