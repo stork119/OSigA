@@ -156,6 +156,9 @@ analyse_model <- function(parameters.model,
 
 
 #dm.list <- list()
+variables <- scan(paste(path.list$optimisation, "variables.csv", sep = "/"))
+variables.priming <- scan(paste(path.list$optimisation, "variables-priming.csv", sep = "/"))
+
 
 variables.factor <- rep(x = 1, times = 17) 
 variables.factor[15] <- 4
@@ -165,6 +168,8 @@ receptors.factor <- 1
 hill.factor <- 1.1
 
 parameters.model <- parameters.factor[1:11]
+
+
 parameters.model[c(1)] <- 0.9*parameters.model[c(1)]
 parameters.model[2] <- 1*parameters.model[2]
 parameters.model[4] <- 0.9*parameters.model[4]
@@ -183,6 +188,7 @@ parameters.model[c(10)] <- 2.5*parameters.model[c(10)]
 parameters.model[c(11)] <- 100000
 variables.model <- variables.factor*variables[1:17]
 variables.model[1] <- hill.factor*0.9*variables.model[1]# - 10000
+
 variables.priming.model <- variables.factor*variables.priming[1:17]
 variables.priming.model[1] <- 2.6*variables.model[1]
 
@@ -473,3 +479,6 @@ ggplot(data = hill_grid, aes(x = log(p6), y = log(y1), color = hill)) +
 ggplot(data = hill_grid, aes(x = p6/y1, y = hill)) + 
   geom_point() + xlim(0,500)
   geom_point(data = hill_grid %>% filter(hill > (quantile(hill_grid$hill, probs = 0.95))), aes(x = log(p6), y = log(y1)), color = "red")
+  
+  
+  
