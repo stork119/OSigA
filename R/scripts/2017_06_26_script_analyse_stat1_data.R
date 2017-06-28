@@ -32,7 +32,7 @@ data.list$stat1.cells <-
 
 #data.list$stat1.cells %>% dplyr::filter(protein.1.1 == 1) %>% dplyr::distinct(time.1.1)
 gplot.list$stat1$boxplot <- ggplot(data = data.list$stat1.cells %>% dplyr::filter(protein.1.1 == 1),
-       mapping = aes(x = factor(time.1.1), y = Intensity_IntegratedIntensity_Alexa, 
+       mapping = aes(x = factor(time.1.1), y = Intensity_MeanIntensity_Alexa, 
                      group = position.name, color = factor(prestimulation.1.1))) + 
   geom_boxplot() +
   facet_grid(~stimulation.1.1) +
@@ -40,24 +40,24 @@ gplot.list$stat1$boxplot <- ggplot(data = data.list$stat1.cells %>% dplyr::filte
   ggtitle("Boxplots compare")
   
 
-data_log <- data.list$stat1.cells %>% dplyr::filter(protein.1.1 == 1, stimulation.1.1 <= 5) %>% dplyr::mutate(prestimulation.1.1 = factor(prestimulation.1.1), Intensity_IntegratedIntensity_Alexa_log = log(Intensity_IntegratedIntensity_Alexa))
+data_log <- data.list$stat1.cells %>% dplyr::filter(protein.1.1 == 1, stimulation.1.1 <= 5) %>% dplyr::mutate(prestimulation.1.1 = factor(prestimulation.1.1), Intensity_MeanIntensity_Alexa_log = log(Intensity_MeanIntensity_Alexa))
 gplot.list$stat1$density.log <- plot_density(data = data_log,
              group = "prestimulation.1.1", 
              compare_to_all = FALSE,
-             x = "Intensity_IntegratedIntensity_Alexa_log") + ggtitle("logdensity")
+             x = "Intensity_MeanIntensity_Alexa_log") + ggtitle("logdensity")
 
 gplot.list$stat1$density <- plot_density(data = data_log,
                                          group = "prestimulation.1.1", 
                                          compare_to_all = FALSE,
-                                         x = "Intensity_IntegratedIntensity_Alexa") + ggtitle("density")
+                                         x = "Intensity_MeanIntensity_Alexa") + ggtitle("density")
 
 
-data_log.nonpriming.q95 <- quantile((data_log %>% dplyr::filter(prestimulation.1.1 == 0))$Intensity_IntegratedIntensity_Alexa_log, probs = 0.95)
-data_log %>% filter(prestimulation.1.1 == 1000, Intensity_IntegratedIntensity_Alexa_log > data_log.nonpriming.q95)
-g_dots <- plot_density(data = data_log %>% filter(prestimulation.1.1 == 1000, Intensity_IntegratedIntensity_Alexa_log > data_log.nonpriming.q95),
+data_log.nonpriming.q95 <- quantile((data_log %>% dplyr::filter(prestimulation.1.1 == 0))$Intensity_MeanIntensity_Alexa_log, probs = 0.95)
+data_log %>% filter(prestimulation.1.1 == 1000, Intensity_MeanIntensity_Alexa_log > data_log.nonpriming.q95)
+g_dots <- plot_density(data = data_log %>% filter(prestimulation.1.1 == 1000, Intensity_MeanIntensity_Alexa_log > data_log.nonpriming.q95),
              group = "prestimulation.1.1", 
              compare_to_all = FALSE,
-             x = "Intensity_IntegratedIntensity_Alexa")
+             x = "Intensity_MeanIntensity_Alexa")
 
 
 
@@ -68,14 +68,14 @@ do.call(what = ggsave,
 
 
 #### how many cells have similar stat level ####
-data_log <- data.list$stat1.cells %>% dplyr::filter(protein.1.1 == 1, stimulation.1.1 <= 5) %>% dplyr::mutate(prestimulation.1.1 = factor(prestimulation.1.1), Intensity_IntegratedIntensity_Alexa_log = log(Intensity_IntegratedIntensity_Alexa))
-data_log.nonpriming.q95 <- quantile((data_log %>% dplyr::filter(prestimulation.1.1 == 0))$Intensity_IntegratedIntensity_Alexa_log, probs = 0.95)
+data_log <- data.list$stat1.cells %>% dplyr::filter(protein.1.1 == 1, stimulation.1.1 <= 5) %>% dplyr::mutate(prestimulation.1.1 = factor(prestimulation.1.1), Intensity_MeanIntensity_Alexa_log = log(Intensity_MeanIntensity_Alexa))
+data_log.nonpriming.q95 <- quantile((data_log %>% dplyr::filter(prestimulation.1.1 == 0))$Intensity_MeanIntensity_Alexa_log, probs = 0.95)
 
-data_log.priming.q05 <- quantile((data_log %>% dplyr::filter(prestimulation.1.1 == 1000))$Intensity_IntegratedIntensity_Alexa_log, probs = 0.05)
+data_log.priming.q05 <- quantile((data_log %>% dplyr::filter(prestimulation.1.1 == 1000))$Intensity_MeanIntensity_Alexa_log, probs = 0.05)
 
 
-df <- data.frame(priming_percentage = sum((data_log %>% dplyr::filter(prestimulation.1.1 == 1000))$Intensity_IntegratedIntensity_Alexa_log < data_log.nonpriming.q95)/nrow(data_log %>% dplyr::filter(prestimulation.1.1 == 1000)),
-                 nonpriming_percentage = sum((data_log %>% dplyr::filter(prestimulation.1.1 == 0))$Intensity_IntegratedIntensity_Alexa_log > data_log.priming.q05)/nrow(data_log %>% dplyr::filter(prestimulation.1.1 == 0)))
+df <- data.frame(priming_percentage = sum((data_log %>% dplyr::filter(prestimulation.1.1 == 1000))$Intensity_MeanIntensity_Alexa_log < data_log.nonpriming.q95)/nrow(data_log %>% dplyr::filter(prestimulation.1.1 == 1000)),
+                 nonpriming_percentage = sum((data_log %>% dplyr::filter(prestimulation.1.1 == 0))$Intensity_MeanIntensity_Alexa_log > data_log.priming.q05)/nrow(data_log %>% dplyr::filter(prestimulation.1.1 == 0)))
 
 write.table(x = df, file = paste(path.stat1.list$output, "cells_with_common_stat1.csv", sep = "/"), sep = ",", row.names = FALSE, col.names = TRUE)
 
