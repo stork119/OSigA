@@ -16,6 +16,7 @@ normalization_simulation <- function(data.model,
 }
 
 simulate_model <- function(parameters, 
+                           parameters.priming = parameters,
                            variables,
                            variables.priming,
                            tmesh,
@@ -52,7 +53,7 @@ simulate_model <- function(parameters,
                      tmesh = tmesh, 
                      time_interval = time_interval, 
                      time_computation = time_computation)
-    res.priming <- rmainmean(parameters = parameters, 
+    res.priming <- rmainmean(parameters = parameters.priming, 
                              variables = variables.priming, 
                              stm = stm, 
                              tmesh = tmesh, 

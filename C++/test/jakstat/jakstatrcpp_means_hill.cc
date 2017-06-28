@@ -52,7 +52,7 @@
 /* Problem Constants */
 
 #define NEQ   17                /* number of equations  */
-#define NPAR  10                /* number of equations  */
+#define NPAR  11                /* number of equations  */
 #define T0    RCONST(0.0)      /* initial time           */
 #define T1    RCONST(1.0)      /* first output time      */
 #define TMULT RCONST(1.0)     /* output time factor     */
@@ -568,7 +568,7 @@ static int f(realtype t, N_Vector yith, N_Vector ydot, void *_user_data)
     y[i] = Ith(yith,i); 
   }
 
-
+/*
 Ith(ydot, 1) =  p[4]*y[13]*2.0-((y[16]+y[17])*p[1]*y[1])/(p[6]+y[1]);
 Ith(ydot, 2) =  p[2]*(y[2]*y[2])*-2.0+((y[16]+y[17])*p[1]*y[1])/(p[6]+y[1]);
 Ith(ydot, 3) =  -p[3]*y[3]+p[2]*(y[2]*y[2]);
@@ -586,10 +586,10 @@ Ith(ydot, 14) =  p[3]*y[3]-p[4]*y[13];
 Ith(ydot, 15) =  p[8]*y[16]-stm*p[5]*p[7]*y[15];
 Ith(ydot, 16) =  -p[8]*y[16]-p[9]*y[16]+stm*p[5]*p[7]*y[15];
 Ith(ydot, 17) =  p[9]*y[16]-p[10]*y[17];
-
+*/
 
 /*hill receptor */
-/*Ith(ydot, 1) =  p[4]*y[13]*2.0-((y[16]+y[17])*p[1]*y[1])/(p[6]+y[1]);
+Ith(ydot, 1) =  p[4]*y[13]*2.0-((y[16]+y[17])*p[1]*y[1])/(p[6]+y[1]);
 Ith(ydot, 2) =  p[2]*(y[2]*y[2])*-2.0+((y[16]+y[17])*p[1]*y[1])/(p[6]+y[1]);
 Ith(ydot, 3) =  -p[3]*y[3]+p[2]*(y[2]*y[2]);
 Ith(ydot, 4) =  p[3]*y[3]-p[4]*y[4];
@@ -606,7 +606,7 @@ Ith(ydot, 14) =  p[3]*y[3]-p[4]*y[13];
 Ith(ydot, 15) =  p[8]*y[16]-(stm*p[5]*p[7]*(y[15]*y[15]))/(y[15]*y[15]+p[11]);
 Ith(ydot, 16) =  -p[8]*y[16]-p[9]*y[16]+(stm*p[5]*p[7]*(y[15]*y[15]))/(y[15]*y[15]+p[11]);
 Ith(ydot, 17) =  p[9]*y[16]-p[10]*y[17];
-*/
+
   return(0);
 }
 
@@ -634,7 +634,7 @@ static int Jac(long int N, realtype t,
     }
   }
   
-
+/*
 IJth(J, 1, 1) =  -((y[16]+y[17])*p[1])/(p[6]+y[1])+1.0/pow(p[6]+y[1],2.0)*(y[16]+y[17])*p[1]*y[1];
 IJth(J, 1, 13) =  p[4]*2.0;
 IJth(J, 1, 16) =  -(p[1]*y[1])/(p[6]+y[1]);
@@ -673,10 +673,10 @@ IJth(J, 16, 15) =  stm*p[5]*p[7];
 IJth(J, 16, 16) =  -p[8]-p[9];
 IJth(J, 17, 16) =  p[9];
 IJth(J, 17, 17) =  -p[10];
-
+*/
 
 /*hill receptor */
-/*IJth(J, 1, 1) =  -((y[16]+y[17])*p[1])/(p[6]+y[1])+1.0/pow(p[6]+y[1],2.0)*(y[16]+y[17])*p[1]*y[1];
+IJth(J, 1, 1) =  -((y[16]+y[17])*p[1])/(p[6]+y[1])+1.0/pow(p[6]+y[1],2.0)*(y[16]+y[17])*p[1]*y[1];
 IJth(J, 1, 13) =  p[4]*2.0;
 IJth(J, 1, 16) =  -(p[1]*y[1])/(p[6]+y[1]);
 IJth(J, 1, 17) =  -(p[1]*y[1])/(p[6]+y[1]);
@@ -714,7 +714,7 @@ IJth(J, 16, 15) =  (stm*p[5]*p[7]*y[15]*2.0)/(y[15]*y[15]+p[11])-stm*1.0/pow(y[1
 IJth(J, 16, 16) =  -p[8]-p[9];
 IJth(J, 17, 16) =  p[9];
 IJth(J, 17, 17) =  -p[10];
-*/
+
 
   return(0);
 }
