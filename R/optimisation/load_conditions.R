@@ -7,6 +7,7 @@ LoadOptimisationConditions <- function(path.optimisation,
                                        path.optimisation.data,
                                        maxit.tmp = Inf,
                                        ...){
+  results.list <- list()
   variables <- scan(paste(path.list$optimisation, "variables.csv", sep = "/"))
   variables.priming <- scan(paste(path.list$optimisation, "variables-priming.csv", sep = "/"))
   
@@ -56,25 +57,28 @@ LoadOptimisationConditions <- function(path.optimisation,
     par.list.ids <- par.list.ids[-which(ids %in% par.list.ids)]
   }
   
-  return(list(variables = variables,
-              variables.priming = variables.priming,
-              optimisation.conditions = optimisation.conditions,
-              fun.optimisation.likelihood = fun.optimisation.likelihood,
-              fun_run_model = fun_run_model,
-              maxit = maxit, 
-              parameters.conditions = parameters.conditions,
-              parameters.base = parameters.base,
-              parameters.factor = parameters.factor,
-              par.lower = par.lower,
-              par.upper = par.upper,
-              par.optimised = par.optimised,
-              stimulation.list = stimulation.list,
-              data.exp.grouped = data.exp.grouped,
-              data.exp.grouped.optimisation = data.exp.grouped.optimisation,
-              data.exp.summarise.optimisation = data.exp.summarise.optimisation,
-              lhs.res = lhs.res,
-              par.list = par.list,
-              par.list.ids = par.list.ids,
-              ids = ids
-              ))
+  
+  results.list <- append(results.list,
+                         list(variables = variables,
+                              variables.priming = variables.priming,
+                              optimisation.conditions = optimisation.conditions,
+                              fun.optimisation.likelihood = fun.optimisation.likelihood,
+                              fun_run_model = fun_run_model,
+                              maxit = maxit, 
+                              parameters.conditions = parameters.conditions,
+                              parameters.base = parameters.base,
+                              parameters.factor = parameters.factor,
+                              par.lower = par.lower,
+                              par.upper = par.upper,
+                              par.optimised = par.optimised,
+                              stimulation.list = stimulation.list,
+                              data.exp.grouped = data.exp.grouped,
+                              data.exp.grouped.optimisation = data.exp.grouped.optimisation,
+                              data.exp.summarise.optimisation = data.exp.summarise.optimisation,
+                              lhs.res = lhs.res,
+                              par.list = par.list,
+                              par.list.ids = par.list.ids,
+                              ids = ids
+                         ))
+  return()
 }
