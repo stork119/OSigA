@@ -9,27 +9,112 @@ attach(LoadOptimisationConditions(
   path.optimisation = path.list$optimisation,
   path.optimisation.data = path.list$optimisation.data))
 no_cores <- 8
+#### analyse trajectory ####
+analyse_trajectory <- function(
+  data.trajectory,
+  variables.ind = 1:17,
+  path = "",
+  save = TRUE,
+  plot = TRUE,
+  title = "",
+  ...){
+  
+  variables.indices <- list()
+  variables.indices$means <- variables.ind
+  variables.indices$vars <- data.frame(means = variables.indices$means, ind = variables.indices$means + max(variables.indices$means))
+  variables.indices$cov  <- data.frame(
+    means.x = unlist(sapply(variables.indices$means, function(v){rep(x = v, times = max(variables.indices$means) - v)})), 
+    means.y = unlist(sapply(variables.indices$means, function(v){variables.indices$means[variables.indices$means > v]})),
+    ind = (2*max(variables.indices$means)+1):(data.trajectory %>% dplyr::summarise(maxvar = max(var)))$maxvar)
+  
+  data.trajectory.list <- normalization_trajectory(
+    data.trajectory = data.trajectory,
+    variables.indices = variables.indices,
+    background = background
+  )
+  
+  data.trajectory.list$means <-
+    data.trajectory.list$means %>% 
+    dplyr::left_join(data.trajectory.list$vars,
+                     by = c("var" = "means", "time", "stimulation", "priming"))
+  
+  data.trajectory.list$means <- 
+    data.trajectory.list$means %>%  
+    dplyr::filter(var == 14)  %>% 
+    dplyr::mutate(type = "model",
+                  m.norm = m.norm.x,
+                  sd.norm = m.norm.y) %>%
+    dplyr::mutate(mean.lmvn  = lmvn.mean(m.norm, sd.norm),
+                  sd.lmvn = lmvn.sd(m.norm, sd.norm))
+  if(plot){
+    gplot <- ggplot(
+      data.trajectory.list$means,
+      mapping = 
+        aes(x = time, 
+            y = m.norm,
+            ymin = m.norm - sqrt(sd.norm), 
+            ymax = m.norm + sqrt(sd.norm),
+            group = type,
+            color = type)) +
+      geom_point() +
+      geom_line() +
+      geom_errorbar() + 
+      facet_grid(priming ~ stimulation) + 
+      do.call(what = theme_jetka, args = plot.args) +
+      geom_point(
+        data = data.exp.summarise.optimisation %>%
+          mutate(type = "data"),
+        color = "black"
+      ) +
+      geom_line(
+        data = data.exp.summarise.optimisation %>%
+          mutate(type = "data"),
+        color = "black") +
+      geom_errorbar(
+        data = data.exp.summarise.optimisation %>%
+          mutate(type = "data"),
+        color = "black"
+      ) +
+      ggtitle(paste(title, collapse = " "))
+    print(gplot)
+    if(save){
+      do.call(what = ggsave,
+              args = append(plot.args.ggsave,
+                            list(filename = paste(path, "models_compare_varaiance.pdf", sep = "/"),
+                                 plot = gplot)))
+    }
+  }
+  return(data.trajectory.list)
+}
+
 #### analyse_model ####
-analyse_model <- function(parameters.model,
+analyse_model <- function(fun_run_model = rmainmean,
+                          parameters.model,
                           parameters.model.priming = parameters.model,
                           variables.model,
                           variables.priming.model,
                           save = TRUE,
+                          save_trajectory = save,
+                          save_derivative = save,
                           plot = TRUE,
                           title = "",
-                          analyse_name = NULL){
+                          analyse_name = NULL,
+                          fun.likelihood = fun.likelihood.list$sd_data,
+                          ...){
   if(is.null(analyse_name)){
     analyse_name <- Sys.time()
   }
   print(analyse_name)
   results <- list()
+  path <- ""
   if(save){
     path <- paste(path.list$optimisation.analysis, analyse_name, sep = "/")
     dir.create(path,recursive = TRUE, showWarnings = FALSE)
     print(path)
   }
   model <- 
-    simulate_model(parameters = parameters.model, 
+    simulate_model(fun_run_model = fun_run_model,
+                   parameters = parameters.model, 
                    parameters.priming = parameters.model.priming, 
                    variables  = variables.model,
                    variables.priming = variables.priming.model,
@@ -42,15 +127,22 @@ analyse_model <- function(parameters.model,
                    tmesh.list.tmp = 1:length(tmesh))
   data.model <- model$data.model
   data.trajectory <- model$data.trajectory
-  data.derivatives <- model_trajectory(data.trajectory = data.trajectory)
   
+  data.trajectory.list <- 
+    analyse_trajectory(
+      data.trajectory = data.trajectory,
+      path = path,
+      ...)
+    
+  data.derivatives <- model_trajectory(
+    data.trajectory = data.trajectory, variables = variables.model)
   
   
   data.model$likelihood  <- 
     likelihood(data.model = data.model,# %>% dplyr::filter(time %in% tmesh[tmesh.list]),
                data.exp.grouped = data.exp.grouped.optimisation,
                data.exp.summarise =   data.exp.summarise.optimisation,
-               fun.likelihood = fun.likelihood.list$sd_data)
+               fun.likelihood = fun.likelihood)
   
   optimisation.opt <- sum(data.model$likelihood)
   print(optimisation.opt)
@@ -104,7 +196,7 @@ analyse_model <- function(parameters.model,
                                                data.trajectory = data.trajectory,
                                                plot.args = plot.args,
                                                plot.args.ggsave = plot.args.ggsave,
-                                               save = save)
+                                               save = save_trajectory)
     results[["gplot.trajectory.list"]] <- gplot.trajectory.list
     print("trajectory saved")
     
@@ -112,7 +204,7 @@ analyse_model <- function(parameters.model,
                                                 data.trajectory = data.derivatives,
                                                 plot.args = plot.args,
                                                 plot.args.ggsave = plot.args.ggsave,
-                                                save = save,
+                                                save = save_derivative,
                                                 filename = "derivatives.pdf")
     results[["gplot.derivatives.list"]] <- gplot.derivatives.list
     print("derivatives saved")
@@ -149,6 +241,7 @@ analyse_model <- function(parameters.model,
   return(append(results,
                 list(likelihood = optimisation.opt,
                      data.model = data.model,
+                     data.trajectory.list = data.trajectory.list,
                      data.trajectory = data.trajectory,
                      data.derivatives = data.derivatives)))
 }
@@ -156,12 +249,99 @@ analyse_model <- function(parameters.model,
 
 
 #### ####
-
-
 #dm.list <- list()
-variables <- scan(paste(path.list$optimisation, "variables.csv", sep = "/"))
-variables.priming <- scan(paste(path.list$optimisation, "variables-priming.csv", sep = "/"))
+variables <- rep(x = 0, times = 170)
+variables.priming <- variables
+variables[1:17] <- scan(paste(path.list$optimisation, "variables.csv", sep = "/"))
+variables.priming[1:17] <- scan(paste(path.list$optimisation, "variables-priming.csv", sep = "/"))
 
+parameters.model <- parameters.factor
+variables.model <- variables
+variables.priming.model <- variables.priming
+arguments <- PrepareModelArguments.pSTAT(parameters = parameters.model,
+                                         variables = variables.model,
+                                         variables.priming = variables.priming)
+arguments$variables[18] <- 200000*400^2
+arguments$variables.priming[18] <-arguments$variables[18]
+
+
+arguments$variables[17+15] <- 0.5*400^2
+arguments$variables.priming[17+15] <-arguments$variables[17+15]
+
+arguments$variables[17+14] <- (400^2)*(775.2586)
+arguments$variables.priming[17+14] <-arguments$variables[17+14]
+
+# write.table(file = paste(path.list$optimisation, "variables.csv", sep = "/"), x = arguments$variables, sep = ",", row.names = FALSE, col.names = FALSE)
+# write.table(file = paste(path.list$optimisation, "variables-priming.csv", sep = "/"), x = arguments$variables.priming, sep = ",", row.names = FALSE, col.names = FALSE)
+#### ####
+
+variables.model <- scan(paste(path.list$optimisation, "variables.csv", sep = "/"))
+variables.priming.model <- scan(paste(path.list$optimisation, "variables-priming.csv", sep = "/"))
+results.id <- "19"
+parameters.df <- read.table(paste(path.list$optimisation.data, results.id, "parameters.csv", sep = "/"), header = TRUE, sep = ",")
+parameters.model <- parameters.df$factor
+par.optimised <- which(parameters.df$lower != parameters.df$upper)
+parameters.model[par.optimised] <- parameters.df$factor[par.optimised]*(parameters.df$base[par.optimised])^parameters.df$opt[par.optimised]
+
+# variables.model[17+14] <- (400^2)*sd
+# variables.priming.model[17+14] <- (400^2)*sd
+# 
+# parameters.model[10] <- 0.8*parameters.model[10]
+# parameters.model[c(11)] <- parameters.model[c(11)]
+# parameters.model[c(12)] <- parameters.model[c(12)]
+
+arguments <- PrepareModelArguments.pSTAT_extrinsic(parameters = parameters.model,
+                                         variables = variables.model,
+                                         variables.priming = variables.priming.model)
+# arguments$variables[17+14] <- (400^2)*(775.2586)
+# arguments$variables.priming[17+14] <-arguments$variables[17+14]
+
+dm.opt <- analyse_model(
+  fun_run_model = rmain,
+  parameters.model = as.numeric(arguments$parameters),
+  parameters.model.priming =  as.numeric(arguments$parameters.priming),
+  variables.model  = as.numeric(arguments$variables),
+  variables.priming.model = as.numeric(arguments$variables.priming),
+  plot = TRUE,
+  save = TRUE,
+  save_trajectory = FALSE,
+  save_derivative = FALSE,
+  fun.likelihood = fun.likelihood.list.sd,
+  analyse_name = paste(results.id, "opt", sep = "/")
+)
+
+data.exp.grouped.optimisation.zscore <-
+  data.exp.grouped.optimisation %>% 
+  data.table() %>% 
+  left_join((dm.opt$data.model %>% data.table()),
+            by = c("priming", "stimulation", "time")) %>% 
+  dplyr::mutate(zscore = (logintensity - mean.lmvn)/sqrt(sd.lmvn))%>%
+  select(priming, stimulation, time, zscore) 
+
+#exp.grid <- data.exp.grouped.optimisation.zscore %>% dplyr::distinct(priming, stimulation, time)
+dt <- data.exp.grouped.optimisation.zscore %>% 
+  dplyr::distinct(priming, stimulation) %>% 
+  mutate(time = "sample") %>% 
+  merge(data.table(zscore  = rnorm(n = 10000)))
+
+gplot <- ggplot(data = data.exp.grouped.optimisation.zscore,
+       mapping = aes( x = zscore, group = factor(time), color = factor(time) )) +
+  facet_grid(priming ~ stimulation) +
+  geom_density() +
+  do.call(theme_jetka, args = plot.args)  +
+  geom_density(data = dt, color = "black")
+
+plot.args.ggsave.tmp <- plot.args.ggsave
+plot.args.ggsave.tmp$width <- 48
+do.call(what = ggsave,
+        args = append(plot.args.ggsave.tmp,
+                      list(filename = paste(path.list$optimisation.analysis, paste(results.id, "opt", sep = "/"), "density_variance_comp.pdf", sep = "/"),
+                           plot = gplot)))
+
+
+
+#### OTHER ####
+#### ####
 parameters.model <- parameters.factor
 variables.model <- variables
 variables.priming.model <- variables.priming
@@ -170,9 +350,7 @@ arguments <- PrepareModelArguments.pSTAT(parameters = parameters.model,
                                          variables = variables.model,
                                          variables.priming = variables.priming)
 
-
-analyse_name <- "receptors"
-
+analyse_name <- "stat"
 n <- 1024
 
 cond.analysed <- list()
@@ -192,11 +370,11 @@ variables.list  <- matrix(rep(arguments$variables, times = n), nrow = n, byrow =
 variables.priming.list  <- matrix(rep(arguments$variables.priming, times = n), nrow = n, byrow = TRUE) %>% data.frame()
 
 
-cond.analysed$variables[15] <- TRUE 
-cond.sd$variables[15] <- 0.1
+cond.analysed$variables[1] <- TRUE 
+cond.sd$variables[1] <- 0.1
 
-cond.analysed$variables.priming[15] <- TRUE 
-cond.sd$variables.priming[15] <- 0.1
+cond.analysed$variables.priming[1] <- TRUE 
+cond.sd$variables.priming[1] <- 0.1
 
 for(i in which(cond.analysed$variables)){
   variables.list[,i] <- variables.list[,i]*2^(rnorm(n = n, mean = 0, sd = cond.sd$variables[i]))
