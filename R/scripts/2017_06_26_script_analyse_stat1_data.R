@@ -283,3 +283,655 @@ do.call(what = ggsave,
         args = append(plot.args.ggsave,
                       list(filename = paste(path.data.output, "density_compare_stm.pdf", sep = ""),
                            plot = marrangeGrob( grobs = gplot.list$density_compare_stm, ncol = 2, nrow = 1))))
+
+
+#### KZ 45 / 46 ####
+source("R/data/normalize_data.R")
+#### remopve data KZ45 ####
+remove_data.KZ45 <- function(data){
+  return(data)
+}
+
+
+remove_data.KZ45 <- function(data){
+  return(dplyr::filter(data, !(id %in% c("G07", paste(LETTERS, 12, sep = "")))) %>% dplyr::filter(time.1.1 != 0))
+}
+
+fun.remove_data <- remove_data.KZ45
+#### AnalyseConstaining ####
+AnalyseConstaining <- function(path.input.costaining = "resources/input/2017-03-30-KZ45/raw/",
+         filename = "ShrinkedNuclei.csv",
+         path.output.costaining = paste(path.input.costaining, strsplit(filename, ".csv")[[1]], "/", sep = "/"),
+         y = "Intensity_MeanIntensity_Alexa488",
+         fun.remove_data =  function(data){ return(data)}){
+  
+  dir.create(path = path.output.costaining, showWarnings = FALSE, recursive = TRUE)
+
+  data.list.costaining <- list()
+
+  data.constaining <- 
+    read.table(paste(path.input.costaining, filename , sep =  "/"), header = TRUE, sep = ",") %>% 
+    normalize_data() %>% 
+    fun.remove_data()
+  
+  gplot.list <- list()
+  gplot.list$boxplot <- plot_boxplot_group(data = data.constaining,#x_factor = FALSE,
+                                                  save_plot = FALSE, 
+                                                  x = "time.1.1",
+                                                  y = y, 
+                                                  boxplot_group = "id",
+                                                  facet_grid_group_y = "stimulation.1.1", 
+                                                  facet_grid_group_x = "priming.1.1")# + xlim(c(-15,45))
+
+
+  gplot.list$boxplot_labels <- 
+    gplot.list$boxplot + 
+    #ggplot() +
+    geom_text(data = data.constaining %>% 
+                dplyr::select(id, priming.1.1, time.1.1, stimulation.1.1, Intensity_MeanIntensity_Alexa488) %>% 
+                dplyr::group_by(id, priming.1.1, time.1.1, stimulation.1.1) %>% 
+                dplyr::summarise(Intensity_MeanIntensity_Alexa488 = mean(Intensity_MeanIntensity_Alexa488)) %>% 
+                dplyr::mutate(id_num = (as.numeric(id)-6)/12),  
+              aes(x = factor(time.1.1), group = id, label = id, y = 3*Intensity_MeanIntensity_Alexa488)) 
+  
+    
+  do.call(what = ggsave,
+        args = append(plot.args.ggsave,
+                      list(filename = paste(path.output.costaining, "boxplot.pdf", sep = "/"),
+                           plot = gplot.list$boxplot)))
+
+
+  stm.list <- data.constaining %>% dplyr::distinct(stimulation.1.1, time.1.1) %>% dplyr::arrange(stimulation.1.1, time.1.1)
+  df.common.list <- list()
+  gplot.list$density <- list()
+  gplot.list$density_log <- list()
+  for(stm.i in 1:nrow(stm.list)){
+    stm <- stm.list[stm.i,]$stimulation.1.1
+    t <- stm.list[stm.i,]$time.1.1
+    #stm <- stm.list[1]
+    gplot.list$density[[as.character(stm.i)]] <-
+      plot_density(data = data.constaining %>%
+                     dplyr::filter(stimulation.1.1 == stm, time.1.1 == t) %>%
+                     dplyr::mutate(priming.1.1 = factor(priming.1.1)),
+                   x = y,
+                   group = "priming.1.1",
+                   color = "priming.1.1",
+                   title = paste("stimulation", stm, "time", t))
+    
+    
+    #stm <- stm.list[1]
+    gplot.list$density_log[[as.character(stm.i)]] <-
+      plot_density(data = data.constaining %>%
+                     dplyr::filter(stimulation.1.1 == stm, time.1.1 == t) %>%
+                     dplyr::mutate(priming.1.1 = factor(priming.1.1)) %>% 
+                     dplyr::mutate_(logint = paste("log(", y, ")")),
+                   x = "logint",
+                   group = "priming.1.1",
+                   color = "priming.1.1",
+                   title = paste("stimulation", stm, "time", t)) + xlab(paste("log(", y, ")"))
+    
+    do.call(what = ggsave,
+            args = append(plot.args.ggsave,
+                          list(filename = paste(path.output.costaining, "density_log.pdf", sep = "/"),
+                               plot = marrangeGrob(grobs = gplot.list$density_log, ncol = 1, nrow = 1 ))))
+    
+    data.nonpriming.q95 <- quantile((data.constaining %>%
+                                        dplyr::filter(stimulation.1.1 == stm, time.1.1 == t)  %>% 
+                                        dplyr::filter(priming.1.1 == 0))[,y],
+                                    probs = 0.95, na.rm = TRUE)
+    data.priming.q05    <- quantile(( data.constaining %>%
+                                        dplyr::filter(stimulation.1.1 == stm, time.1.1 == t)  %>% 
+                                        dplyr::filter(priming.1.1 == 1000))[,y],
+                                    probs = 0.05, na.rm = TRUE)
+    
+    df.common.list[[as.character(stm.i)]] <- data.frame(
+      stm  = stm,
+      time = t,
+      type = y,
+      filename = filename,
+      priming_percentage = sum(( data.constaining %>%
+                                   dplyr::filter(stimulation.1.1 == stm, time.1.1 == t) %>% 
+                                   dplyr::filter(priming.1.1 == 1000))[,y] < data_log.nonpriming.q95)/
+        nrow(data.constaining %>%
+               dplyr::filter(stimulation.1.1 == stm, time.1.1 == t) %>% 
+               dplyr::filter(priming.1.1 == 1000)),
+      nonpriming_percentage = sum(( data.constaining %>%
+                                      dplyr::filter(stimulation.1.1 == stm, time.1.1 == t) %>% 
+                                      dplyr::filter(priming.1.1 == 0))[,y]> data_log.priming.q05)/
+        nrow(data.constaining %>%
+               dplyr::filter(stimulation.1.1 == stm, time.1.1 == t) %>% 
+               dplyr::filter(priming.1.1 == 0)))
+  }
+  # do wyrzucenia wyrzucić kolumnę 7 i 12
+  do.call(what = ggsave,
+          args = append(plot.args.ggsave,
+                        list(filename = paste(path.output.costaining, "density.pdf", sep = "/"),
+                             plot = marrangeGrob(grobs = gplot.list$density, ncol = 1, nrow = 1 ))))
+
+  do.call(what = ggsave,
+          args = append(plot.args.ggsave,
+                        list(filename = paste(path.output.costaining, "density_log.pdf", sep = "/"),
+                             plot = marrangeGrob(grobs = gplot.list$density_log, ncol = 1, nrow = 1 ))))
+  
+  # do wyrzucenia wyrzucić kolumnę 7 i 12
+  
+  df.common <- do.call(what = rbind, args = df.common.list)
+  write.table(x = df.common, 
+              file = paste(path.output.costaining, "cells_common.csv", sep = "/"), sep = ",", row.names = FALSE, col.names = TRUE)
+  
+  return(list(data.constaining = data.constaining,
+              gplot.list = gplot.list, 
+              df.common = df.common))
+  
+}
+####  raw  ####
+constainig.list.raw <- list()
+constainig.list.raw[["nuclei"]] <- 
+  AnalyseConstaining(path.input.costaining = "resources/input/2017-03-30-KZ45/raw/",
+                     filename = "ShrinkedNuclei.csv",
+                     y = "Intensity_MeanIntensity_Alexa488")
+
+constainig.list.raw[["cells.555"]] <- 
+  AnalyseConstaining(path.input.costaining = "resources/input/2017-03-30-KZ45/raw/",
+                     filename = "Cells555.csv",
+                     y = "Intensity_MeanIntensity_Alexa555")
+
+constainig.list.raw[["cells.masked.555"]] <- 
+  AnalyseConstaining(path.input.costaining = "resources/input/2017-03-30-KZ45/raw/",
+                     filename = "CellsMasked555.csv",
+                     y = "Intensity_MeanIntensity_Alexa555")
+
+constainig.list.raw[["cells.filtered.555"]] <- 
+  AnalyseConstaining(path.input.costaining = "resources/input/2017-03-30-KZ45/raw/",
+                     filename = "CellsFiltered555.csv",
+                     y = "Intensity_MeanIntensity_Alexa555")
+
+
+constainig.list.raw[["cells.488"]] <- 
+  AnalyseConstaining(path.input.costaining = "resources/input/2017-03-30-KZ45/raw/",
+                     filename = "Cells488.csv",
+                     y = "Intensity_MeanIntensity_Alexa555")
+
+constainig.list.raw[["cells.masked.488"]] <- 
+  AnalyseConstaining(path.input.costaining = "resources/input/2017-03-30-KZ45/raw/",
+                     filename = "CellsMasked488.csv",
+                     y = "Intensity_MeanIntensity_Alexa555")
+
+constainig.list.raw[["cells.filtered.488"]] <- 
+  AnalyseConstaining(path.input.costaining = "resources/input/2017-03-30-KZ45/raw/",
+                     filename = "CellsFiltered488.csv",
+                     y = "Intensity_MeanIntensity_Alexa555")
+
+####  ffc ####
+constainig.list.ffc <- list()
+constainig.list.ffc[["nuclei"]] <- 
+  AnalyseConstaining(path.input.costaining = "resources/input/2017-03-30-KZ45/ffc/",
+                     filename = "ShrinkedNuclei.csv",
+                     y = "Intensity_MeanIntensity_Alexa488")
+
+constainig.list.ffc[["cells.555"]] <- 
+  AnalyseConstaining(path.input.costaining = "resources/input/2017-03-30-KZ45/ffc/",
+                     filename = "Cells555.csv",
+                     y = "Intensity_MeanIntensity_Alexa555")
+
+constainig.list.ffc[["cells.masked.555"]] <- 
+  AnalyseConstaining(path.input.costaining = "resources/input/2017-03-30-KZ45/ffc/",
+                     filename = "CellsMasked555.csv",
+                     y = "Intensity_MeanIntensity_Alexa555")
+
+constainig.list.ffc[["cells.filtered.555"]] <- 
+  AnalyseConstaining(path.input.costaining = "resources/input/2017-03-30-KZ45/ffc/",
+                     filename = "CellsFiltered555.csv",
+                     y = "Intensity_MeanIntensity_Alexa555")
+
+
+constainig.list.ffc[["cells.488"]] <- 
+  AnalyseConstaining(path.input.costaining = "resources/input/2017-03-30-KZ45/ffc/",
+                     filename = "Cells488.csv",
+                     y = "Intensity_MeanIntensity_Alexa555")
+
+constainig.list.ffc[["cells.masked.488"]] <- 
+  AnalyseConstaining(path.input.costaining = "resources/input/2017-03-30-KZ45/ffc/",
+                     filename = "CellsMasked488.csv",
+                     y = "Intensity_MeanIntensity_Alexa555")
+
+constainig.list.ffc[["cells.filtered.488"]] <- 
+  AnalyseConstaining(path.input.costaining = "resources/input/2017-03-30-KZ45/ffc/",
+                     filename = "CellsFiltered488.csv",
+                     y = "Intensity_MeanIntensity_Alexa555")
+
+
+#### KZ58 ####
+#### KZ 58/ KZ 51 preapre data ####
+type <- "ffc"
+path.input.costaining <- paste("resources/input/2017-05-26-KZ51", type, "/", sep = "/")
+for(filename in list.files(path.input.costaining, pattern = ".csv")){
+  tryCatch({
+    dt <- read.table(paste(path.input.costaining, filename, sep = "/"), header = TRUE, sep = ",") %>% data.table()
+    dt <- dt %>% dplyr::mutate(priming.1.1 = ifelse(time.1.1 == 0, 0, 900*stimulation.1.1/50)) %>%
+      dplyr::mutate(stimulation.2.1 = stimulation.1.1, 
+                    time.2.1 = time.1.1 ) %>%
+      dplyr::mutate(stimulation.1.1 = 0,
+                    time.1.1 = 0)
+    
+    write.table(x = dt, 
+                file = paste(path.input.costaining, filename, sep = "/"), 
+                col.names = TRUE, 
+                row.names = FALSE, 
+                sep = ",")},
+    error = function(e){
+      print(e) 
+      print(filename)})
+}
+#### CompareIFNBpriming####
+CompareIFNBpriming <- function(data.constaining,
+                       y,
+                       path.output.costaining
+                       ){
+  dir.create(path = path.output.costaining, showWarnings = FALSE, recursive = TRUE)
+  gplot.list <- list()
+  gplot.list$boxplot <- plot_boxplot_group(data = data.constaining,#x_factor = FALSE,
+                                           save_plot = FALSE, 
+                                           x = "time.2.1",
+                                           y = y, 
+                                           boxplot_group = "time.2.1",
+                                           facet_grid_group_y = "stimulation.2.1") + ylim(c(0,1000))
+  
+  
+  
+  do.call(what = ggsave,
+          args = append(plot.args.ggsave,
+                        list(filename = paste(path.output.costaining, "boxplot.pdf", sep = "/"),
+                             plot = gplot.list$boxplot)))
+  
+  
+  stm.list <- data.constaining %>% dplyr::distinct(stimulation.2.1) %>% dplyr::arrange(stimulation.2.1) %>% data.table()
+  df.common.list <- list()
+  gplot.list$density <- list()
+  gplot.list$density_log <- list()
+  for(stm.i in 1:nrow(stm.list)){
+    stm <- stm.list[stm.i,]$stimulation.2.1
+    #stm <- stm.list[1]
+    gplot.list$density[[as.character(stm.i)]] <-
+      plot_density(data = data.constaining %>%
+                     dplyr::filter(stimulation.2.1 == stm) %>%
+                     dplyr::mutate(time.2.1 = factor(time.2.1)),
+                   x = y,
+                   group = "time.2.1",
+                   color = "time.2.1",
+                   title = paste("stimulation", stm))
+    
+    
+    #stm <- stm.list[1]
+    gplot.list$density_log[[as.character(stm.i)]] <-
+      plot_density(data = data.constaining %>%
+                     dplyr::filter(stimulation.2.1 == stm) %>%
+                     dplyr::mutate(time.2.1 = factor(time.2.1)) %>% 
+                     dplyr::mutate_(logint = paste("log(", y, ")")),
+                   x = "logint",
+                   group = "time.2.1",
+                   color = "time.2.1",
+                   title = paste("stimulation", stm)) + xlab(paste("log(", y, ")"))
+    
+  }
+  # do wyrzucenia wyrzucić kolumnę 7 i 12
+  do.call(what = ggsave,
+          args = append(plot.args.ggsave,
+                        list(filename = paste(path.output.costaining, "density.pdf", sep = "/"),
+                             plot = marrangeGrob(grobs = gplot.list$density, ncol = 1, nrow = 1 ))))
+  
+  do.call(what = ggsave,
+          args = append(plot.args.ggsave,
+                        list(filename = paste(path.output.costaining, "density_log.pdf", sep = "/"),
+                             plot = marrangeGrob(grobs = gplot.list$density_log, ncol = 1, nrow = 1 ))))
+  
+  
+  
+  time.list <- data.constaining %>% dplyr::distinct(time.2.1) %>% dplyr::arrange(time.2.1) %>% data.table()
+  gplot.list$density_time <- list()
+  gplot.list$density_time_log <- list()
+  for(t.i in 1:nrow(time.list)){
+    t <- time.list[t.i,]$time.2.1
+    #stm <- stm.list[1]
+    gplot.list$density_time[[as.character(t.i)]] <-
+      plot_density(data = data.constaining %>%
+                     dplyr::filter(time.2.1 == t) %>%
+                     dplyr::mutate(stimulation.2.1 = factor(stimulation.2.1)),
+                   x = y,
+                   group = "stimulation.2.1",
+                   color = "stimulation.2.1",
+                   title = paste("time", t))
+    
+    
+    #stm <- stm.list[1]
+    gplot.list$density_time_log[[as.character(t.i)]] <-
+      plot_density(data = data.constaining %>%
+                     dplyr::filter(time.2.1 == t) %>%
+                     dplyr::mutate(stimulation.2.1 = factor(stimulation.2.1)) %>%
+                     dplyr::mutate_(logint = paste("log(", y, ")")),
+                   x = "logint",
+                   group = "stimulation.2.1",
+                   color = "stimulation.2.1",
+                   title = paste("time", t)) + xlab(paste("log(", y, ")"))
+    
+  }
+  
+  do.call(what = ggsave,
+          args = append(plot.args.ggsave,
+                        list(filename = paste(path.output.costaining, "density_time.pdf", sep = "/"),
+                             plot = marrangeGrob(grobs = gplot.list$density_time, ncol = 1, nrow = 1 ))))
+  
+  do.call(what = ggsave,
+          args = append(plot.args.ggsave,
+                        list(filename = paste(path.output.costaining, "density_time_log.pdf", sep = "/"),
+                             plot = marrangeGrob(grobs = gplot.list$density_time_log, ncol = 1, nrow = 1 ))))
+}
+
+#### KZ 58 cells ####
+type <- "ffc"
+type.list <- c("ffc", "raw")
+for(type in type.list){
+path.input.costaining <- paste("resources/input/2017-05-26-KZ51/", type, "/", sep = "/")
+
+filename.list <- list.files(path.input.costaining, pattern = ".csv", recursive = FALSE)
+for(filename in filename.list[c(1,2,5,7)]){
+  path.output.costaining <- paste(path.input.costaining, strsplit(filename, ".csv")[[1]], "/", sep = "/")
+  y <- "Intensity_MeanIntensity_Alexa555"
+  fun.remove_data  <-  function(data){ return(data)}
+  dir.create(path = path.output.costaining, showWarnings = FALSE, recursive = TRUE)
+  data.constaining <- 
+    read.table(paste(path.input.costaining, filename , sep =  "/"), header = TRUE, sep = ",") %>% 
+    normalize_data() %>% 
+    fun.remove_data()
+  CompareIFNBpriming(data.constaining = data.constaining, y = y, path.output.costaining = path.output.costaining)
+     # do wyrzucenia wyrzucić kolumnę 7 i 12
+    
+}}
+#### KZ 58 cytoplasm  ####
+# 
+# fun.remove_data <- function(data){
+#   return(data)
+# }
+# filename <- "CytoplasmFiltered555.csv"
+# type <- "ffc"
+# path.input.costaining <- paste("resources/input/2017-06-29-KZ58", type, "/", sep = "/")
+# data.cells <- 
+#   read.table(paste(path.input.costaining, "Cells555.csv" , sep =  "/"), header = TRUE, sep = ",") %>% 
+#   normalize_data() %>% 
+#   fun.remove_data() %>% 
+#   data.table()
+# data.cells.filtered <- 
+#   read.table(paste(path.input.costaining, "CellsFiltered555.csv" , sep =  "/"), header = TRUE, sep = ",") %>% 
+#   normalize_data() %>% 
+#   fun.remove_data() %>% 
+#   data.table()
+# data.nuclei <- 
+#   read.table(paste(path.input.costaining, "Nuclei.csv" , sep =  "/"), header = TRUE, sep = ",") %>% 
+#   normalize_data() %>% 
+#   fun.remove_data() %>% 
+#   data.table()
+# 
+# 
+# 
+# data.cells_nuclei <-  
+#   data.cells %>% 
+#   dplyr::ungroup() %>% 
+#   dplyr::select_("well.name","ObjectNumber", "Parent_Nuclei") %>% 
+#   left_join(data.nuclei,
+#             by = c("well.name" = "well.name",
+#                    "Parent_Nuclei" = "ObjectNumber")) %>%
+#   data.table()
+# 
+# data.cytoplasm <- 
+#   data.cells.filtered %>%
+#   left_join((data.cells_nuclei), 
+#             by = c("well.name" = "well.name",
+#                    "Parent_Cells555" = "ObjectNumber")) %>% 
+#   data.table()
+# y <- "Intensity_MeanIntensity_Alexa555"
+# 
+# data.cytoplasm <- 
+#   data.cytoplasm %>% 
+#   dplyr::mutate_("IntensityMeanCytoplasm" = 
+#                    paste("(Intensity_IntegratedIntensity_Alexa555.x - Intensity_IntegratedIntensity_Alexa555.y)",
+#                          "(AreaShape_Area.x - AreaShape_Area.y)",
+#                          sep = "/"),
+#                  "IntensityIntegratedCytoplasm" = 
+#                    paste("(Intensity_IntegratedIntensity_Alexa555.x - Intensity_IntegratedIntensity_Alexa555.y)", 
+#                          sep = "/")) %>% 
+#   dplyr::mutate_("IntensityRatioNucleiCytoplasm" = 
+#                    paste("(Intensity_IntegratedIntensity_Alexa555.y)",
+#                          "(IntensityIntegratedCytoplasm)",
+#                          sep = "/"))  
+# 
+# data.cytoplasm <- data.cytoplasm %>% mutate(stimulation.1.1 = stimulation.1.1.x, time.1.1 = time.1.1.x)
+# 
+# write.table(x = data.cytoplasm, 
+#             file = paste(path.input.costaining, filename, sep = "/"),
+#             sep = ",",
+#             row.names = FALSE, 
+#             col.names = TRUE)
+# 
+# y = "IntensityMeanCytoplasm"
+# CompareIFNBpriming(data.constaining = data.cytoplasm,
+#            y = y,
+#            path.output.costaining = paste(path.input.costaining, strsplit(filename, ".csv")[[1]], y, "/", sep = "/"))
+# 
+# y = "IntensityRatioNucleiCytoplasm"
+# CompareIFNBpriming(data.constaining = data.cytoplasm,
+#            y = y,
+#            path.output.costaining = paste(path.input.costaining, strsplit(filename, ".csv")[[1]], y, "/", sep = "/"))
+# 
+
+
+#### 2017-07-06 - analysis ####
+path.input <- "resources/input/"
+experiment.list <-c("2017-06-29-KZ58", "2017-04-06-KZ46", "2017-03-30-KZ45", "2017-05-26-KZ51")
+gplot.list <- list()
+
+i <- 4
+
+gplot.list[[as.character(i)]]  <-list()
+experiment <- experiment.list[i]
+path.input.costaining <- paste(path.input, experiment, sep = "/")
+type.list <- list.dirs(path.input.costaining, recursive = FALSE, full.names = FALSE)
+type.i <- 2
+for(type.i in 1:length(type.list)){
+  gplot.list[[as.character(i)]][[type]]  <- list()
+  y <- "Intensity_MeanIntensity_Alexa555"
+  
+  type <- type.list[type.i]
+  path.input.costaining.type <- paste( path.input.costaining, type, sep = "/")
+  
+  data.cells <- 
+    read.table(paste(path.input.costaining.type, "Cells555.csv" , sep =  "/"), header = TRUE, sep = ",") %>% 
+    normalize_data() %>% 
+    fun.remove_data() %>% 
+    data.table()
+  data.cells.filtered <- 
+    read.table(paste(path.input.costaining.type, "CellsFiltered555.csv" , sep =  "/"), header = TRUE, sep = ",") %>% 
+    normalize_data() %>% 
+    fun.remove_data() %>% 
+    data.table()
+  data.nuclei <- 
+    read.table(paste(path.input.costaining.type, "Nuclei.csv" , sep =  "/"), header = TRUE, sep = ",") %>% 
+    normalize_data() %>% 
+    fun.remove_data() %>% 
+    data.table()
+  
+  if(!("stimulation.2.1" %in% colnames(data.cells))){
+    data.cells <-   data.cells %>% dplyr::mutate(stimulation.2.1 = priming.1.1, time.2.1 = 24)
+    data.cells.filtered <-   data.cells.filtered %>% dplyr::mutate(stimulation.2.1 = priming.1.1, time.2.1 = 24)
+    data.nuclei <-   data.nuclei %>% dplyr::mutate(stimulation.2.1 = priming.1.1, time.2.1 = 24)
+  }
+  
+    data.cells.summarise <- 
+      data.cells.filtered %>%
+    #  dplyr::group_by(priming.1.1, stimulation.1.1, time.1.1) %>%
+      dplyr::group_by(priming.1.1, stimulation.1.1, time.1.1, stimulation.2.1, time.2.1) %>%
+      dplyr::mutate_(intensity = y) %>%
+      dplyr::summarise(intensity_mean = mean(intensity), 
+                      intensity_median = median(intensity))
+  
+    priming <- data.cells.summarise %>% 
+      dplyr::filter(priming.1.1 == 0) %>% 
+      dplyr::ungroup() %>% 
+      dplyr::summarise(intensity_mean = mean(intensity_mean),
+                       intensity_median = mean(intensity_median))
+    priming.mean <- priming$intensity_mean
+    priming.median <- priming$intensity_median
+    
+    data.cells.summarise <- 
+      data.cells.summarise  %>%
+      dplyr::mutate(intensity_mean_ratio = intensity_mean/priming.mean,
+                    intensity_median_ratio = intensity_median/priming.median)
+    
+    
+    write.table(x = data.cells.summarise, file = paste(path.input.costaining.type,
+                                                       "CellsFiltered555",
+                                                       "data_ratio.csv", sep = "/"),
+                sep = ",", 
+                row.names = FALSE, 
+                col.names = TRUE)
+  
+    write.table(x = data.cells.summarise, file = paste(path.input.costaining.type,
+                                                       "data_ratio.csv", sep = "/"),
+                sep = ",", 
+                row.names = FALSE, 
+                col.names = TRUE)
+    
+    ### cytoplasm
+    
+    data.cells_nuclei <-  
+      data.cells %>% 
+      dplyr::ungroup() %>% 
+      dplyr::select_("well.name","ObjectNumber", "Parent_Nuclei") %>% 
+      left_join(data.nuclei,
+                by = c("well.name" = "well.name",
+                       "Parent_Nuclei" = "ObjectNumber")) %>%
+      data.table()
+     
+    
+    data.cytoplasm <- 
+      data.cells.filtered %>%
+      left_join((data.cells_nuclei), 
+                by = c("well.name" = "well.name",
+                       "Parent_Cells555" = "ObjectNumber")) %>% 
+      data.table()
+    
+    y <- "Intensity_MeanIntensity_Alexa555"
+    
+    data.cytoplasm <- 
+      data.cytoplasm %>% 
+      dplyr::mutate_("IntensityMeanCytoplasm" = 
+                       paste("(Intensity_IntegratedIntensity_Alexa555.x - Intensity_IntegratedIntensity_Alexa555.y)",
+                             "(AreaShape_Area.x - AreaShape_Area.y)",
+                             sep = "/"),
+                     "IntensityIntegratedCytoplasm" = 
+                       paste("(Intensity_IntegratedIntensity_Alexa555.x - Intensity_IntegratedIntensity_Alexa555.y)", 
+                             sep = "/")) %>% 
+      dplyr::mutate_("IntensityRatioNucleiCytoplasm" = 
+                       paste("(Intensity_IntegratedIntensity_Alexa555.y)",
+                             "(IntensityIntegratedCytoplasm)",
+                             sep = "/"))  
+    
+    data.cytoplasm <- data.cytoplasm %>% 
+      dplyr::mutate(priming.1.1 = priming.1.1.x, 
+              stimulation.1.1 = stimulation.1.1.x, 
+             stimulation.2.1 = stimulation.2.1.x,
+             time.1.1 = time.1.1.x,
+             time.2.1 = time.2.1.x) %>% 
+      data.table()
+    
+    
+    
+    y <- "Intensity_MeanIntensity_Alexa555"
+    gplot.list[[as.character(i)]][[type]][["cells"]] <-
+      plot_density(data = data.cells.filtered %>%
+                     dplyr::mutate(priming.1.1 = factor(priming.1.1)),
+                   x = y,
+                   group = "priming.1.1",
+                   color = "priming.1.1",
+                   title = paste(experiment, "cells")) +
+      xlim(c(0,1500))
+    
+    gplot.list[[as.character(i)]][[type]][["cells_log"]] <-
+      plot_density(data = data.cells.filtered %>% 
+                     dplyr::mutate(priming.1.1 = factor(priming.1.1)) %>% 
+                     dplyr::mutate_(logint = paste("log(", y, ")")),
+                   x = "logint",
+                   group = "priming.1.1",
+                   color = "priming.1.1",
+                   title = paste(experiment, "cells", "log")) + 
+      xlim(c(2,8))
+    
+    y <- "Intensity_MeanIntensity_Alexa555"
+    gplot.list[[as.character(i)]][[type]][["nuclei"]] <-
+      plot_density(data = data.nuclei %>%
+                     dplyr::mutate(priming.1.1 = factor(priming.1.1)),
+                   x = y,
+                   group = "priming.1.1",
+                   color = "priming.1.1",
+                   title = paste(experiment, "nuclei")) +
+      xlim(c(0,1500))
+    
+    gplot.list[[as.character(i)]][[type]][["nuclei_log"]] <-
+      plot_density(data = data.nuclei %>% 
+                     dplyr::mutate(priming.1.1 = factor(priming.1.1)) %>% 
+                     dplyr::mutate_(logint = paste("log(", y, ")")),
+                   x = "logint",
+                   group = "priming.1.1",
+                   color = "priming.1.1",
+                   title = paste(experiment, "nuclei", "log")) + 
+      xlim(c(2,8))
+    
+  
+    y <- "IntensityMeanCytoplasm"
+    gplot.list[[as.character(i)]][[type]][["cytoplasm"]] <-
+      plot_density(data = data.cytoplasm %>%
+                     dplyr::mutate(priming.1.1 = factor(priming.1.1)),
+                   x = y,
+                   group = "priming.1.1",
+                   color = "priming.1.1",
+                   title = paste(experiment, "cytoplasm")) +
+      xlim(c(0,1500))
+    
+    gplot.list[[as.character(i)]][[type]][["cytoplasm_log"]] <-
+      plot_density(data = data.cytoplasm %>% 
+                     dplyr::mutate(priming.1.1 = factor(priming.1.1)) %>% 
+                     dplyr::mutate_(logint = paste("log(", y, ")")),
+                   x = "logint",
+                   group = "priming.1.1",
+                   color = "priming.1.1",
+                   title = paste(experiment, "cytoplasm", "log")) + 
+      xlim(c(2,8))
+      
+    
+    y <- "IntensityRatioNucleiCytoplasm"
+    gplot.list[[as.character(i)]][[type]][["ratio"]] <-
+      plot_density(data = data.cytoplasm %>%
+                     dplyr::mutate(priming.1.1 = factor(priming.1.1)),
+                   x = y,
+                   group = "priming.1.1",
+                   color = "priming.1.1",
+                   title = paste(experiment, "ratio nuclei/cytoplasm")) +
+      xlim(c(0,20))
+    
+    gplot.list[[as.character(i)]][[type]][["ratio_log"]] <-
+      plot_density(data = data.cytoplasm %>% 
+                     dplyr::mutate(priming.1.1 = factor(priming.1.1)) %>% 
+                     dplyr::mutate_(logint = paste("log(", y, ")")),
+                   x = "logint",
+                   group = "priming.1.1",
+                   color = "priming.1.1",
+                   title = paste(experiment, "ratio nuclei/cytoplasm", "log")) + 
+      xlim(c(-2,7))
+    
+    
+    do.call(what = ggsave,
+            args = append(plot.args.ggsave,
+                          list(filename = paste(path.input.costaining.type, "density_comparison.pdf", sep = "/"),
+                               plot = marrangeGrob(grobs = gplot.list[[as.character(i)]][[type]],
+                                                   ncol = 1,
+                                                   nrow = 1 ))))
+}
