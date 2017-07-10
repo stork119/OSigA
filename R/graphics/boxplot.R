@@ -30,7 +30,12 @@ plot_boxplot_group <- function(data,
                                x_factor = TRUE,
                                save_plot = TRUE){
   CheckColumnExistence <- function(data, columns.list = list()){
-    return(sum(!(unlist(columns.list) %in% colnames(data))) == 0)
+    columns_existance <- (unlist(columns.list) %in% colnames(data))
+    if_exists <- sum(!columns_existance) == 0
+    if(!if_exists){
+      print(unlist(columns.list)[-which(columns_existance)])
+    }
+    return(if_exists)
   }
   ylim_min <- as.integer(ylim_min)
   ylim_max  <- as.integer(ylim_max)
