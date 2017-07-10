@@ -39,7 +39,7 @@ attach(LoadOptimisationConditions(path.optimisation = path.list$optimisation,
 optimisation.table <- InitiOptimisationTable(path.optimisation = path.list$optimisation,
                                              path.optimisation.data = path.list$optimisation.data)
 
-no_cores <- 16
+no_cores <- 12
 
 for( id  in ids[which(!ids  %in% optimisation.table$id)] ){
   try({
@@ -55,9 +55,9 @@ for( id  in ids[which(!ids  %in% optimisation.table$id)] ){
 }
 
 #### ####
-fun.likelihood.name <- "sd_data"
+fun.likelihood.name <- "sd"
 optimisation.table <- optimisation.table[order(as.numeric(optimisation.table[,fun.likelihood.name]) ),]
-optimisation.best <- c(optimisation.table[order(as.numeric(optimisation.table[,fun.likelihood.name])[1:6]),]$id, "single", "receptors")
+#optimisation.best <- c(optimisation.table[order(as.numeric(optimisation.table[,fun.likelihood.name])[1:6]),]$id, "single", "receptors")
 #stimulation.list <- (data.exp.grouped %>% ungroup() %>% distinct(stimulation))$stimulation
 # data.exp.grouped.all <- data.list$data.exp.norm %>% group_by(priming, stimulation, time) %>% mutate(intensity_sd = var(intensity))
 # data.exp.grouped.equal.all <- get_equal_data(data.exp.grouped.all)
@@ -108,7 +108,7 @@ optimisation.best <- c(optimisation.table[order(as.numeric(optimisation.table[,f
 # stopImplicitCluster()
 
 registerDoParallel(no_cores)
-data.model.list <- foreach( i = 1:length(optimisation.table$sd_data)) %dopar% {
+data.model.list <- foreach( i = 1:length(optimisation.table$sd)) %dopar% {
   id <- optimisation.table$id[i]
   try({
     filename <- paste(path.list$optimisation.data, id, "data_model.csv", sep = "/")
@@ -139,33 +139,33 @@ write.table(file = paste(path.list$optimisation.results, "optimisation_ranking_a
             col.names = TRUE)
 
 registerDoParallel(no_cores)
-data.parameters.list.df <- foreach( i = 1:length(optimisation.table$sd_data)) %dopar% {
+data.parameters.list.df <- foreach( i = 1:length(optimisation.table$sd)) %dopar% {
   id <- optimisation.table$id[i]
   try({
     filename <- paste(path.list$optimisation.data, id, "par_exp.txt", sep = "/")
     if(file.exists(filename)){
       parameters.id <- scan(file = filename)
       data.parameters <- matrix(parameters.id, nrow = 1)
-      colnames(data.parameters) <- paste("p", 1:ncol(data.parameters), sep = "")
+      colnames(data.parameters) <- paste("p", par.optimised, sep = "")
       return( data.parameters %>% data.frame() %>% mutate(id = id) )
     }
   })
 }
 stopImplicitCluster()
-data.parameters.df <- do.call(rbind, data.parameters.list.df)
+data.parameters.df <- do.call(rbind, data.parameters.list.df) %>% data.table()
 
-data.parameters.opt <- data.parameters.df[,par.optimised]
+data.parameters.opt <- data.parameters.df[,1:length(par.optimised)]#, with = FALSE]
 #data.parameters.opt$p16 <- data.parameters.opt$p1/data.parameters.opt$p6
 data.parameters.opt$id <- data.parameters.df$id
 
 data.parameters.opt.melt <- data.parameters.opt %>% 
-  melt(id.vares = id) %>% 
+  melt(id.vars = "id") %>% 
   left_join(optimisation.table.results)
 #### save best parameter conditions #####
 
 #parameters[par.optimised] <- parameters.factor[par.optimised]*(parameters.base[par.optimised])^par
 
-par <- as.numeric((data.parameters.df %>% dplyr::filter(id == optimisation.table[1,"id"]))[1,1:10])
+par <- as.numeric((data.parameters.df %>% dplyr::filter(id == optimisation.table[1,"id"])))
 par[which(is.na(par))] <- 0
 write.table(x = data.frame(factor = parameters.factor*(parameters.base^par),
                            base   = parameters.base,
@@ -175,25 +175,25 @@ write.table(x = data.frame(factor = parameters.factor*(parameters.base^par),
             col.names = TRUE,
             row.names = FALSE,
             sep = ",")
-            
-#### ####
 
-gplot.list[["parameters_p1p6"]]  <- ggplot(data = data.parameters %>% 
-         dplyr::filter(par %in% c("p1")) %>% 
-         left_join((data.parameters %>% dplyr::filter(par %in% c("p6"))), by = "type") %>%
-         dplyr::mutate(opt = opt.x/opt.y, id = type) %>%
-         left_join(optimisation.table, by = "id"),
-       mapping = aes(y = opt, x = sd_data)) + 
-  geom_point() + 
-  do.call(theme_jetka, args = plot.args)+ 
-  ggtitle("p1/p6")
-  
-do.call(what = ggsave, 
-        args = append(plot.args.ggsave, 
-                      list(filename = paste(path.list$optimisation.results, "parameters_p1p6.pdf", sep = ""),
-                           plot = gplot.list[["parameters_p1p6"]] )))
+#### p1p6 ####
 
-
+# gplot.list[["parameters_p1p6"]]  <- ggplot(data = data.parameters.df %>% 
+#          dplyr::filter(par %in% c("p1")) %>% 
+#          left_join((data.parameters %>% dplyr::filter(par %in% c("p6"))), by = "type") %>%
+#          dplyr::mutate(opt = opt.x/opt.y, id = type) %>%
+#          left_join(optimisation.table, by = "id"),
+#        mapping = aes(y = opt, x = sd)) + 
+#   geom_point() + 
+#   do.call(theme_jetka, args = plot.args)+ 
+#   ggtitle("p1/p6")
+#   
+# do.call(what = ggsave, 
+#         args = append(plot.args.ggsave, 
+#                       list(filename = paste(path.list$optimisation.results, "parameters_p1p6.pdf", sep = ""),
+#                            plot = gplot.list[["parameters_p1p6"]] )))
+# 
+# 
 #### ####
 gplot.list[["parameters_optimisation"]] <- ggplot( 
   data.parameters.opt.melt %>% 
@@ -241,11 +241,14 @@ conditions.grid <- expand.grid(
   tm = unique(data.model$time))
 
 for(conditions.grid.i in 1:nrow(conditions.grid)){
+  prm <- conditions.grid[conditions.grid.i,]$prm
+  stm <- conditions.grid[conditions.grid.i,]$stm
+  t <- conditions.grid[conditions.grid.i,]$tm
   gplot.list[["optimisation"]][[as.character(conditions.grid.i)]] <-
     data.model %>%
-    dplyr::filter(priming == conditions.grid[conditions.grid.i,]$prm,
-                  stimulation == conditions.grid[conditions.grid.i,]$stm,
-                  time == conditions.grid[conditions.grid.i,]$tm
+    dplyr::filter(priming == prm,
+                  stimulation == stm,
+                  time == t
     ) %>%
     dplyr::arrange(likelihood) %>% 
     tibble::rownames_to_column("position") %>%
@@ -259,7 +262,7 @@ do.call(what = ggsave,
                            plot = marrangeGrob(grobs = gplot.list[["optimisation"]], ncol = 1, nrow = 1))))
 #### parameters table ####
 registerDoParallel(no_cores)
-data.parameters.list <- foreach( i = 1:length(optimisation.table$sd_data)) %dopar% {
+data.parameters.list <- foreach( i = 1:length(optimisation.table$sd)) %dopar% {
   id <- optimisation.table$id[i]
   try({
     filename <- paste(path.list$optimisation.data, id, "parameters.csv", sep = "/")
@@ -285,21 +288,21 @@ data.parameters.init_opt <-
   data.parameters.init_opt[,
                            c("id",
                              "type",
-                             sapply(1:10,
+                             sapply(1:length(parameters.factor),
                                     function(i){
                                       c(
                                         paste("p",i,".","x", sep = ""),
                                         paste("p",i,".","y", sep = ""))}))]
 
-data.parameters.init_opt <- data.parameters.init_opt %>% left_join(optimisation.table, by = "id") %>% dplyr::arrange(sd_data)
+data.parameters.init_opt <- data.parameters.init_opt %>% left_join(optimisation.table, by = "id") %>% dplyr::arrange(sd)
 
 write.table(file = paste(path.list$optimisation.results, "parameters.csv", sep = ""),
-            x = data.parameters.init_opt,
+            x = data.parameters.init_opt %>% dplyr::arrange(sd),
             sep = ",",
             row.names = FALSE,
             col.names = TRUE)
 
-data.parameters.init_opt.melt <- data.parameters.init_opt %>% melt()
+  data.parameters.init_opt.melt <- data.parameters.init_opt %>% reshape2::melt(id.vars = c("id", "type", "sd_data", "sd", "data")) %>% data.table()
 
 params.x <- (data.parameters.init_opt.melt %>% filter(!is.na(value)) %>% distinct(variable))$variable
 gplot.list[["parameters"]] <- list()
@@ -324,27 +327,59 @@ do.call(what = ggsave,
 #### ####
 
 
-gplot.list[["models.compare"]] <- list()
+gplot.list[["models.compare_log"]] <- list()
 for(id in optimisation.table$id[1:10]){
   type.list <- c(id, "single")
-  gplot.list[["models.compare"]][[as.character(id)]] <- ggplot(data.model %>% 
+  gplot.list[["models.compare_log"]][[as.character(id)]] <- ggplot(data.model %>% 
          dplyr::filter(type %in% type.list),
-       mapping = aes(x = factor(time), y = mean.lmvn, group = type, color = type)) +
+       mapping = aes(x = factor(time), 
+                     y = mean.lmvn,
+                     group = type,
+                     color = type,
+                     ymin = mean.lmvn - sqrt(sd.lmvn), 
+                     ymax = mean.lmvn + sqrt(sd.lmvn))) +
   geom_point() +
   geom_line() +
+    geom_errorbar() +
   facet_grid(priming ~ stimulation) + do.call(what = theme_jetka, args = plot.args) +
   geom_point(data = data.exp.summarise.optimisation %>% mutate(type = "data"), color = "black") +
   #geom_line(data = data.exp.summarise.optimisation %>% mutate(type = "data"), color = "black") +
   geom_errorbar(data = data.exp.summarise.optimisation %>% mutate(type = "data"),
-                mapping = aes(ymin = mean.lmvn - sqrt(sd.lmvn), 
-                              ymax = mean.lmvn + sqrt(sd.lmvn)),
                 color = "black") +
   ggtitle(paste("Compare", type.list, collapse = " "))
 }
 do.call(what = ggsave, 
         args = append(plot.args.ggsave, 
+                      list(filename = paste(path.list$optimisation.results, "models_compare_log.pdf", sep = ""),
+                           plot = marrangeGrob(grobs = gplot.list[["models.compare_log"]], ncol = 1, nrow = 1))))
+
+
+gplot.list[["models.compare"]] <- list()
+for(id in optimisation.table$id[1:10]){
+  type.list <- c(id, "single")
+  gplot.list[["models.compare"]][[as.character(id)]] <- ggplot(data.model %>% 
+                                                                 dplyr::filter(type %in% type.list),
+                                                               mapping = aes(x = factor(time), 
+                                                                             y = m.norm,
+                                                                             group = type,
+                                                                             color = type,
+                                                                             ymin = m.norm - sqrt(sd.norm), 
+                                                                             ymax = m.norm + sqrt(sd.norm))) +
+    geom_point() +
+    geom_line() +
+    geom_errorbar() +
+    facet_grid(priming ~ stimulation) + do.call(what = theme_jetka, args = plot.args) +
+    geom_point(data = data.exp.summarise.optimisation %>% mutate(type = "data"), color = "black") +
+    #geom_line(data = data.exp.summarise.optimisation %>% mutate(type = "data"), color = "black") +
+    geom_errorbar(data = data.exp.summarise.optimisation %>% mutate(type = "data"),
+                  color = "black") +
+    ggtitle(paste("Compare", type.list, collapse = " "))
+}
+do.call(what = ggsave, 
+        args = append(plot.args.ggsave, 
                       list(filename = paste(path.list$optimisation.results, "models_compare.pdf", sep = ""),
                            plot = marrangeGrob(grobs = gplot.list[["models.compare"]], ncol = 1, nrow = 1))))
+
 
 #### archive ####
 # parameters.table.all <- foreach( i = 1:nrow(optimisation.table), .combine = rbind) %do% {

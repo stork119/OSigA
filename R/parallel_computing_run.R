@@ -21,5 +21,5 @@ run_parallel_computations(path.optimisation = path.list$optimisation,
                           data.model.list = list(),
                             # LoadInitialModels(path.optimisation = path.list$optimisation,
                             #                   path.optimisation.data = path.list$optimisation.data),
-                          fun_modify_input = PrepareModelArguments.pSTAT
+                          fun_modify_input = function(...){PrepareModelArguments.pSTAT_extrinsic(priming_constant = 3.4, ...)}
                           )

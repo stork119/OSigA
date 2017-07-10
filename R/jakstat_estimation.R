@@ -138,8 +138,8 @@ likelihood <- function(data.model,
 }
 
 #### optimisation ####
-optimisation <- function(fun_run_model = run_model,
-                         par,
+optimisation <- function(par,
+                         fun_run_model = run_model,
                          parameters.base,
                          parameters.factor,
                          variables, 

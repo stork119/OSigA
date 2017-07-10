@@ -56,7 +56,7 @@ optimisation.filename <- paste(path.list$optimisation, "optimisation_conditions.
 if(!file.exists(optimisation.filename)){
   write.table(x = data.table(maxit = 1000,
                              fun.optimisation.likelihood = "fun.likelihood.lmvn.data.norm",
-                             fun_run_model = "run_model_mean"),
+                             fun_run_model = "run_model"),
               file = optimisation.filename,
               sep = ",",
               row.names = FALSE,

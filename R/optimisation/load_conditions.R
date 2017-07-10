@@ -7,7 +7,9 @@ LoadOptimisationConditions <- function(path.optimisation,
                                        path.optimisation.data,
                                        maxit.tmp = Inf,
                                        ...){
-
+  variables <- scan(paste(path.list$optimisation, "variables.csv", sep = "/"))
+  variables.priming <- scan(paste(path.list$optimisation, "variables-priming.csv", sep = "/"))
+  
   optimisation.conditions <- read.table(
     file = paste(path.optimisation, "optimisation_conditions.csv", sep = ""),
     sep = ",",
@@ -54,7 +56,9 @@ LoadOptimisationConditions <- function(path.optimisation,
     par.list.ids <- par.list.ids[-which(ids %in% par.list.ids)]
   }
   
-  return(list(optimisation.conditions = optimisation.conditions,
+  return(list(variables = variables,
+              variables.priming = variables.priming,
+              optimisation.conditions = optimisation.conditions,
               fun.optimisation.likelihood = fun.optimisation.likelihood,
               fun_run_model = fun_run_model,
               maxit = maxit, 

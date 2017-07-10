@@ -49,7 +49,7 @@ model_ode <-  function(p,y,t,s){
 }
 
 
-model_trajectory <- function(data.trajectory){
+model_trajectory <- function(data.trajectory, variables){
   data.trajectory.conditions <- data.trajectory %>% dplyr::distinct(priming, stimulation, time)
   data.derivatives <- data.frame(m = numeric(), time = numeric(), stimulation = numeric(), priming = numeric(), var = numeric())
   for(i in 1:nrow(data.trajectory.conditions)){
@@ -64,7 +64,7 @@ model_trajectory <- function(data.trajectory){
       priming = data.trajectory.conditions[i,]$priming,
       stimulation = data.trajectory.conditions[i,]$stimulation,
       time = data.trajectory.conditions[i,]$time,
-      var = 1:17)
+      var = 1:length(variables))
     data.derivatives <- rbind(data.derivatives, data.derivatives.tmp)  
   }
   return(data.derivatives)

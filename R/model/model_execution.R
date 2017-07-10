@@ -3,19 +3,48 @@
 ### ###
 
 #### ####
+normalization_trajectory <- function(data.trajectory,
+                                     variables.indices,
+                                     m.scale = 400,
+                                     sd.scale = m.scale^2,
+                                     background,
+                                     epsilon = 1){
+  
+  data.trajectory.means <- data.trajectory %>% 
+    dplyr::filter(var %in%  variables.indices$means)
+  data.trajectory.vars  <- data.trajectory %>% 
+    dplyr::filter(var %in%  variables.indices$vars$ind) %>% 
+    dplyr::left_join(variables.indices$vars, by = c("var" = "ind"))
+  data.trajectory.cov  <- data.trajectory %>% 
+    dplyr::filter(var %in%  variables.indices$cov$ind) %>% 
+    dplyr::left_join(variables.indices$cov, by = c("var" = "ind"))
+  
+  data.trajectory.means$m.norm <- data.trajectory.means$m/m.scale + background
+  data.trajectory.vars$m.norm  <- data.trajectory.vars$m/(m.scale^2)# - 2*background*data.trajectory.means$m/m.scale
+  data.trajectory.cov$m.norm  <- data.trajectory.cov$m/(m.scale^2)# - 2*background*data.trajectory.means$m/m.scale
+  
+  data.trajectory.list <- list()
+  data.trajectory.list$means <- data.trajectory.means
+  data.trajectory.list$vars  <- data.trajectory.vars
+  data.trajectory.list$cov   <- data.trajectory.cov
+  
+  return(data.trajectory.list)
+}
+
 normalization_simulation <- function(data.model,
                           m.scale = 400,
                           sd.scale = m.scale^2,
                           background,
                           epsilon = 1){
   data.model$m.norm <- data.model$m/m.scale + background
-  data.model$sd.norm <- data.model$sd/sd.scale
-  data.model$sd.norm <- sapply(data.model$sd.norm, function(sd.norm){ifelse(sd.norm < epsilon, epsilon, sd.norm)})
+  data.model$sd.norm <- data.model$sd/(m.scale^2)
+  #data.model$sd.norm <- sapply(data.model$sd.norm, function(sd.norm){ifelse(sd.norm < epsilon, epsilon, sd.norm)})
   data.model$time <- data.model$time
   return(data.model)
 }
 
-simulate_model <- function(parameters, 
+simulate_model <- function(fun_run_model = rmainmean,
+                           parameters, 
                            parameters.priming = parameters,
                            variables,
                            variables.priming,
@@ -47,13 +76,13 @@ simulate_model <- function(parameters,
   )
   # print(parameters)
   for(stm in stimulation.list){
-    res <- rmainmean(parameters = parameters, 
+    res <- fun_run_model(parameters = parameters, 
                      variables = variables, 
                      stm = stm, 
                      tmesh = tmesh, 
                      time_interval = time_interval, 
                      time_computation = time_computation)
-    res.priming <- rmainmean(parameters = parameters.priming, 
+    res.priming <- fun_run_model(parameters = parameters.priming, 
                              variables = variables.priming, 
                              stm = stm, 
                              tmesh = tmesh, 
@@ -67,7 +96,8 @@ simulate_model <- function(parameters,
                             data.table(time = c(tmesh[tmesh.i], tmesh[tmesh.i]),
                                        m = c(res$output[[tmesh.i]][14],
                                              res.priming$output[[tmesh.i]][14]),
-                                       sd =  c(0,0),
+                                       sd =  c(ifelse(length(res$output[[tmesh.i]]) > 17, res$output[[tmesh.i]][31], 0),
+                                               ifelse(length(res.priming$output[[tmesh.i]]) > 17, res.priming$output[[tmesh.i]][31], 0)),
                                        priming = c(0, 1000), 
                                        stimulation = c(stm, stm))
         )

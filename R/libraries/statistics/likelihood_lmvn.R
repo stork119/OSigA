@@ -59,9 +59,47 @@ fun.likelihood.list.sd_data <- function(logintensity = logintensity,
   return(res)
 }
 
-fun.optimisation.likelihood  <- fun.likelihood.list.sd_data
+fun.likelihood.list.sd <- function(logintensity = logintensity, 
+                                   data.model.tmp = data.model.tmp,
+                                   ...){
+  
+  nu <- mean.lmvn(data.model.tmp$m.norm, data.model.tmp$sd.norm)
+  sd <- sd.lmvn(data.model.tmp$m.norm, data.model.tmp$sd.norm)
+  res <- log(sqrt(sd)) + (((nu - logintensity)^2)/sd)
+  #print(res)
+  return(res)
+}
+
+
+
+fun.likelihood.list.data <- function(logintensity = logintensity, 
+                                   data.model.tmp = data.model.tmp,
+                                   data.exp.summarise = data.exp.summarise,
+                                   ...){
+  intensity.sd <- (data.exp.summarise %>% dplyr::filter(
+    stimulation == data.model.tmp$stimulation,
+    priming == data.model.tmp$priming,
+    time == data.model.tmp$time))$sd.norm
+
+  intensity.mean <- (data.exp.summarise %>% dplyr::filter(
+    stimulation == data.model.tmp$stimulation,
+    priming == data.model.tmp$priming,
+    time == data.model.tmp$time))$m.norm
+  
+  nu <- mean.lmvn(intensity.mean, intensity.sd)
+  sd <- sd.lmvn(intensity.mean, intensity.sd)
+  
+  res <- log(sqrt(sd)) + (((nu - logintensity)^2)/sd)
+  #print(res)
+  return(res)
+}
+
+
+fun.optimisation.likelihood  <- fun.likelihood.list.sd
 fun.likelihood.list <- list(
-  sd_data = fun.likelihood.list.sd_data 
+  sd_data = fun.likelihood.list.sd_data ,
+  sd = fun.likelihood.list.sd ,
+  data = fun.likelihood.list.data
 )
 
 # ComputeLikelihood.lmvn.bias <- function(nu, # lmvn.mean(m, sd)

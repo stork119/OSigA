@@ -16,18 +16,30 @@ stimulation.list <- (data.list$data.exp %>%
                        dplyr::distinct(stimulation) %>% 
                        dplyr::filter(stimulation != 0))$stimulation
 
-background     <- mean(data.list$data.exp[data.list$data.exp$time == 0,]$intensity)
-background.var <- var(data.list$data.exp[data.list$data.exp$time == 0,]$intensity)
+
+dt.summarise <- data.list$data.exp.norm %>% 
+  filter(time == 0) %>% 
+  ungroup() %>% 
+  summarise(mean.lmvn = mean(logintensity), sd.lmvn = var(logintensity))
+
+m <-  exp(dt.summarise$mean.lmvn + dt.summarise$sd.lmvn/2)
+sd <- exp(2*dt.summarise$mean.lmvn + dt.summarise$sd.lmvn)*(exp(dt.summarise$sd.lmvn) - 1)
+
+background <- m
+background.var <- sd
+
+# background     <- mean(data.list$data.exp[data.list$data.exp$time == 0,]$intensity)
+# background.var <- var(data.list$data.exp[data.list$data.exp$time == 0,]$intensity)
 
 
-variables <- rep(0.0, times = 629)
-variables.priming <- rep(0.0, times = 629)
-variables[1:17] <- scan(file = paste(path.parameters, "var.txt", sep = ""))
-variables.priming[1:17] <- scan(file = paste(path.parameters, "var-priming.txt", sep = ""))
-variables[44:52] <- scan(file = paste(path.parameters, "var-extrinsic.txt", sep = ""))
-variables.priming[44:52] <- variables[44:52]
-variables[27:43] <- varscale*(variables[1:17]^2)
-variables.priming[27:43] <- varscale*(variables.priming[1:17]^2)
+# variables <- rep(0.0, times = 629)
+# variables.priming <- rep(0.0, times = 629)
+# variables[1:17] <- scan(file = paste(path.parameters, "var.txt", sep = ""))
+# variables.priming[1:17] <- scan(file = paste(path.parameters, "var-priming.txt", sep = ""))
+# variables[44:52] <- scan(file = paste(path.parameters, "var-extrinsic.txt", sep = ""))
+# variables.priming[44:52] <- variables[44:52]
+# variables[27:43] <- varscale*(variables[1:17]^2)
+# variables.priming[27:43] <- varscale*(variables.priming[1:17]^2)
 
 
 #### ####
