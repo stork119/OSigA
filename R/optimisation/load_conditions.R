@@ -80,5 +80,5 @@ LoadOptimisationConditions <- function(path.optimisation,
                               par.list.ids = par.list.ids,
                               ids = ids
                          ))
-  return()
+  return(results.list)
 }
