@@ -28,6 +28,7 @@ run_parallel_computations <- function(path.optimisation,
                                       optimisation.res.par = "par",
                                       data.model.list,
                                       fun_modify_input,
+                                      optimisation_procedure = optimisation,
                                       ...
                                       ){
                                       
@@ -45,7 +46,7 @@ run_parallel_computations <- function(path.optimisation,
   print(maxit)
 #### ####
     registerDoParallel(no_cores)
-    test <- foreach(i = par.list.ids, .combine = list, .multicombine = TRUE ) %dopar%
+    test <- foreach(i = par.list.ids[1], .combine = list, .multicombine = TRUE ) %dopar%
     {
       
       #print(par.list.ids)
@@ -55,7 +56,7 @@ run_parallel_computations <- function(path.optimisation,
         fun.optimisation,
         list(par = par, 
            # fun = optimisation,
-            fn = optimisation,
+            fn = optimisation_procedure,
             control = list(maxit = maxit,
                            stopfitness = stopfitness,
                            diag.sigma = TRUE,
@@ -80,6 +81,7 @@ run_parallel_computations <- function(path.optimisation,
             fun.likelihood = fun.optimisation.likelihood,
             par.optimised = par.optimised,
             fun_modify_input = fun_modify_input,
+            #sigmapoints = sigmapoints))
            ...))
       
       path.optimisation.i <- paste(path.optimisation.data, i, sep = "/")
@@ -108,7 +110,14 @@ run_parallel_computations <- function(path.optimisation,
                                     tmesh = tmesh,
                                     tmesh.list = tmesh.list,
                                     stimulation.list = stimulation.list,
-                                    background = background))
+                                    background = background,
+                                    parameters.base = parameters.base,
+                                    parameters.factor = parameters.factor,
+                                    par.optimised = par.optimised,
+                                    fun_modify_input = fun_modify_input,
+                                    par = par.exp.opt,
+                                    #sigmapoints = sigmapoints)),
+                                    ...))
       error <- model.simulation$error
       # if(model.simulation$error){
       #   model.simulation <- do.call(run_model_mean,
@@ -130,6 +139,7 @@ run_parallel_computations <- function(path.optimisation,
                            data.exp.summarise = data.exp.summarise.optimisation))
                          })
 
+      print(paste(c(result, par.exp.opt), sep = " "))
       
       model.simulation$data.model$likelihood  <- 
         likelihood(data.model = model.simulation$data.model,
@@ -138,7 +148,7 @@ run_parallel_computations <- function(path.optimisation,
                    fun.likelihood = fun.optimisation.likelihood)
       
       model.simulation$data.model$type <- "optimised"
-      print(sum(model.simulation$data.model$likelihood))
+      #print(sum(model.simulation$data.model$likelihood))
       gplot <- ggplot(model.simulation$data.model ,
              mapping = aes(x = time,
                            y = mean.lmvn,
@@ -229,4 +239,3 @@ run_parallel_computations <- function(path.optimisation,
 stopImplicitCluster()
 }
 
-#### run computations ####

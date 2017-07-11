@@ -1,7 +1,6 @@
 ### ### ###
 ### plot compare
 ### ### ###
-source("R/graphics/libraries.R")
 
 compare_models <- function(
   data,
@@ -22,8 +21,8 @@ compare_models <- function(
   
   data.model <- data.table(label = character(),
                            time  = numeric(),
-                           m     = numeric(),
-                           sd    = numeric(),
+                           # m     = numeric(),
+                           # sd    = numeric(),
                            priming = numeric(),
                            stimulation = numeric(),
                            m.norm = numeric(),
@@ -34,12 +33,21 @@ compare_models <- function(
   for(data.model.i in 1:length(data.model.list)){
     data.model.list[[data.model.i]]$label <- labels(data.model.list)[data.model.i]
     data.model <- rbind(data.model,
-                        data.model.list[[data.model.i]][, c("label" ,      "time" ,       "m"     ,      "sd",          "priming",     "stimulation", "m.norm",      "sd.norm",     "mean.lmvn" , "sd.lmvn")]
+                        data.model.list[[data.model.i]][, c("label" ,     
+                                                            "time" ,      
+                                                            # "m"     ,   
+                                                            # "sd",     
+                                                            "priming",   
+                                                            "stimulation",
+                                                            "m.norm",   
+                                                            "sd.norm",     
+                                                            "mean.lmvn" ,
+                                                            "sd.lmvn")]
                         ### TODO ###
                         )
 
   }
-  data.distinct <- data %>% ungroup() %>% distinct(priming, stimulation)
+  data.distinct <- data.model %>% ungroup() %>% distinct(priming, stimulation)
   data.model$intensity <- data.model$m.norm
   g.list <- list()
   if(plot.save){
@@ -53,20 +61,20 @@ compare_models <- function(
     
     g.list[[data.distinct.i]] <- ggplot(data = data %>% filter(priming == data.distinct.tmp$priming,
                                   stimulation == data.distinct.tmp$stimulation),
-           mapping = aes(x = factor(time - 5), y = intensity)) +
+           mapping = aes(x = factor(time), y = intensity)) +
       geom_boxplot() +
       geom_line( data = data.model %>% filter(priming == data.distinct.tmp$priming,
                                         stimulation == data.distinct.tmp$stimulation),
-                 mapping = aes(x = factor(time - 5), y = m.norm, group = factor(label), color = factor(label))) +
+                 mapping = aes(x = factor(time ), y = m.norm, group = factor(label), color = factor(label))) +
       geom_errorbar(
         data = data.model %>% filter(priming == data.distinct.tmp$priming,
                                      stimulation == data.distinct.tmp$stimulation),
-        mapping = aes(x = factor(time - 5), ymax = m.norm + sqrt(sd.norm), ymin=m.norm - sqrt(sd.norm), color = factor(label))) +
+        mapping = aes(x = factor(time), ymax = m.norm + sqrt(sd.norm), ymin=m.norm - sqrt(sd.norm), color = factor(label))) +
       ggtitle(paste(plot.title, data.distinct.tmp$priming, data.distinct.tmp$stimulation)) +
       geom_point(data = data.summarise %>% 
                    filter(priming == data.distinct.tmp$priming,
                           stimulation == data.distinct.tmp$stimulation),
-                 aes(x = factor(time - 5), y = intensity_mean), shape = 23) +
+                 aes(x = factor(time), y = intensity_mean), shape = 23) +
       ylim(c(0,1000)) + 
       theme_jetka()
     if(plot.save){

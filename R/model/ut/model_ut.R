@@ -8,7 +8,7 @@ PrepareModelArguments.ut <-
            parameters.priming = parameters,
            variables,
            variables.priming,
-           priming_constant = 2.6,
+           priming_constant = 3.4,
            ...) {
     
     variables.priming[1] <- priming_constant*variables[1]
@@ -23,7 +23,7 @@ PrepareModelArguments.ut <-
     ))}
 
 #### LoadSigmapointsConditions ####
-LoadSigmapointsConditions <- function(){
+LoadSigmapointsConditions <- function(path.optimisation){
   path.sigmapoints <-  paste(path.optimisation, "sigmapoints_conditions.csv", sep = "")
   if(file.exists(path.sigmapoints)){
     sigmapoints.conditions <- read.table(file = path.sigmapoints, 
@@ -332,7 +332,7 @@ run_model_ut <- function(
                   sd.lmvn = sd.lmvn.ut,
                   m.norm = m.norm.ut,
                   sd.norm = sd.norm.ut) %>%
-    dplyr::select(time, priming, stimulation, m.norm, sd.norm, mean.lmvn, sd.norm)
+    dplyr::select(time, priming, stimulation, m.norm, sd.norm, mean.lmvn, sd.lmvn)
   
   return(list( error = FALSE, 
                data.model = data.model, 
@@ -386,7 +386,7 @@ optimisation_ut <- function(par,
                data.model = model.simulation$data.model,
                data.exp.grouped = data.exp.grouped,
                data.exp.summarise = data.exp.summarise))
-  print(result)
+  print(paste(c(result, par), sep = " "))
   
   if(return.model){
     return(list( error = FALSE, 

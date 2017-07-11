@@ -12,7 +12,8 @@ run_model <- function(parameters,
                       stimulation.list,
                       background,
                       time_interval = 100,
-                      time_computation = 1000*60*5){
+                      time_computation = 1000*60*5,
+                      ...){
   data.model <- data.table(time = numeric(),
                            m = numeric(),
                            sd = numeric(),

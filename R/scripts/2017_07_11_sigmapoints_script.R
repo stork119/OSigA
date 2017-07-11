@@ -16,7 +16,7 @@ rm(list = labels(optimisation.conditions.toload))
 attach(optimisation.conditions.toload)
 
 
-sigmapoints <- LoadSigmapointsConditions()
+sigmapoints <- LoadSigmapointsConditions(path.optimisation = path.list$optimisation)
 
 
 optimisation.results <- 
