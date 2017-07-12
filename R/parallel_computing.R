@@ -46,7 +46,7 @@ run_parallel_computations <- function(path.optimisation,
   print(maxit)
 #### ####
     registerDoParallel(no_cores)
-    test <- foreach(i = par.list.ids[1], .combine = list, .multicombine = TRUE ) %dopar%
+    test <- foreach(i = par.list.ids, .combine = list, .multicombine = TRUE ) %dopar%
     {
       
       #print(par.list.ids)
