@@ -16,14 +16,14 @@ ComputeLikelihood.lmvn <- function(m,
                                 ... ){
   nu    <- lmvn.mean(m, sd)
   sigma <- lmvn.sd(m, sd)
-  return((((nu - log(X))^2)/sigma))
+  return((((nu - log(X))^2)/(2*sigma)))
 }
 
 ComputeLikelihood.lmvn.nusigma <- function(nu, # lmvn.mean(m, sd)
                                    sigma, # lmvn.sd(m, sd)
                                    X,
                                 ... ){
-  return((((nu - log(X))^2)/sigma))
+  return((((nu - log(X))^2)/(2*sigma)))
 }
 
 ComputeLikelihood.lmvn.rse <- function(nu, # lmvn.mean(m, sd)
@@ -54,7 +54,7 @@ fun.likelihood.list.sd_data <- function(logintensity = logintensity,
 
   nu <- mean.lmvn(data.model.tmp$m.norm, intensity.sd)
   sd <- sd.lmvn(data.model.tmp$m.norm, intensity.sd)
-  res <- ((nu - logintensity)^2)/sd
+  res <- ((nu - logintensity)^2)/(2*sd)
 #print(res)
   return(res)
 }
@@ -65,7 +65,7 @@ fun.likelihood.list.sd <- function(logintensity = logintensity,
   
   nu <- mean.lmvn(data.model.tmp$m.norm, data.model.tmp$sd.norm)
   sd <- sd.lmvn(data.model.tmp$m.norm, data.model.tmp$sd.norm)
-  res <- log(sqrt(sd)) + (((nu - logintensity)^2)/sd)
+  res <- log(sqrt(sd)) + (((nu - logintensity)^2)/(2*sd))
   #print(res)
   return(res)
 }
@@ -89,7 +89,7 @@ fun.likelihood.list.data <- function(logintensity = logintensity,
   nu <- mean.lmvn(intensity.mean, intensity.sd)
   sd <- sd.lmvn(intensity.mean, intensity.sd)
   
-  res <- log(sqrt(sd)) + (((nu - logintensity)^2)/sd)
+  res <- log(sqrt(sd)) + (((nu - logintensity)^2)/(2*sd))
   #print(res)
   return(res)
 }
