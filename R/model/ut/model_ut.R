@@ -4,12 +4,12 @@
 
 #### PrepareModelArguments.ut ####
 PrepareModelParameters.ut <-
-  function(parameters,
+  function(parameters.model,
            priming_constant = 3.4,
            ...)
     {
-    parameters[15] <- priming_constant*parameters[11]
-    return(parameters)
+    parameters.model[15] <- priming_constant*parameters.model[11]
+    return(parameters.model)
 }
 
 PrepareModelArguments.ut <-
@@ -25,6 +25,32 @@ PrepareModelArguments.ut <-
     
     return(list(parameters = parameters,
                 parameters.priming = parameters.priming,
+                variables = variables,
+                variables.priming = variables.priming
+    ))}
+
+
+PrepareModelArguments.ut.multiple <-
+  function(parameters,
+           parameters.priming = parameters,
+           variables,
+           variables.priming,
+           parameters.conditions,
+           priming_constant = 3.4,
+           ...) {
+    
+    # print(parameters.conditions)
+    parameters.model <- rep(0, times = length(which(parameters.conditions$parameters != 0)))
+    parameters.priming.model <- rep(0, times = length(which(parameters.conditions$parameters.priming != 0)))
+    
+    parameters.model[parameters.conditions$parameters[which(parameters.conditions$parameters != 0)]] <- 
+      parameters[which(parameters.conditions$parameters != 0)]
+    
+    parameters.priming.model[parameters.conditions$parameters.priming[which(parameters.conditions$parameters.priming != 0)]] <- 
+      parameters[which(parameters.conditions$parameters.priming != 0)]
+    
+    return(list(parameters = parameters.model,
+                parameters.priming = parameters.priming.model,
                 variables = variables,
                 variables.priming = variables.priming
     ))}
@@ -49,7 +75,6 @@ LoadSigmapointsConditions <- function(path.optimisation){
   return(list(conditions = sigmapoints.conditions,
               parameters.conditions = sigmapoints.parameters.conditions,
           #    optimisation.procedure = optimisation.procedure,
-              fun_modify_input = PrepareModelArguments.ut,
           fun_run_model = fun_run_model
               ))
   
@@ -140,7 +165,8 @@ simulate_model_ut <- function(
     priming = numeric(), 
     stimulation = numeric()
   )
-  # print(parameters)
+   # print(parameters.model)
+   # print(parameters.priming.model)
   for(stm in stimulation.list){
     if(model.computations$raw){
       res <- rmain(parameters = parameters.model, 
@@ -230,16 +256,18 @@ ut.fun_sigmapoints <-
            parameters.base,
            variables,
            variables.priming,
-           fun_modify_input = fun_modify_input,
+           fun_modify_input,
            fun_modify_parameters = function(parameters){return(parameters)},
            ...
            ){
+    
+    # print(fun_modify_input)
     
     # sigmapoints.par <- par.all
     # sigmapoints.par[sigmapoints.parameters.conditions$id.par] <- sigmapoints.list[[i]]
     # 
     parameters <- parameters.factor*(parameters.base)^par.all
-    parameters <- fun_modify_parameters(parameters)
+    parameters <- fun_modify_parameters(parameters.model = parameters)
     
     sigmapoints.list <- 
       GetSigmapoints(sigmapoints.parameters = parameters[sigmapoints.parameters.conditions$id.par],
@@ -265,6 +293,7 @@ ut.fun_sigmapoints <-
         sigmapoints.parameters[
             sigmapoints.parameters.conditions$id.par[
               which(sigmapoints.parameters.conditions$variables.priming != 0)]]
+      
       arguments.list[[i]] <- fun_modify_input(parameters = sigmapoints.parameters,
                                 variables = sigmapoints.variables,
                                 variables.priming = sigmapoints.variables.priming,
@@ -276,6 +305,7 @@ ut.fun_sigmapoints <-
 
 #### run_model_ut ####
 run_model_ut <- function(
+  parameters,
   par,
   parameters.base,
   parameters.factor,
@@ -294,6 +324,7 @@ run_model_ut <- function(
   #par <- as.numeric(par.list[[11]])
   par.all <- rep(0, times = length(parameters.factor))
   par.all[par.optimised] <- par
+  
   arguments.list  <-  ut.fun_sigmapoints(
     par.all = par.all,
     sigmapoints.parameters.conditions = sigmapoints$parameters.conditions,
@@ -302,9 +333,9 @@ run_model_ut <- function(
     parameters.base = parameters.base,
     variables = variables,
     variables.priming = variables.priming,
-    fun_modify_input = sigmapoints$fun_modify_input,
+    fun_modify_input = fun_modify_input,
     ...)
-  
+
   
   
   sigmapoints$weights <- GetWeigths(alpha = sigmapoints$conditions$alpha, 
@@ -317,12 +348,15 @@ run_model_ut <- function(
     
     input <- arguments.list[[argument.i]]
     parameters <- input$parameters
+    parameters.priming <- input$parameters.priming
     variables  <- input$variables
     variables.priming <- input$variables.priming
     
+
     model.simulation<- do.call(simulate_model_ut,
                                list(
                                  parameters.model = parameters,
+                                 parameters.priming.model = parameters.priming,
                                  variables = variables,
                                  variables.priming = variables.priming,
                                  tmesh = tmesh,
@@ -330,6 +364,7 @@ run_model_ut <- function(
                                  stimulation.list = stimulation.list,
                                  background = background,
                                  ...))
+
     data.model.list[[argument.i]] <- model.simulation$data.model
     data.model.list[[argument.i]]$sigmapoint <- argument.i
     
@@ -440,7 +475,7 @@ optimisation_ut <- function(par,
                data.model = model.simulation$data.model,
                data.exp.grouped = data.exp.grouped,
                data.exp.summarise = data.exp.summarise))
-  print(paste(c(result, par), sep = " "))
+  #print(paste(c(result, par), sep = " "))
   
   if(return.model){
     return(list( error = FALSE, 

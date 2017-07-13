@@ -35,7 +35,8 @@ optimisation.results <-
                             return.model = TRUE,
                             fun.likelihood = fun.likelihood.list.sd,
                             par.optimised = par.optimised,
-                            fun_modify_input = PrepareModelArguments.ut,
+                            fun_modify_input = PrepareModelArguments.ut.multiple,
+                parameters.conditions = parameters.conditions,
                             fun_modify_parameters = PrepareModelParameters.ut,
                             sigmapoints = sigmapoints)
 
@@ -106,7 +107,8 @@ analyse_model_ut <- function(variables.model,
   }
   par.optimised <- which(parameters.df$lower != parameters.df$upper)
   
-  model<- run_model_ut(par = parameters.df$par[par.optimised],
+  model<- run_model_ut(
+    par = parameters.df$par[par.optimised],
                        parameters.base = parameters.df$base,
                        parameters.factor = parameters.df$factor,
                        variables = variables.model, 
@@ -116,7 +118,6 @@ analyse_model_ut <- function(variables.model,
                        stimulation.list = stimulation.list,
                        background = background,
                        par.optimised = par.optimised,
-                       fun_modify_input = PrepareModelArguments.ut,
                        sigmapoints = sigmapoints,
                        ...)
   data.model <- model$data.model
@@ -274,13 +275,16 @@ parameters.df$par[10] <- 2.5
 parameters.df$par[12] <- -0.25
 parameters.df$par[14] <- 0
 
-res <- analyse_model_ut(variables.model = variables.model,
+res <- analyse_model_ut(parameters = parameters.factor,
+   variables.model = variables.model,
                  variables.priming.model = variables.priming.model,
                  sigmapoints = sigmapoints,
                  analyse_name = "karol",
                  model.computations = list(raw = TRUE, priming = TRUE),
                  parameters.df = parameters.df,
-                 fun_modify_parameters = PrepareModelParameters.ut
+                 fun_modify_parameters = PrepareModelParameters.ut,
+                 fun_modify_input = PrepareModelArguments.ut.multiple,
+                 parameters.conditions = parameters.conditions
                  )
 compare_distribution(data.exp.grouped.optimisation = data.exp.grouped.optimisation, data.model = res$data.model, analyse_name = res$analyse_name)
 
