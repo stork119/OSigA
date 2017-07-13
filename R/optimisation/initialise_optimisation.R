@@ -29,7 +29,7 @@ source("R/parallel_computing.R")
 
 path.list <- LoadOptimisationPaths(
   path.output = "resources/output/",
-  id = "2017-07-10-ut"
+  id = "2017-07-12-ut"
 )
 
 path.optimisation <- path.list$optimisation

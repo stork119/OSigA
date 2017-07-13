@@ -328,7 +328,7 @@ do.call(what = ggsave,
 
 
 gplot.list[["models.compare_log"]] <- list()
-for(id in optimisation.table$id[1:10]){
+for(id in optimisation.table$id){
   type.list <- c(id, "single")
   gplot.list[["models.compare_log"]][[as.character(id)]] <- ggplot(data.model %>% 
          dplyr::filter(type %in% type.list),
@@ -355,7 +355,7 @@ do.call(what = ggsave,
 
 
 gplot.list[["models.compare"]] <- list()
-for(id in optimisation.table$id[1:10]){
+for(id in optimisation.table$id){
   type.list <- c(id, "single")
   gplot.list[["models.compare"]][[as.character(id)]] <- ggplot(data.model %>% 
                                                                  dplyr::filter(type %in% type.list),

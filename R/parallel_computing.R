@@ -29,6 +29,7 @@ run_parallel_computations <- function(path.optimisation,
                                       data.model.list,
                                       fun_modify_input,
                                       optimisation_procedure = optimisation,
+                                      par.list.ids.part = NULL,
                                       ...
                                       ){
                                       
@@ -44,6 +45,9 @@ run_parallel_computations <- function(path.optimisation,
   rm(list = labels(optimisation.conditions.toload))
   attach(optimisation.conditions.toload)
   print(maxit)
+  if(!is.null(par.list.ids.part)){
+    par.list.ids <- par.list.ids.part
+  }
 #### ####
     registerDoParallel(no_cores)
     test <- foreach(i = par.list.ids, .combine = list, .multicombine = TRUE ) %dopar%

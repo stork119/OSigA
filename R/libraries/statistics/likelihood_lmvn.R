@@ -59,17 +59,25 @@ fun.likelihood.list.sd_data <- function(logintensity = logintensity,
   return(res)
 }
 
+# fun.likelihood.list.sd <- function(logintensity = logintensity, 
+#                                    data.model.tmp = data.model.tmp,
+#                                    ...){
+#   
+#   nu <- mean.lmvn(data.model.tmp$m.norm, data.model.tmp$sd.norm)
+#   sd <- sd.lmvn(data.model.tmp$m.norm, data.model.tmp$sd.norm)
+#   res <- log(sqrt(sd)) + (((nu - logintensity)^2)/(2*sd))
+#   #print(res)
+#   return(res)
+# }
+
+
 fun.likelihood.list.sd <- function(logintensity = logintensity, 
                                    data.model.tmp = data.model.tmp,
                                    ...){
-  
-  nu <- mean.lmvn(data.model.tmp$m.norm, data.model.tmp$sd.norm)
-  sd <- sd.lmvn(data.model.tmp$m.norm, data.model.tmp$sd.norm)
-  res <- log(sqrt(sd)) + (((nu - logintensity)^2)/(2*sd))
+  res <- log(sqrt(data.model.tmp$sd.lmvn)) + (((data.model.tmp$mean.lmvn - logintensity)^2)/(2*data.model.tmp$sd.lmvn))
   #print(res)
   return(res)
 }
-
 
 
 fun.likelihood.list.data <- function(logintensity = logintensity, 
