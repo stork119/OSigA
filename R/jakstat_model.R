@@ -4,7 +4,7 @@
 
 
 if( Sys.info()[["sysname"]] == "Linux"){
-  if(Sys.info()[["nodename"]] == "piotrk-pc"){
+  if(Sys.info()[["nodename"]] == "piotrek-pc"){
     PKG_CXXFLAGS="-I/usr/share/sundials/sundials-2.7.0/instdir/include -I/usr/share/sundials/sundials-2.7.0/instdir/include/cvode -I/usr/share/sundials/sundials-2.7.0/instdir/include/cvodes -L/usr/share/sundials/sundials-2.7.0/instdir/lib -mtune=core2 -std=c++11      -Wl,-rpath,/usr/share/sundials/sundials-2.7.0/instdir/lib"
     PKG_LIBS="-I/usr/share/sundials/sundials-2.7.0/instdir/include -L/usr/share/sundials/sundials-2.7.0/instdir/lib  -lsundials_cvodes -lsundials_nvecserial -Wl,-rpath,/home/knt/Programs/Sundials/cvodes-2.9.0-inst/lib -pthread      -Wl,-rpath,/usr/share/sundials/sundials-2.7.0/instdir/lib"
   } else {

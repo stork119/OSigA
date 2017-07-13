@@ -23,12 +23,12 @@ optimisation.results <-
   optimisation_ut(par = as.numeric(par.list[[1]]),
                 fun_run_model = run_model_ut,
                 parameters.base = parameters.base,
-                            parameters.factor = parameters.factor,
-                            variables = variables, 
-                            variables.priming = variables.priming, 
-                            tmesh = tmesh, 
-                            tmesh.list = tmesh.list,
-                            stimulation.list = stimulation.list,
+                parameters.factor = parameters.factor,
+                variables = variables, 
+                variables.priming = variables.priming, 
+                tmesh = tmesh, 
+                tmesh.list = tmesh.list,
+                stimulation.list = stimulation.list,
                             background = background,
                             data.exp.grouped = data.exp.grouped.optimisation,
                             data.exp.summarise = data.exp.summarise.optimisation,
@@ -36,6 +36,7 @@ optimisation.results <-
                             fun.likelihood = fun.likelihood.list.sd,
                             par.optimised = par.optimised,
                             fun_modify_input = PrepareModelArguments.ut,
+                            fun_modify_parameters = PrepareModelParameters.ut,
                             sigmapoints = sigmapoints)
 
 
@@ -116,7 +117,8 @@ analyse_model_ut <- function(variables.model,
                        background = background,
                        par.optimised = par.optimised,
                        fun_modify_input = PrepareModelArguments.ut,
-                       sigmapoints = sigmapoints)
+                       sigmapoints = sigmapoints,
+                       ...)
   data.model <- model$data.model
   
   data.model$likelihood  <- 
@@ -257,7 +259,7 @@ sigmapoints <- LoadSigmapointsConditions(path.optimisation = path.list$optimisat
 
 variables.model <- scan(paste(path.list$optimisation, "variables.csv", sep = "/"))
 variables.priming.model <- scan(paste(path.list$optimisation, "variables-priming.csv", sep = "/"))
-results.id <- "10"
+results.id <- "1"
 parameters.df <- read.table(paste(path.list$optimisation.data, results.id, "parameters.csv", sep = "/"), header = TRUE, sep = ",")
 
 parameters.df <-parameters.df %>% 
@@ -275,8 +277,10 @@ parameters.df$par[14] <- 0
 res <- analyse_model_ut(variables.model = variables.model,
                  variables.priming.model = variables.priming.model,
                  sigmapoints = sigmapoints,
-                 analyse_name = "test",
-                 parameters.df = parameters.df
+                 analyse_name = "karol",
+                 model.computations = list(raw = TRUE, priming = TRUE),
+                 parameters.df = parameters.df,
+                 fun_modify_parameters = PrepareModelParameters.ut
                  )
 compare_distribution(data.exp.grouped.optimisation = data.exp.grouped.optimisation, data.model = res$data.model, analyse_name = res$analyse_name)
 
