@@ -257,7 +257,7 @@ ut.fun_sigmapoints <-
            variables,
            variables.priming,
            fun_modify_input,
-           fun_modify_parameters = function(parameters){return(parameters)},
+           fun_modify_parameters = function(parameters.model){return(parameters.model)},
            ...
            ){
     
