@@ -8,7 +8,13 @@ PrepareModelParameters.ut <-
            priming_constant = 3.4,
            ...)
     {
-    parameters.model[15] <- priming_constant*parameters.model[11]
+   # parameters.model[15] <- priming_constant*parameters.model[11]
+    parameters.model[11] <- parameters.model[17]*parameters.model[11]
+    parameters.model[12] <- (parameters.model[17]^2)*parameters.model[12]
+    parameters.model[15] <- parameters.model[17]*parameters.model[15]
+    parameters.model[16] <- (parameters.model[17]^2)*parameters.model[16]
+    parameters.model[13] <- parameters.model[18]*parameters.model[13]
+    parameters.model[14] <- (parameters.model[18]^2)*parameters.model[13]
     return(parameters.model)
 }
 

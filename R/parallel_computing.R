@@ -209,17 +209,13 @@ run_parallel_computations <- function(path.optimisation,
                      grid.ncol = ceiling(length(stimulation.list)/2))
         
         
-        init <- 0*par.optimised 
-        init[par.optimised] <- par
-        opt <- 0*par.optimised 
-        opt[par.optimised] <- optimisation.res[[optimisation.res.par]]
-        write.table(x = data.frame(factor = parameters.factor,
-                                   base = parameters.base, 
-                                   init = init,
-                                   opt = opt,
-                                   lower = par.lower,
-                                   upper = par.upper), 
-                    file = paste(path.optimisation.i, "parameters.csv", sep = "/"),
+        parameters.conditions.opt <- parameters.conditions
+        parameters.conditions.opt$init <- 0
+        parameters.conditions.opt$init[par.optimised] <- par
+        parameters.conditions.opt$opt <- 0
+        parameters.conditions.opt$opt[par.optimised] <- optimisation.res[[optimisation.res.par]]
+        write.table(x = parameters.conditions.opt, 
+                    file = paste(path.optimisation.i, "parameters_conditions.csv", sep = "/"),
                     sep = ",", 
                     row.names = FALSE, 
                     col.names = TRUE)
