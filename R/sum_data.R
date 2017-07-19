@@ -143,7 +143,7 @@ data.parameters.opt.melt <- data.parameters.opt.melt %>% dplyr::left_join(optimi
 
 write.table(x = data.parameters.df %>% 
               dplyr::filter(id == optimisation.table[1,"id"]) %>%
-              dplyr::mutate(factor == value) %>%
+              dplyr::mutate(factor = value) %>%
               dplyr::select(factor, base, lower, upper, parameters, parameters.priming),
             file = paste(path.list$optimisation.results, "parameters_conditions.csv", sep = ""),
             col.names = TRUE,
