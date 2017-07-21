@@ -1,7 +1,17 @@
 ### ###
 ### Unscented transform model 
 ### ###
+#### ####
 
+#### fun_parameters_penalty ####
+fun_parameters_penalty_sigmapoints <- function(par, 
+                                   parameters.conditions,
+                                   ...){
+  a <- parameters.conditions$lower[which(parameters.conditions$lower != parameters.conditions$upper)]
+  b <- parameters.conditions$upper[which(parameters.conditions$lower != parameters.conditions$upper)]
+  base <- parameters.conditions$base[which(parameters.conditions$lower != parameters.conditions$upper)]
+  return(sum(((base^par - base^0)^2)/(base^(2*b) - base^(2*a))))
+}
 #### PrepareModelArguments.ut ####
 PrepareModelParameters.ut <-
   function(parameters.model,
@@ -350,6 +360,7 @@ run_model_ut <- function(
                                     D = nrow(sigmapoints$parameters.conditions))
   ###
   data.model.list <- list()
+  data.trajectory.list <- list()
   for(argument.i in 1:length(arguments.list)){
     
     input <- arguments.list[[argument.i]]
@@ -376,14 +387,21 @@ run_model_ut <- function(
     
     data.model.list[[argument.i]] <- model.simulation$data.model
     data.model.list[[argument.i]]$sigmapoint <- argument.i
-    
+    data.trajectory.list[[argument.i]] <- model.simulation$data.trajectory
+    data.trajectory.list[[argument.i]]$sigmapoint <- argument.i
+    data.model.list[[argument.i]] <- model.simulation$data.model
+    data.model.list[[argument.i]]$sigmapoint <- argument.i
+     
   }
   
   data.model.sigmapoints <- do.call(
     rbind,
     data.model.list) %>% 
     data.table()
-  
+  data.trajectory <- do.call(
+    rbind,
+    data.trajectory.list) %>% 
+    data.table()
   data.model.ut <- 
     data.model.sigmapoints %>% 
     dplyr::mutate(mean.lmvn.ut = 
@@ -433,7 +451,8 @@ run_model_ut <- function(
                data.model = data.model, 
                data.model.sigmapoints = data.model.sigmapoints,
                data.model.ut = data.model.ut,
-               arguments.list = arguments.list
+               arguments.list = arguments.list,
+               data.trajectory = data.trajectory
   ))
 }
 
@@ -455,6 +474,7 @@ optimisation_ut <- function(par,
                             par.optimised = rep(1, times = length(par)),
                             fun_modify_input = PrepareModelArguments.ut,
                             sigmapoints,
+                            fun_parameters_penalty = NULL,
                             ...)
 {
   
@@ -481,6 +501,9 @@ optimisation_ut <- function(par,
                data.model = model.simulation$data.model,
                data.exp.grouped = data.exp.grouped,
                data.exp.summarise = data.exp.summarise))
+  if(!is.null(fun_parameters_penalty)){
+    result <- result + nrow(data.exp.summarise)*fun_parameters_penalty(par, ...)
+  }
   #print(paste(c(result, par), sep = " "))
   
   if(return.model){
