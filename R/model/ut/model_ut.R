@@ -8,6 +8,7 @@ PrepareModelParameters.ut <-
            priming_constant = 3.4,
            ...)
     {
+   # parameters.model[15] <- priming_constant*parameters.model[11]
     parameters.model[11] <- parameters.model[17]*parameters.model[11]
     parameters.model[12] <- (parameters.model[17]^2)*parameters.model[12]
     parameters.model[15] <- parameters.model[17]*parameters.model[15]
@@ -349,7 +350,6 @@ run_model_ut <- function(
                                     D = nrow(sigmapoints$parameters.conditions))
   ###
   data.model.list <- list()
-  data.trajectory.list <- list()
   for(argument.i in 1:length(arguments.list)){
     
     input <- arguments.list[[argument.i]]
@@ -370,24 +370,18 @@ run_model_ut <- function(
                                  stimulation.list = stimulation.list,
                                  background = background,
                                  ...))
-    data.trajectory.list[[argument.i]] <- model.simulation$data.trajectory
-    data.trajectory.list[[argument.i]]$sigmapoint <- argument.i
-    data.model.list[[argument.i]] <- model.simulation$data.model
-    data.model.list[[argument.i]]$sigmapoint <- argument.i
-    
     if(model.simulation$error){
       return(list(error = TRUE))
     } 
+    
+    data.model.list[[argument.i]] <- model.simulation$data.model
+    data.model.list[[argument.i]]$sigmapoint <- argument.i
+    
   }
   
   data.model.sigmapoints <- do.call(
     rbind,
     data.model.list) %>% 
-    data.table()
-  
-  data.trajectory <- do.call(
-    rbind,
-    data.trajectory.list) %>% 
     data.table()
   
   data.model.ut <- 
@@ -439,7 +433,6 @@ run_model_ut <- function(
                data.model = data.model, 
                data.model.sigmapoints = data.model.sigmapoints,
                data.model.ut = data.model.ut,
-               data.trajectory = data.trajectory,
                arguments.list = arguments.list
   ))
 }
