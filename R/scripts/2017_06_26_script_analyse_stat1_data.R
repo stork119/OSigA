@@ -503,12 +503,13 @@ constainig.list.ffc[["cells.filtered.488"]] <-
 
 #### KZ58 ####
 #### KZ 58/ KZ 51 preapre data ####
-type <- "ffc"
-path.input.costaining <- paste("resources/input/2017-05-26-KZ51", type, "/", sep = "/")
+type <- "raw"
+path.input.costaining <- paste("resources/input/2017-07-13-KZ62", type, "/", sep = "/")
 for(filename in list.files(path.input.costaining, pattern = ".csv")){
   tryCatch({
     dt <- read.table(paste(path.input.costaining, filename, sep = "/"), header = TRUE, sep = ",") %>% data.table()
-    dt <- dt %>% dplyr::mutate(priming.1.1 = ifelse(time.1.1 == 0, 0, 900*stimulation.1.1/50)) %>%
+    dt <- dt %>% dplyr::mutate(stimulation.1.1 = ifelse(stimulation.1.1 == 1001, 1000, stimulation.1.1)) %>%
+      dplyr::mutate(priming.1.1 = ifelse(time.1.1 == 0, 0, stimulation.1.1)) %>%
       dplyr::mutate(stimulation.2.1 = stimulation.1.1, 
                     time.2.1 = time.1.1 ) %>%
       dplyr::mutate(stimulation.1.1 = 0,
@@ -631,7 +632,7 @@ CompareIFNBpriming <- function(data.constaining,
 type <- "ffc"
 type.list <- c("ffc", "raw")
 for(type in type.list){
-path.input.costaining <- paste("resources/input/2017-05-26-KZ51/", type, "/", sep = "/")
+path.input.costaining <- paste("resources/input/2017-07-13-KZ62/", type, "/", sep = "/")
 
 filename.list <- list.files(path.input.costaining, pattern = ".csv", recursive = FALSE)
 for(filename in filename.list[c(1,2,5,7)]){
@@ -726,16 +727,16 @@ for(filename in filename.list[c(1,2,5,7)]){
 
 #### 2017-07-06 - analysis ####
 path.input <- "resources/input/"
-experiment.list <-c("2017-06-29-KZ58", "2017-04-06-KZ46", "2017-03-30-KZ45", "2017-05-26-KZ51")
+experiment.list <-c("2017-06-29-KZ58", "2017-04-06-KZ46", "2017-03-30-KZ45", "2017-05-26-KZ51", "2017-07-13-KZ62")
 gplot.list <- list()
 
-i <- 4
+i <- 5
 
 gplot.list[[as.character(i)]]  <-list()
 experiment <- experiment.list[i]
 path.input.costaining <- paste(path.input, experiment, sep = "/")
 type.list <- list.dirs(path.input.costaining, recursive = FALSE, full.names = FALSE)
-type.i <- 2
+type.i <- 1
 for(type.i in 1:length(type.list)){
   gplot.list[[as.character(i)]][[type]]  <- list()
   y <- "Intensity_MeanIntensity_Alexa555"
@@ -833,6 +834,10 @@ for(type.i in 1:length(type.list)){
       dplyr::mutate_("IntensityRatioNucleiCytoplasm" = 
                        paste("(Intensity_IntegratedIntensity_Alexa555.y)",
                              "(IntensityIntegratedCytoplasm)",
+                             sep = "/"))  %>%
+      dplyr::mutate_("IntensityPercentageNucleiCytoplasm" = 
+                       paste("100*(Intensity_IntegratedIntensity_Alexa555.y)",
+                             "(IntensityIntegratedCytoplasm + Intensity_IntegratedIntensity_Alexa555.y)",
                              sep = "/"))  
     
     data.cytoplasm <- data.cytoplasm %>% 
@@ -927,6 +932,24 @@ for(type.i in 1:length(type.list)){
                    title = paste(experiment, "ratio nuclei/cytoplasm", "log")) + 
       xlim(c(-2,7))
     
+    
+    y <- "IntensityPercentageNucleiCytoplasm"
+    gplot.list[[as.character(i)]][[type]][["percentage"]] <-
+      plot_density(data = data.cytoplasm %>%
+                     dplyr::mutate(priming.1.1 = factor(priming.1.1)),
+                   x = y,
+                   group = "priming.1.1",
+                   color = "priming.1.1",
+                   title = paste(experiment, "Percentage in nuclei. nuclei/(nuclei+cytoplasm)")) 
+    
+    gplot.list[[as.character(i)]][[type]][["percentage_log"]] <-
+      plot_density(data = data.cytoplasm %>% 
+                     dplyr::mutate(priming.1.1 = factor(priming.1.1)) %>% 
+                     dplyr::mutate_(logint = paste("log(", y, ")")),
+                   x = "logint",
+                   group = "priming.1.1",
+                   color = "priming.1.1",
+                   title = paste(experiment, "Percentage in nuclei. nuclei/(nuclei+cytoplasm)", "log")) 
     
     do.call(what = ggsave,
             args = append(plot.args.ggsave,

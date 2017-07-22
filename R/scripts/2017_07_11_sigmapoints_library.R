@@ -38,7 +38,7 @@ analyse_model_ut <- function(variables.model,
     background = background,
     par.optimised = par.optimised,
     sigmapoints = sigmapoints,
-    #parameters.conditions = parameters.conditions,fun_modify_input = fun_modify_input,fun_modify_parameters= fun_modify_parameters),
+    #parameters.conditions = parameters.conditions,fun_modify_input = fun_modify_input,fun_modify_parameters= fun_modify_parameters)
     ...)
   data.model <- model$data.model
   data.trajectory <- model$data.trajectory
@@ -55,8 +55,68 @@ analyse_model_ut <- function(variables.model,
                fun.likelihood = fun.likelihood)
   
   optimisation.opt <- sum(data.model$likelihood)
+  if(!is.null(fun_parameters_penalty)){
+    
+    optimisation.opt <- optimisation.opt + nrow(data.exp.summarise.optimisation)*
+      fun_parameters_penalty(par = parameters.df$par[par.optimised],
+    #                         parameters.conditions = parameters.conditions)
+                              ...)
+  }
+  
   print(optimisation.opt)
   if(plot){
+    
+    results[["compare_log_noise"]] <- 
+      ggplot(model$data.model.ut %>% mutate(type = "model") ,
+             mapping = aes(x = time,
+                           y = mean.lmvn.ut,
+                           
+                           ymin =  mean.lmvn.ut - sqrt(sd.lmvn.ut),
+                           ymax =  mean.lmvn.ut + sqrt(sd.lmvn.ut),
+                           group = factor(type),
+                           color = factor(type),
+                           fill = factor(type))) +
+      geom_ribbon(alpha = .5) +
+      geom_ribbon(model$data.model.ut %>% mutate(type = "model_intrinsic") ,
+                mapping = aes(x = time,
+                              ymax = mean.lmvn.ut + sqrt(sd_intrinsic.lmvn.ut),
+                              ymin = mean.lmvn.ut - sqrt(sd_intrinsic.lmvn.ut),
+                              group = factor(type),
+                              color = factor(type),
+                              fill = factor(type)),
+                alpha = .5) +
+      geom_ribbon(model$data.model.ut %>% mutate(type = "model_extrinsic") ,
+                  mapping = aes(x = time,
+                                ymax = mean.lmvn.ut + sqrt(sd_extrinsic.lmvn.ut),
+                                ymin = mean.lmvn.ut - sqrt(sd_extrinsic.lmvn.ut),
+                                group = factor(type),
+                                color = factor(type),
+                                fill = factor(type)),
+                  alpha = .5) +
+      geom_point() +
+      geom_line() +
+      facet_grid(priming ~ stimulation) + do.call(what = theme_jetka, args = plot.args) +
+      geom_point(data =  data.exp.summarise.optimisation %>%
+                   mutate(type = "data"),
+                 mapping = aes(x = time,
+                               y = mean.lmvn,
+                               ymin =  mean.lmvn - sqrt(sd.lmvn),
+                               ymax =  mean.lmvn + sqrt(sd.lmvn),
+                               group = factor(type),
+                               color = factor(type))) +
+      geom_errorbar(data = data.exp.summarise.optimisation %>% 
+                      mutate(type = "data"),
+                    mapping = aes(x = time,
+                                  y = mean.lmvn,
+                                  ymin =  mean.lmvn - sqrt(sd.lmvn),
+                                  ymax =  mean.lmvn + sqrt(sd.lmvn),
+                                  group = factor(type),
+                                  color = factor(type))) +
+      ggtitle(paste(title, "compare log", collapse = ""))
+    
+    print(results[["compare_log"]])
+    
+    
     results[["compare_log"]] <- 
       ggplot(data.model %>% mutate(type = "model") ,
              mapping = aes(x = time,
@@ -100,8 +160,12 @@ analyse_model_ut <- function(variables.model,
                                                  data.trajectory = data.trajectory %>% filter(sigmapoint == 1, var <= 34),
                                                  plot.args = plot.args,
                                                  plot.args.ggsave = plot.args.ggsave,
-                                                 save = save)
-      
+
+                                                                                                  save = save)
+      do.call(what = ggsave,
+              args = append(plot.args.ggsave,
+                            list(filename = paste(path, "models_compare_log_noise.pdf", sep = "/"),
+                                 plot = results[["compare_log_noise"]])))
       do.call(what = ggsave,
               args = append(plot.args.ggsave,
                             list(filename = paste(path, "models_compare_log.pdf", sep = "/"),
