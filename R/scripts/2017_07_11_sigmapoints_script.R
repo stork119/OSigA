@@ -129,5 +129,4 @@ res <- analyse_model_ut(parameters = parameters.factor,
                  )
 compare_distribution(data.exp.grouped.optimisation = data.exp.grouped.optimisation, data.model = res$data.model, analyse_name = res$analyse_name)
 
-
 res$argumeents.list

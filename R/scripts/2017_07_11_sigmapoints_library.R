@@ -12,6 +12,7 @@ analyse_model_ut <- function(variables.model,
                              fun.likelihood = fun.likelihood.list$sd,
                              sigmapoints,
                              parameters.df,
+                             fun_parameters_penalty = NULL,
                              ...){
   if(is.null(analyse_name)){
     analyse_name <- Sys.time()
@@ -24,6 +25,7 @@ analyse_model_ut <- function(variables.model,
     dir.create(path,recursive = TRUE, showWarnings = FALSE)
     print(path)
   }
+  results$path <- path
   par.optimised <- which(parameters.df$lower != parameters.df$upper)
   
   model<- run_model_ut(
