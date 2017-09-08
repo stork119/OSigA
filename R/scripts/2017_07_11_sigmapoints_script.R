@@ -105,6 +105,7 @@ parameters.df <- parameters.conditions
 parameters.df <-parameters.df %>% 
   dplyr::mutate(par = 0)
 
+parameters.df$par[20] <- 2
 # variables.model[31] <- 0.5*variables.model[31]
 # variables.priming.model[31] <- variables.model[31]
 # parameters.df$par[10] <- 2.5
