@@ -86,6 +86,13 @@ gplot <- ggplot(optimisation.results$data.model %>% mutate(type = factor(sigmapo
 
 #### model simulation ####
 source("R/scripts/2017_07_11_sigmapoints_library.R")
+gplot.list <- list()
+optimisation.conditions.toload <-
+  LoadOptimisationConditions(path.optimisation = path.list$optimisation,
+                             path.optimisation.data = path.list$optimisation.data,
+                             maxit.tmp = Inf)
+rm(list = labels(optimisation.conditions.toload))
+attach(optimisation.conditions.toload)
 sigmapoints <- LoadSigmapointsConditions(path.optimisation = path.list$optimisation)
 
 variables.model <- scan(paste(path.list$optimisation, "variables.csv", sep = "/"))
@@ -101,11 +108,13 @@ parameters.df <-parameters.df %>%
 
 ## no results 
 results.id <- 0 
+data.list$cellsvolumes.summarise
+parameters.conditions
 parameters.df <- parameters.conditions
 parameters.df <-parameters.df %>% 
   dplyr::mutate(par = 0)
 
-parameters.df$par[20] <- 2
+analyse_name = "volume_ver0-initial"
 # variables.model[31] <- 0.5*variables.model[31]
 # variables.priming.model[31] <- variables.model[31]
 # parameters.df$par[10] <- 2.5
@@ -120,14 +129,14 @@ res <- analyse_model_ut(parameters = parameters.factor,
    variables.model = variables.model,
                  variables.priming.model = variables.priming.model,
                  sigmapoints = sigmapoints,
-                 analyse_name = "karol-penalty",
+                 analyse_name = analyse_name,
                  model.computations = list(raw = TRUE, priming = TRUE),
                  parameters.df = parameters.df,
                  fun_modify_parameters = PrepareModelParameters.ut,
                  fun_modify_input = PrepareModelArguments.ut.multiple,
                  parameters.conditions = parameters.conditions,
-                 fun_parameters_penalty = fun_parameters_penalty_sigmapoints
+                 #plot = FALSE,
+                 fun_parameters_penalty = NULL#fun_parameters_penalty_sigmapoints
                  )
 compare_distribution(data.exp.grouped.optimisation = data.exp.grouped.optimisation, data.model = res$data.model, analyse_name = res$analyse_name)
 
-res$argumeents.list

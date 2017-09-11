@@ -7,7 +7,7 @@ analyse_model_ut <- function(variables.model,
                              variables.priming.model,
                              save = TRUE,
                              plot = TRUE,
-                             title = "",
+                             plot.title = "",
                              analyse_name = NULL,
                              fun.likelihood = fun.likelihood.list$sd,
                              sigmapoints,
@@ -40,8 +40,8 @@ analyse_model_ut <- function(variables.model,
     background = background,
     par.optimised = par.optimised,
     sigmapoints = sigmapoints,
-    #parameters.conditions = parameters.conditions,fun_modify_input = fun_modify_input,fun_modify_parameters= fun_modify_parameters)
-    ...)
+    parameters.conditions = parameters.conditions,fun_modify_input = fun_modify_input,fun_modify_parameters= fun_modify_parameters)
+    #...)
   data.model <- model$data.model
   data.trajectory <- model$data.trajectory
   
@@ -114,7 +114,7 @@ analyse_model_ut <- function(variables.model,
                                   ymax =  mean.lmvn + sqrt(sd.lmvn),
                                   group = factor(type),
                                   color = factor(type))) +
-      ggtitle(paste(title, "compare log", collapse = ""))
+      ggtitle(paste(plot.title, "compare log", collapse = ""))
     
     print(results[["compare_log"]])
     
@@ -135,7 +135,7 @@ analyse_model_ut <- function(variables.model,
                    mutate(type = "data")) +
       geom_errorbar(data = data.exp.summarise.optimisation %>% 
                       mutate(type = "data")) +
-      ggtitle(paste(title, "compare log", collapse = ""))
+      ggtitle(paste(plot.title, "compare log", collapse = ""))
     
     print(results[["compare_log"]])
     
@@ -155,7 +155,7 @@ analyse_model_ut <- function(variables.model,
                    mutate(type = "data")) +
       geom_errorbar(data = data.exp.summarise.optimisation %>% 
                       mutate(type = "data")) +
-      ggtitle(paste(title, "compare log", collapse = ""))
+      ggtitle(paste(plot.title, "compare log", collapse = ""))
     
     if(save){
       gplot.trajectory.list <- plot_trajectories(path = path,
