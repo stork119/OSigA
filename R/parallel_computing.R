@@ -16,8 +16,9 @@
 #   col.names = TRUE
 # )
 #### ####
-run_parallel_computations <- function(path.list = list("id" = "",
-                                                       "optimisation" = ""),
+run_parallel_computations <- function(path.list = list("id" = NULL,
+                                                       "optimisation" = NULL,
+                                                       "optimisation.data" = NULL),
                                       no_cores = 18,
                                       stopfitness = -10000000,
                                       #fun.optimisation = pureCMAES,
@@ -31,6 +32,7 @@ run_parallel_computations <- function(path.list = list("id" = "",
                                       ...
                                       ){
   
+  #TODO get path to logfile$path outside
   logfile <- list()
   logfile$name <- paste("optimisation", path.list$id, Sys.time(), sep = "-")
   logfile$path <- "~/Documents/modelling/scripts/"

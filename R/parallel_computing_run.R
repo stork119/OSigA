@@ -51,10 +51,9 @@ source(file = "R/optimisation/initialise_optimisation.R")
 
 run_parallel_computations(path.list = path.list,
                           # data.exp.grouped = data.exp.grouped,
-                          no_cores = 1,
-
-                           maxit.tmp   =   1,
-                            par.list.ids.part = 1,
+                          no_cores = 8,
+                          #maxit.tmp   =   1,
+                          #par.list.ids.part = 1,
                           # fun.optimisation = pureCMAES,
                           # optimisation.res.par = "xmin",
                           data.model.list = list(),

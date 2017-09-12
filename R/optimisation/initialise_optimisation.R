@@ -29,7 +29,7 @@ source("R/parallel_computing.R")
 
 #### ####
 path.list <- list()
-path.list$id <- "2017-09-08-density_ver0-test"
+path.list$id <- "2017-09-08-density_ver0"
 path.list <- 
   append(
     path.list,
