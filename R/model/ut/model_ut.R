@@ -1,7 +1,7 @@
 ### ###
-### Unscented transform model 
+### Unscented transformation model
+### running model
 ### ###
-#### ####
 
 #### fun_parameters_penalty ####
 fun_parameters_penalty_sigmapoints <- function(par, 
@@ -30,23 +30,6 @@ PrepareModelParameters.ut <-
     return(parameters.model)
 }
 
-# PrepareModelArguments.ut <-
-#   function(parameters,
-#            parameters.priming = parameters,
-#            variables,
-#            variables.priming,
-#            priming_constant = 3.4,
-#            ...) {
-#     
-#     parameters<- parameters[1:10]
-#     parameters.priming<- parameters[1:10]
-#     
-#     return(list(parameters = parameters,
-#                 parameters.priming = parameters.priming,
-#                 variables = variables,
-#                 variables.priming = variables.priming
-#     ))}
-
 #### PrepareModelArguments.ut.multiple ####
 PrepareModelArguments.ut.multiple <-
   function(parameters,
@@ -73,47 +56,7 @@ PrepareModelArguments.ut.multiple <-
                 variables = variables,
                 variables.priming = variables.priming
     ))}
-#### LoadSigmapointsConditions ####
-LoadSigmapointsConditions <- function(path.optimisation){
-  path.sigmapoints <-  paste(path.optimisation, "sigmapoints_conditions.csv", sep = "")
-  if(file.exists(path.sigmapoints)){
-    sigmapoints.conditions <- read.table(file = path.sigmapoints, 
-                                         header = TRUE, 
-                                         sep = ",")
-  }
-  path.sigmapoints.parameters <-  paste(path.optimisation, "sigmapoints_parameters_conditions.csv", sep = "")
-  if(file.exists(path.sigmapoints.parameters)){
-    sigmapoints.parameters.conditions <- read.table(file = path.sigmapoints.parameters, 
-                                         header = TRUE, 
-                                         sep = ",")
-  }
-  #optimisation.procedure <- optimisation_ut
-  # fun_modify_input <- PrepareModelArguments.ut.multiple
-  fun_run_model <- run_model_ut
-  return(list(conditions = sigmapoints.conditions,
-              parameters.conditions = sigmapoints.parameters.conditions,
-          #    optimisation.procedure = optimisation.procedure,
-          fun_run_model = fun_run_model
-              ))
-  
-}
-####  GetWeigths ####
-GetWeigths <- function(
-  alpha = 0.7,
-  kappa = 0,
-  beta = 2,
-  D # number of sigma points
-){
-  weights.means <- c()
-  weights.variance <- c()
-  weights.means[1]    <- 1 - D/((alpha^2)*(D + kappa))
-  weights.variance[1] <- weights.means[1] + 1 - (alpha^2) + beta 
-  weights.means[2:(2*D + 1)] <- 1/ (2*(alpha^2)*(D+kappa))
-  weights.variance[2:(2*D + 1)] <- weights.means[2:(2*D + 1)] 
-  return(
-    list(weights.means = weights.means, 
-         weights.variance =weights.variance))
-}
+
 #### AggreagateSimulationData ####
 AggreagateSimulationData <- function(
   data.model,
@@ -183,8 +126,6 @@ simulate_model_ut <- function(
     priming = numeric(), 
     stimulation = numeric()
   )
-   # print(parameters.model)
-   # print(parameters.priming.model)
   for(stm in stimulation.list){
     if(model.computations$raw){
       res <- rmain(parameters = parameters.model, 
@@ -238,112 +179,6 @@ simulate_model_ut <- function(
               data.trajectory = data.trajectory))
 }
 
-#### GetSigmapoints ####
-GetSigmapoints <- function(
-  sigmapoints.parameters,
-  sigmapoints.parameters.sd,
-  alpha = 0.7,
-  kappa = 0,
-  beta = 2
-  
-){
-  D <- length(sigmapoints.parameters)
-  
-  sigmapoints.parameters.lmvn.mean <- lmvn.mean.vector(m.norm = sigmapoints.parameters,
-                                                sd.norm = sigmapoints.parameters.sd)
-  sigmapoints.parameters.lmvn.sd   <- lmvn.sd.vector(m.norm = sigmapoints.parameters, 
-                                              sd.norm = sigmapoints.parameters.sd)
-  
-  sigmapoints.list <- list()
-  sigmapoints.list[[1]] <- exp(sigmapoints.parameters.lmvn.mean)
-  for(i in 1:length(sigmapoints.parameters.lmvn.mean)){
-    sigmapoints.parameters.lmvn.sd_tmp <- sigmapoints.parameters.lmvn.sd
-    sigmapoints.parameters.lmvn.sd_tmp[-i] <- 0
-    sigmapoints.list[[i+1]] <- exp(sigmapoints.parameters.lmvn.mean + alpha*(sqrt(D + kappa))*sqrt(sigmapoints.parameters.lmvn.sd_tmp))
-    sigmapoints.list[[D + i + 1]] <- exp(sigmapoints.parameters.lmvn.mean - alpha*(sqrt(D + kappa))*sqrt(sigmapoints.parameters.lmvn.sd_tmp))
-  }
-  return(sigmapoints.list)
-}
-
-#### ut.fun_sigmapoints ####
-ut.fun_sigmapoints <- 
-  function(sigmapoints.parameters.conditions,
-           sigmapoints.conditions,
-           parameters.conditions,
-           par.all,
-           parameters.factor,
-           parameters.base,
-           variables,
-           variables.priming,
-           fun_modify_input,
-           fun_modify_parameters = function(parameters.model){return(parameters.model)},
-           ...
-           ){
-    
-    flog.debug("model_ut.R ut.fun_sigmapoints", name="logger.optimisation")
-
-    
-    # print("ut.fun_sigmapoints")
-    # 
-    #flog.debug("ut.fun_sigmapoints %s", parameters.conditions)
-    # print(fun_modify_input)
-    
-    # sigmapoints.par <- par.all
-    # sigmapoints.par[sigmapoints.parameters.conditions$id.par] <- sigmapoints.list[[i]]
-    #
-    # print("ut.fun_sigmapoints")
-    parameters <- parameters.factor*(parameters.base)^par.all
-    parameters <- fun_modify_parameters(parameters.model = parameters)
-    # print("ut.fun_sigmapoints OLA")
-    
-    sigmapoints.list <- 
-      GetSigmapoints(sigmapoints.parameters = parameters[sigmapoints.parameters.conditions$id.par],
-                      sigmapoints.parameters.sd = parameters[sigmapoints.parameters.conditions$id.par.sd],
-                     alpha = sigmapoints.conditions$alpha,
-                     beta = sigmapoints.conditions$beta,
-                     kappa = sigmapoints.conditions$kappa)
-    # print(sigmapoints.list)
-    
-    arguments.list <- list()
-    # flog.debug("ut.fun_sigmapoints KASIA")
-    # 
-    # flog.debug("ut.fun_sigmapoints sigmapoints_list %s", sigmapoints.list)
-    # 
-    for(i in 1:length(sigmapoints.list)){
-      # flog.debug("ut.fun_sigmapoints ZOSIA %d", i)
-      flog.debug("model_ut.R ut.fun_sigmapoints for %s", paste(i), name="logger.optimisation")
-      
-        sigmapoints.parameters <- parameters 
-      sigmapoints.parameters[sigmapoints.parameters.conditions$id.par] <- sigmapoints.list[[i]]
-      sigmapoints.variables <- variables
-      sigmapoints.variables.priming <- variables.priming
-      sigmapoints.variables[ 
-        sigmapoints.parameters.conditions$variables[
-          which(sigmapoints.parameters.conditions$variables != 0)]] <- 
-        sigmapoints.parameters[
-            sigmapoints.parameters.conditions$id.par[
-              which(sigmapoints.parameters.conditions$variables != 0)]]
-      sigmapoints.variables.priming[ 
-        sigmapoints.parameters.conditions$variables.priming[
-          which(sigmapoints.parameters.conditions$variables.priming != 0)]] <- 
-        sigmapoints.parameters[
-            sigmapoints.parameters.conditions$id.par[
-              which(sigmapoints.parameters.conditions$variables.priming != 0)]]
-      
-      #flog.debug("ut.fun_sigmapoints i %s parameters_conditions %s", i, parameters.conditions)
-      # print(i)
-      flog.debug("model_ut.R ut.fun_sigmapoints parameters.conditions %s", paste(parameters.conditions$parameters), name="logger.optimisation")
-      
-      arguments.list[[i]] <- fun_modify_input(parameters = sigmapoints.parameters,
-                                variables = sigmapoints.variables,
-                                variables.priming = sigmapoints.variables.priming,
-                                sigmapoints.parameters.conditions = sigmapoints.parameters.conditions,
-                                parameters.conditions = parameters.conditions,
-                                ...)
-    }
-    return(arguments.list)
-}
-
 #### run_model_ut ####
 run_model_ut <- function(
   parameters,
@@ -365,13 +200,11 @@ run_model_ut <- function(
   
   
   # flog.debug("run_model_ut %s", parameters.conditions)
-  
   ### run 
-  #par <- as.numeric(par.list[[11]])
   par.all <- rep(0, times = length(parameters.factor))
   par.all[par.optimised] <- par
   
-  arguments.list  <-  ut.fun_sigmapoints(
+  arguments.list  <-  GetSigmapointsArguments(
     par.all = par.all,
     sigmapoints.parameters.conditions = sigmapoints$parameters.conditions,
     sigmapoints.conditions = sigmapoints$conditions,
@@ -382,10 +215,8 @@ run_model_ut <- function(
     variables.priming = variables.priming,
     fun_modify_input = fun_modify_input,
     ...)
-
   
-  
-  sigmapoints$weights <- GetWeigths(alpha = sigmapoints$conditions$alpha, 
+  sigmapoints$weights <- GetSigmapointsWeigths(alpha = sigmapoints$conditions$alpha, 
                                     kappa = sigmapoints$conditions$kappa,
                                     beta = sigmapoints$conditions$beta,
                                     D = nrow(sigmapoints$parameters.conditions))
@@ -394,11 +225,10 @@ run_model_ut <- function(
   data.trajectory.list <- list()
   for(argument.i in 1:length(arguments.list)){
     
-    input <- arguments.list[[argument.i]]
-    parameters <- input$parameters
-    parameters.priming <- input$parameters.priming
-    variables  <- input$variables
-    variables.priming <- input$variables.priming
+    parameters <- arguments.list[[argument.i]]$parameters
+    parameters.priming <- arguments.list[[argument.i]]$parameters.priming
+    variables  <- arguments.list[[argument.i]]$variables
+    variables.priming <- arguments.list[[argument.i]]$variables.priming
     
 
     model.simulation<- do.call(simulate_model_ut,
@@ -485,70 +315,4 @@ run_model_ut <- function(
                arguments.list = arguments.list,
                data.trajectory = data.trajectory
   ))
-}
-
-#### optimisation ####
-optimisation_ut <- function(par,
-                            fun_run_model = run_model_ut,
-                            parameters.conditions,
-                            parameters.base,
-                            parameters.factor,
-                            variables, 
-                            variables.priming, 
-                            tmesh, 
-                            tmesh.list,
-                            stimulation.list,
-                            background,
-                            data.exp.grouped,
-                            data.exp.summarise,
-                            return.model = FALSE,
-                            fun.likelihood,
-                            par.optimised = rep(1, times = length(par)),
-                            fun_modify_input = PrepareModelArguments.ut.multiple,
-                            sigmapoints,
-                            fun_parameters_penalty = NULL,
-                            ...)
-{
-  
-  flog.debug("model_ut.R optimisation_ut", name="logger.optimisation")
-  
-  model.simulation <- fun_run_model(par = par,
-                                    parameters.base = parameters.base,
-                                    parameters.factor = parameters.factor,
-                                    variables = variables, 
-                                    variables.priming = variables.priming, 
-                                    tmesh = tmesh, 
-                                    tmesh.list = tmesh.list,
-                                    stimulation.list = stimulation.list,
-                                    background = background,
-                                    par.optimised = par.optimised,
-                                    fun_modify_input = fun_modify_input,
-                                    sigmapoints = sigmapoints, 
-                                    parameters.conditions = parameters.conditions,
-                                    ...)
-            
-  if(model.simulation$error){
-    return(Inf)
-  }
-  
-  result <- sum(
-    likelihood(fun.likelihood = fun.likelihood,
-               data.model = model.simulation$data.model,
-               data.exp.grouped = data.exp.grouped,
-               data.exp.summarise = data.exp.summarise))
-  if(!is.null(fun_parameters_penalty)){
-    result <- result + nrow(data.exp.summarise)*fun_parameters_penalty(par, ...)
-  }
-  #print(paste(c(result, par), sep = " "))
-  
-  if(return.model){
-    return(list( error = FALSE, 
-                 #optimisation = result,
-                 data.model = model.simulation$data.model, 
-                 data.model.sigmapoints = model.simulation$data.model.sigmapoints,
-                 data.model.ut = model.simulation$data.model.ut,
-                 arguments.list = model.simulation$arguments.list
-    ))
-  }
-  return(result)
 }
