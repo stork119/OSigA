@@ -28,11 +28,16 @@ rm(filename.optimisation,path.optimisation,files.optimisation,comment.optimisati
 source("R/parallel_computing.R")
 
 #### ####
-
-path.list <- LoadOptimisationPaths(
-  path.output = "resources/output/",
-  id = "2017-09-08-density_ver0"
-)
+path.list <- list()
+path.list$id <- "2017-09-08-density_ver0-test"
+path.list <- 
+  append(
+    path.list,
+    LoadOptimisationPaths(
+      path.output = "resources/output/",
+      id = path.list$id
+    ))
+  
 
 path.optimisation <- path.list$optimisation
 path.optimisation.data <- path.list$optimisation.data

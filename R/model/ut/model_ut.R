@@ -18,7 +18,7 @@ PrepareModelParameters.ut <-
            priming_constant = 3.4,
            ...)
     {
-    loginfo("model_ut.R PrepareModelParameters.ut", logger="loggger.optimisation")
+    flog.debug("model_ut.R PrepareModelParameters.ut", name="logger.optimisation")
     
    # parameters.model[15] <- priming_constant*parameters.model[11]
     parameters.model[11] <- parameters.model[17]*parameters.model[11]
@@ -54,11 +54,10 @@ PrepareModelArguments.ut.multiple <-
            variables,
            variables.priming,
            priming_constant = 3.4,
+           parameters.conditions,
            ...) {
     
-    loginfo("model_ut.R PrepareModelArguments.ut.multiple", logger="loggger.optimisation")
-    
-    #print(paste("PrepareModelArguments.ut.multiple %s", parameters.conditions))
+    flog.debug("model_ut.R PrepareModelArguments.ut.multiple", name="logger.optimisation")
     
     parameters.model <- rep(0, times = length(which(parameters.conditions$parameters != 0)))
     parameters.priming.model <- rep(0, times = length(which(parameters.conditions$parameters.priming != 0)))
@@ -281,11 +280,12 @@ ut.fun_sigmapoints <-
            ...
            ){
     
-    loginfo("model_ut.R ut.fun_sigmapoints", logger="loggger.optimisation")
+    flog.debug("model_ut.R ut.fun_sigmapoints", name="logger.optimisation")
+
     
     # print("ut.fun_sigmapoints")
     # 
-    #loginfo("ut.fun_sigmapoints %s", parameters.conditions)
+    #flog.debug("ut.fun_sigmapoints %s", parameters.conditions)
     # print(fun_modify_input)
     
     # sigmapoints.par <- par.all
@@ -305,12 +305,14 @@ ut.fun_sigmapoints <-
     # print(sigmapoints.list)
     
     arguments.list <- list()
-    # loginfo("ut.fun_sigmapoints KASIA")
+    # flog.debug("ut.fun_sigmapoints KASIA")
     # 
-    # loginfo("ut.fun_sigmapoints sigmapoints_list %s", sigmapoints.list)
+    # flog.debug("ut.fun_sigmapoints sigmapoints_list %s", sigmapoints.list)
     # 
     for(i in 1:length(sigmapoints.list)){
-      # loginfo("ut.fun_sigmapoints ZOSIA %d", i)
+      # flog.debug("ut.fun_sigmapoints ZOSIA %d", i)
+      flog.debug("model_ut.R ut.fun_sigmapoints for %s", paste(i), name="logger.optimisation")
+      
         sigmapoints.parameters <- parameters 
       sigmapoints.parameters[sigmapoints.parameters.conditions$id.par] <- sigmapoints.list[[i]]
       sigmapoints.variables <- variables
@@ -328,8 +330,10 @@ ut.fun_sigmapoints <-
             sigmapoints.parameters.conditions$id.par[
               which(sigmapoints.parameters.conditions$variables.priming != 0)]]
       
-      #loginfo("ut.fun_sigmapoints i %s parameters_conditions %s", i, parameters.conditions)
+      #flog.debug("ut.fun_sigmapoints i %s parameters_conditions %s", i, parameters.conditions)
       # print(i)
+      flog.debug("model_ut.R ut.fun_sigmapoints parameters.conditions %s", paste(parameters.conditions$parameters), name="logger.optimisation")
+      
       arguments.list[[i]] <- fun_modify_input(parameters = sigmapoints.parameters,
                                 variables = sigmapoints.variables,
                                 variables.priming = sigmapoints.variables.priming,
@@ -360,7 +364,7 @@ run_model_ut <- function(
   ...){
   
   
-  # loginfo("run_model_ut %s", parameters.conditions)
+  # flog.debug("run_model_ut %s", parameters.conditions)
   
   ### run 
   #par <- as.numeric(par.list[[11]])
@@ -506,7 +510,7 @@ optimisation_ut <- function(par,
                             ...)
 {
   
-  loginfo("model_ut.R optimisation_ut", logger="loggger.optimisation")
+  flog.debug("model_ut.R optimisation_ut", name="logger.optimisation")
   
   model.simulation <- fun_run_model(par = par,
                                     parameters.base = parameters.base,

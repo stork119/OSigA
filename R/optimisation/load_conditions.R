@@ -8,7 +8,7 @@ LoadOptimisationConditions <- function(path.optimisation,
                                        maxit.tmp = Inf,
                                        ...){
   
-  loginfo("load_conditions.R LoadOptimisationConditions", logger="loggger.optimisation")
+  flog.debug("load_conditions.R LoadOptimisationConditions", name="logger.optimisation")
   
   results.list <- list()
   variables <- scan(paste(path.list$optimisation, "variables.csv", sep = "/"))

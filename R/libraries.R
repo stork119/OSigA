@@ -9,7 +9,7 @@
 packages.list <- c(
   
   #### developer ####
-  "logging",
+  "futile.logger",
   
   #### graphics ####
   "ggplot2",

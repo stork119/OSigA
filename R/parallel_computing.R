@@ -16,8 +16,8 @@
 #   col.names = TRUE
 # )
 #### ####
-run_parallel_computations <- function(path.optimisation,
-                                      path.optimisation.data = paste(path.optimisation, "data", sep = "/"),
+run_parallel_computations <- function(path.list = list("id" = "",
+                                                       "optimisation" = ""),
                                       no_cores = 18,
                                       stopfitness = -10000000,
                                       #fun.optimisation = pureCMAES,
@@ -30,19 +30,27 @@ run_parallel_computations <- function(path.optimisation,
                                       par.list.ids.part = NULL,
                                       ...
                                       ){
+  
+  logfile <- list()
+  logfile$name <- paste("optimisation", path.list$id, Sys.time(), sep = "-")
+  logfile$path <- "~/Documents/modelling/scripts/"
+  logfile$filename <- paste(logfile$path, logfile$name, ".log", sep = "")
+  InitLogging(filename = logfile$filename)
+  remove(logfile)
                                       
-  loginfo("run_parallel_computations", logger="loggger.optimisation")
+  flog.info("run_parallel_computations", name ="logger.optimisation")
   
   ### initialization ###
-  dir.create(path.optimisation.data, showWarnings = FALSE, recursive = TRUE)
-  print(path.optimisation.data)
+  dir.create(path.list$optimisation.data, showWarnings = FALSE, recursive = TRUE)
+  print(path.list$optimisation.data)
   optimisation.conditions.toload <- LoadOptimisationConditions(
-    path.optimisation = path.optimisation,
-    path.optimisation.data = path.optimisation.data,
+    path.optimisation = path.list$optimisation,
+    path.optimisation.data = path.list$optimisation.data,
     #maxit.tmp = maxit.tmp)
     ...)
   #rm(list = labels(optimisation.conditions.toload))
   #attach(optimisation.conditions.toload)
+  
   
   
   variables <- optimisation.conditions.toload$variables
@@ -111,7 +119,7 @@ run_parallel_computations <- function(path.optimisation,
                #sigmapoints = sigmapoints))
                ...))
         
-        path.optimisation.i <- paste(path.optimisation.data, i, sep = "/")
+        path.optimisation.i <- paste(path.list$optimisation.data, i, sep = "/")
         dir.create(path.optimisation.i, recursive = TRUE, showWarnings = FALSE)
         
         par.exp.opt <- optimisation.res[[optimisation.res.par]]

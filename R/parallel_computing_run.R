@@ -1,8 +1,8 @@
 ###
 ### parallel_computing_run
 ###
-setwd("~/Documents/Projects/Modelling/modelling/")
-#setwd("~/Documents//modelling/")
+#setwd("~/Documents/Projects/Modelling/modelling/")
+setwd("~/Documents//modelling/")
 
 # path.optimisation <- paste(path.output, "cmaes/normalized/2017-02-04-5/", sep = "/")
 
@@ -48,9 +48,8 @@ source(file = "R/optimisation/initialise_optimisation.R")
 # basicConfig()
 # addHandler(writeToConsole)
 # setLevel(loglevels[["DEBUG"]], getHandler('basic.stdout'))
-loginfo("kasia", logger="loggger.optimisation")
-loginfo("kasia-log")
-run_parallel_computations(path.optimisation = path.list$optimisation,
+
+run_parallel_computations(path.list = path.list,
                           # data.exp.grouped = data.exp.grouped,
                           no_cores = 1,
 
