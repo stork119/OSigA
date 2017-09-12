@@ -37,10 +37,12 @@ run_parallel_computations <- function(path.list = list("id" = NULL,
   logfile$name <- paste("optimisation", path.list$id, Sys.time(), sep = "-")
   logfile$path <- "scripts/"
   logfile$filename <- paste(logfile$path, logfile$name, ".log", sep = "")
+  print(logfile$filename)
   InitLogging(filename = logfile$filename)
   remove(logfile)
-                                      
+  print(getwd())
   flog.info("run_parallel_computations", name ="logger.optimisation")
+  print(12)
   
   ### initialization ###
   dir.create(path.list$optimisation.data, showWarnings = FALSE, recursive = TRUE)
@@ -52,8 +54,6 @@ run_parallel_computations <- function(path.list = list("id" = NULL,
     ...)
   #rm(list = labels(optimisation.conditions.toload))
   #attach(optimisation.conditions.toload)
-  
-  
   
   variables <- optimisation.conditions.toload$variables
   variables.priming <- optimisation.conditions.toload$variables.priming

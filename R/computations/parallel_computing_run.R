@@ -2,7 +2,7 @@
 ### parallel_computing_run
 ###
 #setwd("~/Documents/Projects/Modelling/modelling/")
-setwd("~/Documents//modelling/")
+#setwd("~/Documents//modelling/")
 
 # path.optimisation <- paste(path.output, "cmaes/normalized/2017-02-04-5/", sep = "/")
 
