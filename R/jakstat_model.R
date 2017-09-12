@@ -15,8 +15,8 @@ if( Sys.info()[["sysname"]] == "Linux"){
   print("NOT WORKING !!!")
   break()
 } else {
-  PKG_CXXFLAGS="-I/usr/local/include -I/usr/local/include/cvode -I/usr/local/include/cvodes -L/usr/local/lib  -mtune=core2 -std=c++11"
-  PKG_LIBS="-I/usr/local/include -I/usr/local/include/cvode -I/usr/local/include/cvodes -L/usr/local/lib  -lsundials_cvodes -lsundials_nvecserial -Wl,-rpath,/usr/local/lib -pthread"
+  PKG_CXXFLAGS="-I/usr/local/include -I/usr/local/include/cvode -I/usr/local/include/cvodes   -mtune=core2 -std=c++11 -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function"
+  PKG_LIBS="-I/usr/local/include -I/usr/local/include/cvode -I/usr/local/include/cvodes   -lsundials_cvodes -lsundials_nvecserial -Wl,-rpath,/usr/local/lib"
 }
 
 Sys.setenv("PKG_CXXFLAGS" = PKG_CXXFLAGS)

@@ -35,7 +35,7 @@ run_parallel_computations <- function(path.list = list("id" = NULL,
   #TODO get path to logfile$path outside
   logfile <- list()
   logfile$name <- paste("optimisation", path.list$id, Sys.time(), sep = "-")
-  logfile$path <- "~/Documents/modelling/scripts/"
+  logfile$path <- "scripts/"
   logfile$filename <- paste(logfile$path, logfile$name, ".log", sep = "")
   InitLogging(filename = logfile$filename)
   remove(logfile)

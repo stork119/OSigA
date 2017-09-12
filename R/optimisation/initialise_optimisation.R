@@ -25,7 +25,7 @@ comment.optimisation <- sapply(
 
 rm(filename.optimisation,path.optimisation,files.optimisation,comment.optimisation)
 
-source("R/parallel_computing.R")
+source("R/computations/parallel_computing.R")
 
 #### ####
 path.list <- list()
