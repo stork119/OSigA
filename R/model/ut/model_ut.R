@@ -12,12 +12,14 @@ fun_parameters_penalty_sigmapoints <- function(par,
   base <- parameters.conditions$base[which(parameters.conditions$lower != parameters.conditions$upper)]
   return(sum(((base^par - base^0)^2)/(base^(2*b) - base^(2*a))))
 }
-#### PrepareModelArguments.ut ####
+#### PrepareModelParameters.ut ####
 PrepareModelParameters.ut <-
   function(parameters.model,
            priming_constant = 3.4,
            ...)
     {
+    loginfo("model_ut.R PrepareModelParameters.ut", logger="loggger.optimisation")
+    
    # parameters.model[15] <- priming_constant*parameters.model[11]
     parameters.model[11] <- parameters.model[17]*parameters.model[11]
     parameters.model[12] <- (parameters.model[17]^2)*parameters.model[12]
@@ -45,7 +47,7 @@ PrepareModelParameters.ut <-
 #                 variables.priming = variables.priming
 #     ))}
 
-
+#### PrepareModelArguments.ut.multiple ####
 PrepareModelArguments.ut.multiple <-
   function(parameters,
            parameters.priming = parameters,
@@ -53,7 +55,9 @@ PrepareModelArguments.ut.multiple <-
            variables.priming,
            priming_constant = 3.4,
            ...) {
-     
+    
+    loginfo("model_ut.R PrepareModelArguments.ut.multiple", logger="loggger.optimisation")
+    
     #print(paste("PrepareModelArguments.ut.multiple %s", parameters.conditions))
     
     parameters.model <- rep(0, times = length(which(parameters.conditions$parameters != 0)))
@@ -276,6 +280,9 @@ ut.fun_sigmapoints <-
            fun_modify_parameters = function(parameters.model){return(parameters.model)},
            ...
            ){
+    
+    loginfo("model_ut.R ut.fun_sigmapoints", logger="loggger.optimisation")
+    
     # print("ut.fun_sigmapoints")
     # 
     #loginfo("ut.fun_sigmapoints %s", parameters.conditions)
@@ -499,7 +506,7 @@ optimisation_ut <- function(par,
                             ...)
 {
   
-  # loginfo("optimisation_ut %s", parameters.conditions)
+  loginfo("model_ut.R optimisation_ut", logger="loggger.optimisation")
   
   model.simulation <- fun_run_model(par = par,
                                     parameters.base = parameters.base,
