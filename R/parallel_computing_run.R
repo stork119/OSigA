@@ -1,7 +1,8 @@
 ###
 ### parallel_computing_run
 ###
-setwd("~/Documents/modelling/")
+setwd("~/Documents/Projects/Modelling/modelling/")
+#setwd("~/Documents//modelling/")
 
 # path.optimisation <- paste(path.output, "cmaes/normalized/2017-02-04-5/", sep = "/")
 
@@ -9,7 +10,8 @@ setwd("~/Documents/modelling/")
 #   file = paste(path.optimisation, "data_exp_grouped.csv", sep = ""),
 #   sep = ",",
 #   header = TRUE)
-#library(logging)
+
+
 source(file = "R/optimisation/initialise_optimisation.R")
 
 # run_parallel_computations(path.optimisation = path.list$optimisation,
@@ -46,13 +48,14 @@ source(file = "R/optimisation/initialise_optimisation.R")
 # basicConfig()
 # addHandler(writeToConsole)
 # setLevel(loglevels[["DEBUG"]], getHandler('basic.stdout'))
-
+loginfo("kasia", logger="loggger.optimisation")
+loginfo("kasia-log")
 run_parallel_computations(path.optimisation = path.list$optimisation,
                           # data.exp.grouped = data.exp.grouped,
-                          no_cores = 8,
-                          
-                          # maxit.tmp   =   1,
-                          #  par.list.ids.part = 1,
+                          no_cores = 1,
+
+                           maxit.tmp   =   1,
+                            par.list.ids.part = 1,
                           # fun.optimisation = pureCMAES,
                           # optimisation.res.par = "xmin",
                           data.model.list = list(),
@@ -60,7 +63,7 @@ run_parallel_computations(path.optimisation = path.list$optimisation,
                           #                   path.optimisation.data = path.list$optimisation.data),
                           sigmapoints = LoadSigmapointsConditions(path.optimisation = path.list$optimisation),
                           model.computations = list(raw = TRUE, priming = TRUE),
-                          fun_modify_input = PrepareModelArguments.ut.multiple,
+                          fun_modify_input      = PrepareModelArguments.ut.multiple,
                           fun_modify_parameters = PrepareModelParameters.ut,
                           optimisation_procedure = optimisation_ut,
                           fun_parameters_penalty =  NULL#fun_parameters_penalty_sigmapoints

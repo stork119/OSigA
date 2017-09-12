@@ -7,6 +7,8 @@ source("R/libraries.R")
 source("R/sources.R")
 source("R/initialise.R")
 
+source("R/logging/logging-initnialisation.R")
+
 filename.optimisation       <- "initialise_optimisation.R"
 path.optimisation  <- "R/optimisation/"
 files.optimisation <- list.files(path = path.optimisation,

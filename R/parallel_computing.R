@@ -31,7 +31,8 @@ run_parallel_computations <- function(path.optimisation,
                                       ...
                                       ){
                                       
-                                      
+  loginfo("run_parallel_computations", logger="loggger.optimisation")
+  
   ### initialization ###
   dir.create(path.optimisation.data, showWarnings = FALSE, recursive = TRUE)
   print(path.optimisation.data)

@@ -8,6 +8,9 @@
 ### ###
 packages.list <- c(
   
+  #### developer ####
+  "logging",
+  
   #### graphics ####
   "ggplot2",
   "corrplot",

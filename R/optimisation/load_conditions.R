@@ -7,6 +7,9 @@ LoadOptimisationConditions <- function(path.optimisation,
                                        path.optimisation.data,
                                        maxit.tmp = Inf,
                                        ...){
+  
+  loginfo("load_conditions.R LoadOptimisationConditions", logger="loggger.optimisation")
+  
   results.list <- list()
   variables <- scan(paste(path.list$optimisation, "variables.csv", sep = "/"))
   variables.priming <- scan(paste(path.list$optimisation, "variables-priming.csv", sep = "/"))
