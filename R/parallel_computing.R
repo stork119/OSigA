@@ -40,8 +40,32 @@ run_parallel_computations <- function(path.optimisation,
     path.optimisation.data = path.optimisation.data,
     #maxit.tmp = maxit.tmp)
     ...)
-  rm(list = labels(optimisation.conditions.toload))
-  attach(optimisation.conditions.toload)
+  #rm(list = labels(optimisation.conditions.toload))
+  #attach(optimisation.conditions.toload)
+  
+  
+  variables <- optimisation.conditions.toload$variables
+  variables.priming <- optimisation.conditions.toload$variables.priming
+  optimisation.conditions <-  optimisation.conditions.toload$optimisation.conditions
+  fun.optimisation.likelihood <- optimisation.conditions.toload$fun.optimisation.likelihood
+  fun_run_model <- optimisation.conditions.toload$fun_run_model
+  maxit <-  optimisation.conditions.toload$maxit 
+  parameters.conditions <- optimisation.conditions.toload$parameters.conditions
+  parameters.base <- optimisation.conditions.toload$parameters.base
+  parameters.factor <- optimisation.conditions.toload$parameters.factor
+  par.lower <-  optimisation.conditions.toload$par.lower
+  par.upper <- optimisation.conditions.toload$par.upper
+  par.optimised <- optimisation.conditions.toload$par.optimised
+  stimulation.list <- optimisation.conditions.toload$stimulation.list
+  data.exp.grouped <- optimisation.conditions.toload$data.exp.grouped
+  data.exp.grouped.optimisation <- optimisation.conditions.toload$data.exp.grouped.optimisation
+  data.exp.summarise.optimisation <- optimisation.conditions.toload$data.exp.summarise.optimisation
+  lhs.res <- optimisation.conditions.toload$lhs.res
+  par.list <- optimisation.conditions.toload$par.list
+  par.list.ids <- optimisation.conditions.toload$par.list.ids
+  ids <- optimisation.conditions.toload$ids
+  
+  
   if(!is.null(par.list.ids.part)){
     par.list.ids <- par.list.ids.part
   }

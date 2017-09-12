@@ -9,7 +9,7 @@ setwd("~/Documents/modelling/")
 #   file = paste(path.optimisation, "data_exp_grouped.csv", sep = ""),
 #   sep = ",",
 #   header = TRUE)
-
+#library(logging)
 source(file = "R/optimisation/initialise_optimisation.R")
 
 # run_parallel_computations(path.optimisation = path.list$optimisation,
@@ -43,10 +43,14 @@ source(file = "R/optimisation/initialise_optimisation.R")
 # )
 
 
+# basicConfig()
+# addHandler(writeToConsole)
+# setLevel(loglevels[["DEBUG"]], getHandler('basic.stdout'))
 
 run_parallel_computations(path.optimisation = path.list$optimisation,
                           # data.exp.grouped = data.exp.grouped,
-                          no_cores = 12,
+                          no_cores = 8,
+                          
                           # maxit.tmp   =   1,
                           #  par.list.ids.part = 1,
                           # fun.optimisation = pureCMAES,
@@ -59,5 +63,5 @@ run_parallel_computations(path.optimisation = path.list$optimisation,
                           fun_modify_input = PrepareModelArguments.ut.multiple,
                           fun_modify_parameters = PrepareModelParameters.ut,
                           optimisation_procedure = optimisation_ut,
-                         fun_parameters_penalty =  fun_parameters_penalty_sigmapoints
+                          fun_parameters_penalty =  NULL#fun_parameters_penalty_sigmapoints
 )

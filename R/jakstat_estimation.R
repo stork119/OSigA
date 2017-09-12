@@ -141,6 +141,7 @@ likelihood <- function(data.model,
 #### optimisation ####
 optimisation <- function(par,
                          fun_run_model = run_model,
+                         parameters.conditions,
                          parameters.base,
                          parameters.factor,
                          variables, 
@@ -184,7 +185,9 @@ optimisation <- function(par,
                                 tmesh = tmesh,
                                 tmesh.list = tmesh.list,
                                 stimulation.list = stimulation.list,
-                                background = background))
+                                background = background,
+                                parameters.conditions = parameters.conditions,
+                                ...))
   
   
   if(model.simulation$error){
