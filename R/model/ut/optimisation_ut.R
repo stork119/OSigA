@@ -27,7 +27,8 @@ optimisation_ut <- function(par,
   
   flog.debug("optimisation_ut.R optimisation_ut", name="logger.optimisation")
   
-  model.simulation <- fun_run_model(par = par,
+  model.simulation <- do.call(fun_run_model,
+                              list(par = par,
                                     parameters.base = parameters.base,
                                     parameters.factor = parameters.factor,
                                     variables = variables, 
@@ -39,7 +40,7 @@ optimisation_ut <- function(par,
                                     par.optimised = par.optimised,
                                     sigmapoints = sigmapoints, 
                                     parameters.conditions = parameters.conditions,
-                                    ...)
+                                    ...))
   
   if(model.simulation$error){
     return(Inf)
