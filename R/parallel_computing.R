@@ -1,9 +1,7 @@
 ### ###
 ### parallel computing ###
 ### ###
-# source("R/libraries.R")
-# source("R/sources.R")
-# source("R/initialise.R")
+
 #### ####
 #### ####
 #### ####

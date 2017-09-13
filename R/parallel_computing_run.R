@@ -47,8 +47,8 @@ source(file = "R/optimisation/initialise_optimisation.R")
 run_parallel_computations(path.optimisation = path.list$optimisation,
                           # data.exp.grouped = data.exp.grouped,
                           no_cores = 12,
-                         maxit.tmp   =   1,
-                          par.list.ids.part = 13,
+                          # maxit.tmp   =   1,
+                          #  par.list.ids.part = 1,
                           # fun.optimisation = pureCMAES,
                           # optimisation.res.par = "xmin",
                           data.model.list = list(),
@@ -58,5 +58,6 @@ run_parallel_computations(path.optimisation = path.list$optimisation,
                           model.computations = list(raw = TRUE, priming = TRUE),
                           fun_modify_input = PrepareModelArguments.ut.multiple,
                           fun_modify_parameters = PrepareModelParameters.ut,
-                          optimisation_procedure = optimisation_ut
+                          optimisation_procedure = optimisation_ut,
+                         fun_parameters_penalty =  fun_parameters_penalty_sigmapoints
 )

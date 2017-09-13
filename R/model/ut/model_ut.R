@@ -28,22 +28,22 @@ PrepareModelParameters.ut <-
     return(parameters.model)
 }
 
-PrepareModelArguments.ut <-
-  function(parameters,
-           parameters.priming = parameters,
-           variables,
-           variables.priming,
-           priming_constant = 3.4,
-           ...) {
-    
-    parameters<- parameters[1:10]
-    parameters.priming<- parameters[1:10]
-    
-    return(list(parameters = parameters,
-                parameters.priming = parameters.priming,
-                variables = variables,
-                variables.priming = variables.priming
-    ))}
+# PrepareModelArguments.ut <-
+#   function(parameters,
+#            parameters.priming = parameters,
+#            variables,
+#            variables.priming,
+#            priming_constant = 3.4,
+#            ...) {
+#     
+#     parameters<- parameters[1:10]
+#     parameters.priming<- parameters[1:10]
+#     
+#     return(list(parameters = parameters,
+#                 parameters.priming = parameters.priming,
+#                 variables = variables,
+#                 variables.priming = variables.priming
+#     ))}
 
 
 PrepareModelArguments.ut.multiple <-
@@ -86,7 +86,7 @@ LoadSigmapointsConditions <- function(path.optimisation){
                                          sep = ",")
   }
   #optimisation.procedure <- optimisation_ut
-  fun_modify_input <- PrepareModelArguments.ut
+  fun_modify_input <- PrepareModelArguments.ut.multiple
   fun_run_model <- run_model_ut
   return(list(conditions = sigmapoints.conditions,
               parameters.conditions = sigmapoints.parameters.conditions,
@@ -333,7 +333,7 @@ run_model_ut <- function(
   background,
   fun.likelihood,
   par.optimised = rep(1, times = length(par)),
-  fun_modify_input = PrepareModelArguments.ut,
+  fun_modify_input = PrepareModelArguments.ut.multiple,
   sigmapoints,
   ...){
   ### run 
@@ -472,7 +472,7 @@ optimisation_ut <- function(par,
                             return.model = FALSE,
                             fun.likelihood,
                             par.optimised = rep(1, times = length(par)),
-                            fun_modify_input = PrepareModelArguments.ut,
+                            fun_modify_input = PrepareModelArguments.ut.multiple,
                             sigmapoints,
                             fun_parameters_penalty = NULL,
                             ...)
