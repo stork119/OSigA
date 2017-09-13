@@ -49,13 +49,33 @@ source(file = "R/optimisation/initialise_optimisation.R")
 # addHandler(writeToConsole)
 # setLevel(loglevels[["DEBUG"]], getHandler('basic.stdout'))
 
-run_parallel_computations(path.list = path.list,
+# run_parallel_computations(path.list = path.list,
+#                           # data.exp.grouped = data.exp.grouped,
+#                           no_cores = 1,
+#                           maxit.tmp   =   1,
+#                           par.list.ids.part = 1,
+#                           # fun.optimisation = pureCMAES,
+#                           # optimisation.res.par = "xmin",
+#                           data.model.list = list(),
+#                           # LoadInitialModels(path.optimisation = path.list$optimisation,
+#                           #                   path.optimisation.data = path.list$optimisation.data),
+#                           sigmapoints = LoadSigmapointsConditions(path.optimisation = path.list$optimisation),
+#                           model.computations = list(raw = TRUE, priming = TRUE),
+#                           fun_modify_input      = PrepareModelArguments.ut.multiple,
+#                           fun_modify_parameters = PrepareModelParameters.ut,
+#                           optimisation_procedure = optimisation_ut,
+#                           fun_parameters_penalty =  NULL#fun_parameters_penalty_sigmapoints
+# )
+
+
+run_parallel_computations_cv(path.list = path.list,
                           # data.exp.grouped = data.exp.grouped,
-                          no_cores = 1,
-                          maxit.tmp   =   1,
-                          par.list.ids.part = 1,
+                          no_cores = 12,
+                          #maxit.tmp   =   1,
+                          #par.list.ids.part = 1,
+                          #computations.ids = 1:5,
                           # fun.optimisation = pureCMAES,
-                          # optimisation.res.par = "xmin",
+                          # optimisation.res.par = "xmin"warni,
                           data.model.list = list(),
                           # LoadInitialModels(path.optimisation = path.list$optimisation,
                           #                   path.optimisation.data = path.list$optimisation.data),

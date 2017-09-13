@@ -25,21 +25,18 @@ comment.optimisation <- sapply(
 
 rm(filename.optimisation,path.optimisation,files.optimisation,comment.optimisation)
 
-source("R/computations/parallel_computing.R")
+source("R/computations/parallel_computing_cv.R")
+source("R/computations/load_conditions_cv.R")
 
 #### ####
-path.list <- list()
-path.list$id <- "2017-09-08-density_ver0"
 path.list <- 
-  append(
-    path.list,
     LoadOptimisationPaths(
       path.output = "resources/output/",
-      id = path.list$id
-    ))
+      id = "2017-09-08-density_ver0"
+    )
   
 
-path.optimisation <- path.list$optimisation
-path.optimisation.data <- path.list$optimisation.data
-path.optimisation.analysis <- path.list$optimisation.analysis
-path.optimisation.results <- path.list$optimisation.results
+# path.optimisation <- path.list$optimisation
+# path.optimisation.data <- path.list$optimisation.data
+# path.optimisation.analysis <- path.list$optimisation.analysis
+# path.optimisation.results <- path.list$optimisation.results
