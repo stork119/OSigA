@@ -2,7 +2,7 @@
 ### parallel_computing_run
 ###
 #setwd("~/Documents/Projects/Modelling/modelling/")
-#setwd("~/Documents//modelling/")
+setwd("~/Documents//modelling/")
 
 # path.optimisation <- paste(path.output, "cmaes/normalized/2017-02-04-5/", sep = "/")
 
@@ -71,9 +71,9 @@ source(file = "R/optimisation/initialise_optimisation.R")
 run_parallel_computations_cv(path.list = path.list,
                           # data.exp.grouped = data.exp.grouped,
                           no_cores = 12,
-                          #maxit.tmp   =   1,
-                          #par.list.ids.part = 1,
-                          #computations.ids = 1:5,
+                          maxit.tmp   =   1,
+                          par.list.ids.part = 1,
+                          computations.ids = 15,
                           # fun.optimisation = pureCMAES,
                           # optimisation.res.par = "xmin"warni,
                           data.model.list = list(),
@@ -86,3 +86,5 @@ run_parallel_computations_cv(path.list = path.list,
                           optimisation_procedure = optimisation_ut,
                           fun_parameters_penalty =  NULL#fun_parameters_penalty_sigmapoints
 )
+
+run_summary(path.list = path.list)

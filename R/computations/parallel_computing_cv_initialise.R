@@ -55,10 +55,10 @@ write.table(x = matrix(stimulation.list, ncol = 1),
 
 optimisation.conditions <- 
   list(
-    maxit = 1000,
+    maxit = 250,
     data.size = 1000,
     data.opt.size = 250,
-    cross_validation_num = 1,
+    cross_validation_num = 25,
     optimisation = "optimisation_ut",
     fun.optimisation.likelihood = "fun.likelihood.list.sd",
     fun_run_model = "run_model_ut"
@@ -88,9 +88,11 @@ data.list$data.exp.norm <-
     data = data.list$data.exp,
     sample_size = optimisation.conditions$data.size)
 
+path <- paste(path.list$optimisation.conditions, 1, sep = "/")
+dir.create(path = path, recursive = TRUE, showWarnings = FALSE)
 write.table(
   x = data.list$data.exp.norm,
-  file = paste(path.list$optimisation, "data_exp_grouped.csv", sep = ""),
+  file = paste(path, "data_exp_grouped.csv", sep = "/"),
   sep = ",",
   row.names = FALSE,
   col.names = TRUE)

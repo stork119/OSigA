@@ -38,16 +38,18 @@ run_parallel_computations_cv <- function(
   logfile$name <- paste("optimisation", path.list$id, Sys.time(), sep = "-")
   logfile$path <- "scripts/"
   logfile$filename <- paste(logfile$path, logfile$name, ".log", sep = "")
-  print(logfile$filename)
+
   InitLogging(filename = logfile$filename)
-  remove(logfile)
-  print(getwd())
-  flog.info("run_parallel_computations", name ="logger.optimisation")
-  print(12)
+  #remove(logfile)
   
+  flog.info("run_parallel_computations", name ="logger.optimisation")
+
   ### initialization ###
   dir.create(path.list$optimisation.data, showWarnings = FALSE, recursive = TRUE)
-  print(path.list$optimisation.data)
+  flog.info("run_parallel_computations optimisation %s",
+            path.list$optimisation.data,
+            name ="logger.optimisation")
+  
   optimisation.initiate <- InitiateOptimisation(
     path.list = path.list,
     #maxit.tmp = maxit.tmp)
@@ -83,7 +85,13 @@ run_parallel_computations_cv <- function(
     tryCatch({
       par <- as.numeric(par.list[[computations.list[computation.i,]$par.id]])
       
-      print(par)
+      
+      flog.info("run_parallel_computations 
+                par.id %s
+                data.set %s",
+                computations.list[computation.i,]$par.id,
+                computations.list[computation.i,]$data.id,
+                name ="logger.optimisation")
       
       optimisation.res <- do.call(
         fun.optimisation,
@@ -178,10 +186,15 @@ run_parallel_computations_cv <- function(
                            data.exp.grouped = data.list$data.exp.grouped.optimisation,
                            data.exp.summarise = data.list$data.exp.summarise.optimisation))
                        })
+      flog.info("run_parallel_computations 
+                par.id %s
+                data.set %s
+                likelihood %s",
+                computations.list[computation.i,]$par.id,
+                computations.list[computation.i,]$data.id,
+                paste(result, collapse = " "),
+                name ="logger.optimisation")
       
-      print(paste(path.optimisation.i,
-                  paste(result, collapse = " "),
-                  paste(par.exp.opt, collapse = " "), sep = " "))
       
       model.simulation$data.model$likelihood  <- 
         likelihood(data.model = model.simulation$data.model,
@@ -259,7 +272,6 @@ run_parallel_computations_cv <- function(
                   sep = ",", 
                   row.names = FALSE, 
                   col.names = TRUE)
-      
       # write.table(
       #   x = data.frame(mse = optimisation.res$fmin,
       #                  maxit = maxit,
@@ -274,7 +286,10 @@ run_parallel_computations_cv <- function(
       return(list(par = parameters))
       
     }, error =function(e){
-      print(e)
+      flog.error("run_parallel_computations 
+                error %s",
+                e,
+                name ="logger.optimisation")
       return(list(error = TRUE))
     })
   }
@@ -456,7 +471,7 @@ run_summary <- function(
     dplyr::summarise(likelihood = mean(likelihood)) %>%
     dplyr::arrange(type)
   
-  colnames(likelihood.cv.df) <- c("type", optimisation.name)
+  colnames(likelihood.cv.comp.df) <- c("type", optimisation.name)
   write.table(file = paste(path.list$optimisation.results,
                            "otimisation_comparison.csv", sep = "/"), 
               x = likelihood.cv.comp.df,
@@ -464,4 +479,3 @@ run_summary <- function(
               row.names = FALSE,
               col.names = TRUE) 
 }
-
