@@ -456,9 +456,9 @@ do.call(what = ggsave,
 parameters.model[6]
 variables.model[1]
 
-
+coef <- parameters.conditions$factor[15]/parameters.conditions$factor[11]
 hill_coef <- function(p6,y1){
-  return((2.6*(p6+y1))/(p6+(2.6*y1)))
+  return((coef*(p6+y1))/(p6+(coef*y1)))
 }
 
 
@@ -478,7 +478,7 @@ ggplot(data = hill_grid, aes(x = log(p6), y = log(y1), color = hill)) +
 
 ggplot(data = hill_grid, aes(x = p6/y1, y = hill)) + 
   geom_point() + xlim(0,500)
-  geom_point(data = hill_grid %>% filter(hill > (quantile(hill_grid$hill, probs = 0.95))), aes(x = log(p6), y = log(y1)), color = "red")
-  
+  #geom_point(data = hill_grid %>% filter(hill > (quantile(hill_grid$hill, probs = 0.95))), aes(x = log(p6), y = log(y1)), color = "red")
+geom_point(data = hill_grid, aes(x = log(p6), y = log(y1)), color = "red")
   
   
