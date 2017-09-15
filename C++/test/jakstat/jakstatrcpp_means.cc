@@ -52,7 +52,7 @@
 /* Problem Constants */
 
 #define NEQ   17                /* number of equations  */
-#define NPAR  10                /* number of equations  */
+#define NPAR  13                /* number of equations  */
 #define T0    RCONST(0.0)      /* initial time           */
 #define T1    RCONST(1.0)      /* first output time      */
 #define TMULT RCONST(1.0)     /* output time factor     */
@@ -86,9 +86,9 @@ static int Jac(long int N, realtype t,
 
 int findNearestNeighbourIndex( double value, double *x, int len );
 
-/*void interp1(double *x, int x_tam, double *y,
+void interp1(double *x, int x_tam, double *y,
   double *xx, int xx_tam, double *yy);
-*/
+
 double cosineInterpolation(double x1, double x2,
   double y1, double y2, const realtype t);
 
@@ -96,8 +96,8 @@ double stimulus(const realtype t);
 
 
 
-/* Private functions to output5results */
-static void writeToFile(N_Vector y, FILE* outputFile);
+/* Private functions to output results */
+// static void writeToFile(N_Vector y, FILE* outputFile);
 
 /* Private function to check function return values */
 
@@ -148,7 +148,6 @@ solverData run_solver(
   
   std::vector<double> yvector;  
   for(int i = 0; i < NEQ; ++i){
-    double yvar, atol;
     Ith(y,i+1) = variables[i + 1];
     Ith(abstol,i+1) = ATOL;
     yvector.push_back(variables[i + 1]);
@@ -209,13 +208,12 @@ solverData run_solver(
   while(1) {
     flag = CVode(cvode_mem, tout, y, &t, CV_NORMAL);
     std::vector<double> yvector;  
-//    printf("%lf\t", t);
     for(int i = 0; i < NEQ; ++i){
       yvector.push_back(Ith(y, i+1));
-    //  printf("%lf\t", Ith(y, i+1));
+//      printf("%lf\t", Ith(y, i+1));
     } 
     results.push_back(yvector);
-    //printf("\n");
+//    printf("\n");
 
     if (check_flag(&flag, "CVode", 1)){
       solver_results.solver_flag = 0;
@@ -397,14 +395,14 @@ int main(){
  *-------------------------------
  */
 
-static void writeToFile(N_Vector y, FILE* outputFile)
-{
-  for(int i = 1; i < NEQ; ++i)
-  {
-    fprintf(outputFile, "%lf,", Ith(y, i) );
-  }
-  fprintf(outputFile, "%lf\n", Ith(y, NEQ));
-}
+// static void writeToFile(N_Vector y, FILE* outputFile)
+// {
+//   for(int i = 1; i < NEQ; ++i)
+//   {
+//     fprintf(outputFile, "%lf,", Ith(y, i) );
+//   }
+//   fprintf(outputFile, "%lf\n", Ith(y, NEQ));
+// }
 
 /*
  * Check function return value...
@@ -466,7 +464,7 @@ int findNearestNeighbourIndex( double value, double *x, int len )
     return idx;
 }
 
-/*void interp1(double *x, int x_tam, double *y, double *xx, int xx_tam, double *yy)
+void interp1(double *x, int x_tam, double *y, double *xx, int xx_tam, double *yy)
 {
     double dx, dy, *slope, *intercept;
     int i, indiceEnVector;
@@ -495,7 +493,7 @@ int findNearestNeighbourIndex( double value, double *x, int len )
     }
     free(slope);
     free(intercept);
-}*/
+}
 
 double cosineInterpolation(double x1, double x2,
   double y1, double y2, const realtype t){
@@ -568,45 +566,24 @@ static int f(realtype t, N_Vector yith, N_Vector ydot, void *_user_data)
     y[i] = Ith(yith,i); 
   }
 
+  Ith(ydot, 1) =  (p[4]*p[12]*y[13]*2.0)/p[11]-((p[11]*y[17]+p[13]*y[16])*p[1]*y[1])/(p[11]*y[1]+p[6]);
+  Ith(ydot, 2) =  p[2]*p[11]*(y[2]*y[2])*-2.0+((p[11]*y[17]+p[13]*y[16])*p[1]*y[1])/(p[11]*y[1]+p[6]);
+  Ith(ydot, 3) =  -p[3]*y[3]+p[2]*p[11]*(y[2]*y[2]);
+  Ith(ydot, 4) =  -p[4]*y[4]+(p[3]*p[11]*y[3])/p[12];
+  Ith(ydot, 5) =  p[4]*y[4]-p[4]*y[5];
+  Ith(ydot, 6) =  p[4]*y[5]-p[4]*y[6];
+  Ith(ydot, 7) =  p[4]*y[6]-p[4]*y[7];
+  Ith(ydot, 8) =  p[4]*y[7]-p[4]*y[8];
+  Ith(ydot, 9) =  p[4]*y[8]-p[4]*y[9];
+  Ith(ydot, 10) =  p[4]*y[9]-p[4]*y[10];
+  Ith(ydot, 11) =  p[4]*y[10]-p[4]*y[11];
+  Ith(ydot, 12) =  p[4]*y[11]-p[4]*y[12];
+  Ith(ydot, 13) =  p[4]*y[12]-p[4]*y[13];
+  Ith(ydot, 14) =  -p[4]*y[13]+(p[3]*p[11]*y[3])/p[12];
+  Ith(ydot, 15) =  p[8]*y[16]-stm*p[5]*p[7]*y[15];
+  Ith(ydot, 16) =  -p[8]*y[16]-p[9]*y[16]+stm*p[5]*p[7]*y[15];
+  Ith(ydot, 17) =  (p[9]*p[13]*y[16])/p[12]-(p[10]*p[11]*y[17])/p[12];
 
-Ith(ydot, 1) =  p[4]*y[13]*2.0-((y[16]+y[17])*p[1]*y[1])/(p[6]+y[1]);
-Ith(ydot, 2) =  p[2]*(y[2]*y[2])*-2.0+((y[16]+y[17])*p[1]*y[1])/(p[6]+y[1]);
-Ith(ydot, 3) =  -p[3]*y[3]+p[2]*(y[2]*y[2]);
-Ith(ydot, 4) =  p[3]*y[3]-p[4]*y[4];
-Ith(ydot, 5) =  p[4]*y[4]-p[4]*y[5];
-Ith(ydot, 6) =  p[4]*y[5]-p[4]*y[6];
-Ith(ydot, 7) =  p[4]*y[6]-p[4]*y[7];
-Ith(ydot, 8) =  p[4]*y[7]-p[4]*y[8];
-Ith(ydot, 9) =  p[4]*y[8]-p[4]*y[9];
-Ith(ydot, 10) =  p[4]*y[9]-p[4]*y[10];
-Ith(ydot, 11) =  p[4]*y[10]-p[4]*y[11];
-Ith(ydot, 12) =  p[4]*y[11]-p[4]*y[12];
-Ith(ydot, 13) =  p[4]*y[12]-p[4]*y[13];
-Ith(ydot, 14) =  p[3]*y[3]-p[4]*y[13];
-Ith(ydot, 15) =  p[8]*y[16]-stm*p[5]*p[7]*y[15];
-Ith(ydot, 16) =  -p[8]*y[16]-p[9]*y[16]+stm*p[5]*p[7]*y[15];
-Ith(ydot, 17) =  p[9]*y[16]-p[10]*y[17];
-
-
-/*hill receptor */
-/*Ith(ydot, 1) =  p[4]*y[13]*2.0-((y[16]+y[17])*p[1]*y[1])/(p[6]+y[1]);
-Ith(ydot, 2) =  p[2]*(y[2]*y[2])*-2.0+((y[16]+y[17])*p[1]*y[1])/(p[6]+y[1]);
-Ith(ydot, 3) =  -p[3]*y[3]+p[2]*(y[2]*y[2]);
-Ith(ydot, 4) =  p[3]*y[3]-p[4]*y[4];
-Ith(ydot, 5) =  p[4]*y[4]-p[4]*y[5];
-Ith(ydot, 6) =  p[4]*y[5]-p[4]*y[6];
-Ith(ydot, 7) =  p[4]*y[6]-p[4]*y[7];
-Ith(ydot, 8) =  p[4]*y[7]-p[4]*y[8];
-Ith(ydot, 9) =  p[4]*y[8]-p[4]*y[9];
-Ith(ydot, 10) =  p[4]*y[9]-p[4]*y[10];
-Ith(ydot, 11) =  p[4]*y[10]-p[4]*y[11];
-Ith(ydot, 12) =  p[4]*y[11]-p[4]*y[12];
-Ith(ydot, 13) =  p[4]*y[12]-p[4]*y[13];
-Ith(ydot, 14) =  p[3]*y[3]-p[4]*y[13];
-Ith(ydot, 15) =  p[8]*y[16]-(stm*p[5]*p[7]*(y[15]*y[15]))/(y[15]*y[15]+p[11]);
-Ith(ydot, 16) =  -p[8]*y[16]-p[9]*y[16]+(stm*p[5]*p[7]*(y[15]*y[15]))/(y[15]*y[15]+p[11]);
-Ith(ydot, 17) =  p[9]*y[16]-p[10]*y[17];
-*/
   return(0);
 }
 
@@ -633,88 +610,46 @@ static int Jac(long int N, realtype t,
        IJth(J,i,j) = RCONST(0.0);
     }
   }
-  
-
-IJth(J, 1, 1) =  -((y[16]+y[17])*p[1])/(p[6]+y[1])+1.0/pow(p[6]+y[1],2.0)*(y[16]+y[17])*p[1]*y[1];
-IJth(J, 1, 13) =  p[4]*2.0;
-IJth(J, 1, 16) =  -(p[1]*y[1])/(p[6]+y[1]);
-IJth(J, 1, 17) =  -(p[1]*y[1])/(p[6]+y[1]);
-IJth(J, 2, 1) =  ((y[16]+y[17])*p[1])/(p[6]+y[1])-1.0/pow(p[6]+y[1],2.0)*(y[16]+y[17])*p[1]*y[1];
-IJth(J, 2, 2) =  p[2]*y[2]*-4.0;
-IJth(J, 2, 16) =  (p[1]*y[1])/(p[6]+y[1]);
-IJth(J, 2, 17) =  (p[1]*y[1])/(p[6]+y[1]);
-IJth(J, 3, 2) =  p[2]*y[2]*2.0;
-IJth(J, 3, 3) =  -p[3];
-IJth(J, 4, 3) =  p[3];
-IJth(J, 4, 4) =  -p[4];
-IJth(J, 5, 4) =  p[4];
-IJth(J, 5, 5) =  -p[4];
-IJth(J, 6, 5) =  p[4];
-IJth(J, 6, 6) =  -p[4];
-IJth(J, 7, 6) =  p[4];
-IJth(J, 7, 7) =  -p[4];
-IJth(J, 8, 7) =  p[4];
-IJth(J, 8, 8) =  -p[4];
-IJth(J, 9, 8) =  p[4];
-IJth(J, 9, 9) =  -p[4];
-IJth(J, 10, 9) =  p[4];
-IJth(J, 10, 10) =  -p[4];
-IJth(J, 11, 10) =  p[4];
-IJth(J, 11, 11) =  -p[4];
-IJth(J, 12, 11) =  p[4];
-IJth(J, 12, 12) =  -p[4];
-IJth(J, 13, 12) =  p[4];
-IJth(J, 13, 13) =  -p[4];
-IJth(J, 14, 3) =  p[3];
-IJth(J, 14, 13) =  -p[4];
-IJth(J, 15, 15) =  -stm*p[5]*p[7];
-IJth(J, 15, 16) =  p[8];
-IJth(J, 16, 15) =  stm*p[5]*p[7];
-IJth(J, 16, 16) =  -p[8]-p[9];
-IJth(J, 17, 16) =  p[9];
-IJth(J, 17, 17) =  -p[10];
 
 
-/*hill receptor */
-/*IJth(J, 1, 1) =  -((y[16]+y[17])*p[1])/(p[6]+y[1])+1.0/pow(p[6]+y[1],2.0)*(y[16]+y[17])*p[1]*y[1];
-IJth(J, 1, 13) =  p[4]*2.0;
-IJth(J, 1, 16) =  -(p[1]*y[1])/(p[6]+y[1]);
-IJth(J, 1, 17) =  -(p[1]*y[1])/(p[6]+y[1]);
-IJth(J, 2, 1) =  ((y[16]+y[17])*p[1])/(p[6]+y[1])-1.0/pow(p[6]+y[1],2.0)*(y[16]+y[17])*p[1]*y[1];
-IJth(J, 2, 2) =  p[2]*y[2]*-4.0;
-IJth(J, 2, 16) =  (p[1]*y[1])/(p[6]+y[1]);
-IJth(J, 2, 17) =  (p[1]*y[1])/(p[6]+y[1]);
-IJth(J, 3, 2) =  p[2]*y[2]*2.0;
-IJth(J, 3, 3) =  -p[3];
-IJth(J, 4, 3) =  p[3];
-IJth(J, 4, 4) =  -p[4];
-IJth(J, 5, 4) =  p[4];
-IJth(J, 5, 5) =  -p[4];
-IJth(J, 6, 5) =  p[4];
-IJth(J, 6, 6) =  -p[4];
-IJth(J, 7, 6) =  p[4];
-IJth(J, 7, 7) =  -p[4];
-IJth(J, 8, 7) =  p[4];
-IJth(J, 8, 8) =  -p[4];
-IJth(J, 9, 8) =  p[4];
-IJth(J, 9, 9) =  -p[4];
-IJth(J, 10, 9) =  p[4];
-IJth(J, 10, 10) =  -p[4];
-IJth(J, 11, 10) =  p[4];
-IJth(J, 11, 11) =  -p[4];
-IJth(J, 12, 11) =  p[4];
-IJth(J, 12, 12) =  -p[4];
-IJth(J, 13, 12) =  p[4];
-IJth(J, 13, 13) =  -p[4];
-IJth(J, 14, 3) =  p[3];
-IJth(J, 14, 13) =  -p[4];
-IJth(J, 15, 15) =  (stm*p[5]*p[7]*y[15]*-2.0)/(y[15]*y[15]+p[11])+stm*1.0/pow(y[15]*y[15]+p[11],2.0)*p[5]*p[7]*(y[15]*y[15]*y[15])*2.0;
-IJth(J, 15, 16) =  p[8];
-IJth(J, 16, 15) =  (stm*p[5]*p[7]*y[15]*2.0)/(y[15]*y[15]+p[11])-stm*1.0/pow(y[15]*y[15]+p[11],2.0)*p[5]*p[7]*(y[15]*y[15]*y[15])*2.0;
-IJth(J, 16, 16) =  -p[8]-p[9];
-IJth(J, 17, 16) =  p[9];
-IJth(J, 17, 17) =  -p[10];
-*/
+  IJth(J, 1, 1) =  -((p[11]*y[17]+p[13]*y[16])*p[1])/(p[11]*y[1]+p[6])+1.0/pow(p[11]*y[1]+p[6],2.0)*(p[11]*y[17]+p[13]*y[16])*p[1]*p[11]*y[1];
+  IJth(J, 1, 13) =  (p[4]*p[12]*2.0)/p[11];
+  IJth(J, 1, 16) =  -(p[1]*p[13]*y[1])/(p[11]*y[1]+p[6]);
+  IJth(J, 1, 17) =  -(p[1]*p[11]*y[1])/(p[11]*y[1]+p[6]);
+  IJth(J, 2, 1) =  ((p[11]*y[17]+p[13]*y[16])*p[1])/(p[11]*y[1]+p[6])-1.0/pow(p[11]*y[1]+p[6],2.0)*(p[11]*y[17]+p[13]*y[16])*p[1]*p[11]*y[1];
+  IJth(J, 2, 2) =  p[2]*p[11]*y[2]*-4.0;
+  IJth(J, 2, 16) =  (p[1]*p[13]*y[1])/(p[11]*y[1]+p[6]);
+  IJth(J, 2, 17) =  (p[1]*p[11]*y[1])/(p[11]*y[1]+p[6]);
+  IJth(J, 3, 2) =  p[2]*p[11]*y[2]*2.0;
+  IJth(J, 3, 3) =  -p[3];
+  IJth(J, 4, 3) =  (p[3]*p[11])/p[12];
+  IJth(J, 4, 4) =  -p[4];
+  IJth(J, 5, 4) =  p[4];
+  IJth(J, 5, 5) =  -p[4];
+  IJth(J, 6, 5) =  p[4];
+  IJth(J, 6, 6) =  -p[4];
+  IJth(J, 7, 6) =  p[4];
+  IJth(J, 7, 7) =  -p[4];
+  IJth(J, 8, 7) =  p[4];
+  IJth(J, 8, 8) =  -p[4];
+  IJth(J, 9, 8) =  p[4];
+  IJth(J, 9, 9) =  -p[4];
+  IJth(J, 10, 9) =  p[4];
+  IJth(J, 10, 10) =  -p[4];
+  IJth(J, 11, 10) =  p[4];
+  IJth(J, 11, 11) =  -p[4];
+  IJth(J, 12, 11) =  p[4];
+  IJth(J, 12, 12) =  -p[4];
+  IJth(J, 13, 12) =  p[4];
+  IJth(J, 13, 13) =  -p[4];
+  IJth(J, 14, 3) =  (p[3]*p[11])/p[12];
+  IJth(J, 14, 13) =  -p[4];
+  IJth(J, 15, 15) =  -stm*p[5]*p[7];
+  IJth(J, 15, 16) =  p[8];
+  IJth(J, 16, 15) =  stm*p[5]*p[7];
+  IJth(J, 16, 16) =  -p[8]-p[9];
+  IJth(J, 17, 16) =  (p[9]*p[13])/p[12];
+  IJth(J, 17, 17) =  -(p[10]*p[11])/p[12];
 
   return(0);
 }

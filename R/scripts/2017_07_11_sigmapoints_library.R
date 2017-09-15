@@ -13,6 +13,9 @@ analyse_model_ut <- function(variables.model,
                              sigmapoints,
                              parameters.df,
                              fun_parameters_penalty = NULL,
+                             data.list,
+                             data.exp.grouped.optimisation = data.list$data.exp.grouped.optimisation,
+                             data.exp.summarise.optimisation = data.list$data.exp.summarise.optimisation,
                              ...){
   if(is.null(analyse_name)){
     analyse_name <- Sys.time()
@@ -40,8 +43,8 @@ analyse_model_ut <- function(variables.model,
     background = background,
     par.optimised = par.optimised,
     sigmapoints = sigmapoints,
-    parameters.conditions = parameters.conditions,fun_modify_input = fun_modify_input,fun_modify_parameters= fun_modify_parameters)
-    #...)
+    #parameters.conditions = parameters.conditions,fun_modify_input = fun_modify_input,fun_modify_parameters= fun_modify_parameters)
+    ...)
   data.model <- model$data.model
   data.trajectory <- model$data.trajectory
   

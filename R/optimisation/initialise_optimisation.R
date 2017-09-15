@@ -32,7 +32,7 @@ source("R/computations/load_conditions_cv.R")
 path.list <- 
     LoadOptimisationPaths(
       path.output = "resources/output/",
-      id = "2017-09-08-density_ver0"
+      id = "2017-09-08-density_ver2_mean"
     )
   
 
