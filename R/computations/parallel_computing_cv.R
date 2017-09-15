@@ -83,6 +83,8 @@ run_parallel_computations_cv <- function(
                   .multicombine = TRUE ) %dopar%
   {
     tryCatch({
+      time.list <- list()
+      time.list[[1]] <- Sys.time()
       par <- as.numeric(par.list[[computations.list[computation.i,]$par.id]])
       
       
@@ -282,6 +284,17 @@ run_parallel_computations_cv <- function(
                   sep = ",", 
                   row.names = FALSE, 
                   col.names = TRUE)
+      
+      time.list[[2]] <- Sys.time()
+      
+      write.table(x = difftime(time.list[[2]],
+                               time.list[[1]], 
+                               units = c("secs"))[[1]], 
+                  file = paste(path.optimisation.i, "time.txt", sep = "/"),
+                  sep = ",", 
+                  row.names = FALSE, 
+                  col.names = FALSE)
+      
       # write.table(
       #   x = data.frame(mse = optimisation.res$fmin,
       #                  maxit = maxit,
@@ -405,6 +418,8 @@ run_local_summary <- function(
   
   likelihood.df$par.id <- par.id
   parmaeters.df$par.id <- par.id
+  
+  
   return(
     list(
       parameters = parmaeters.df, 

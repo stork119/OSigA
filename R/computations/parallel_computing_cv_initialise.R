@@ -97,6 +97,14 @@ write.table(
   row.names = FALSE,
   col.names = TRUE)
 
+
+write.table(
+  x = data.list$data.exp.norm,
+  file = paste(path.list$optimisation, "data_exp_grouped.csv", sep = "/"),
+  sep = ",",
+  row.names = FALSE,
+  col.names = TRUE)
+
 data.opt.list <- list()
 data.opt.list[[1]] <- data.list$data.exp.norm
 for(i in 2:(optimisation.conditions$cross_validation_num+1)){
