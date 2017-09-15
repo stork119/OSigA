@@ -92,7 +92,7 @@ AggreagateSimulationData <- function(
 
 #### simulate_model_ut ####
 simulate_model_ut <- function(
-  fun_run_model = rmain,
+  fun_model_ode = rmain,
   parameters.model, 
   parameters.priming.model = parameters.model,
   variables,
@@ -128,12 +128,15 @@ simulate_model_ut <- function(
   )
   for(stm in stimulation.list){
     if(model.computations$raw){
-      res <- rmain(parameters = parameters.model, 
-                         variables = variables, 
-                         stm = stm, 
-                         tmesh = tmesh, 
-                         time_interval = time_interval, 
-                         time_computation = time_computation)
+      res <- do.call(
+        fun_model_ode,
+        list(parameters = parameters.model, 
+             variables = variables, 
+             stm = stm, 
+             tmesh = tmesh, 
+             time_interval = time_interval, 
+             time_computation = time_computation)
+      )
       if(res$success){
         res$aggregate <- AggreagateSimulationData(
           data.model = data.model,
@@ -150,12 +153,15 @@ simulate_model_ut <- function(
       }
     }
     if(model.computations$priming){
-      res.priming <- rmain(parameters = parameters.priming.model, 
-                                 variables = variables.priming, 
-                                 stm = stm, 
-                                 tmesh = tmesh, 
-                                 time_interval = time_interval, 
-                                 time_computation = time_computation)
+      res.priming <- do.call(
+        fun_model_ode,
+        list(parameters = parameters.priming.model, 
+             variables = variables.priming, 
+             stm = stm, 
+             tmesh = tmesh, 
+             time_interval = time_interval, 
+             time_computation = time_computation))
+        
       if(res.priming$success){
         res$aggregate <- AggreagateSimulationData(
           data.model = data.model,
@@ -216,10 +222,11 @@ run_model_ut <- function(
     fun_modify_input = fun_modify_input,
     ...)
   
-  sigmapoints$weights <- GetSigmapointsWeigths(alpha = sigmapoints$conditions$alpha, 
-                                    kappa = sigmapoints$conditions$kappa,
-                                    beta = sigmapoints$conditions$beta,
-                                    D = nrow(sigmapoints$parameters.conditions))
+  sigmapoints$weights <- 
+    GetSigmapointsWeigths(alpha = sigmapoints$conditions$alpha, 
+                          kappa = sigmapoints$conditions$kappa,
+                          beta = sigmapoints$conditions$beta,
+                          D = nrow(sigmapoints$parameters.conditions))
   ###
   data.model.list <- list()
   data.trajectory.list <- list()

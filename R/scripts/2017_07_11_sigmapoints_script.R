@@ -87,34 +87,44 @@ gplot <- ggplot(optimisation.results$data.model %>% mutate(type = factor(sigmapo
 #### model simulation ####
 source("R/scripts/2017_07_11_sigmapoints_library.R")
 gplot.list <- list()
-optimisation.conditions.toload <-
-  LoadOptimisationConditions(path.optimisation = path.list$optimisation,
-                             path.optimisation.data = path.list$optimisation.data,
-                             maxit.tmp = Inf)
-rm(list = labels(optimisation.conditions.toload))
-attach(optimisation.conditions.toload)
+optimisation.initiate <- InitiateOptimisation(
+  path.list = path.list)
+
+variables <- optimisation.initiate$variables
+variables.priming <- optimisation.initiate$variables.priming
+optimisation.conditions <- optimisation.initiate$optimisation.conditions
+parameters.conditions <- optimisation.initiate$parameters.conditions
+parameters.base <- optimisation.initiate$parameters.base
+parameters.factor <- optimisation.initiate$parameters.factor
+par.lower <- optimisation.initiate$par.lower
+par.upper <- optimisation.initiate$par.upper
+par.optimised <- optimisation.initiate$par.optimised
+stimulation.list <- optimisation.initiate$stimulation.list
+data.list <- optimisation.initiate$data.list
+data.opt.list <- optimisation.initiate$data.opt.list
+data.opt.summary.list <- optimisation.initiate$data.opt.summary.list
+par.list <- optimisation.initiate$par.list
+computations.list <-optimisation.initiate$computations.list
+
 sigmapoints <- LoadSigmapointsConditions(path.optimisation = path.list$optimisation)
 
-variables.model <- scan(paste(path.list$optimisation, "variables.csv", sep = "/"))
-variables.priming.model <- scan(paste(path.list$optimisation, "variables-priming.csv", sep = "/"))
 ##
-results.id <- "108"
-parameters.df <- read.table(paste(path.list$optimisation.data, results.id, "parameters_conditions.csv", sep = "/"), header = TRUE, sep = ",")
-parameters.df <-parameters.df %>% 
-  dplyr::mutate(par = opt) %>%
-  dplyr::select(-c(opt, init)) %>%
-  dplyr::mutate(factor = factor*base^par) %>% 
-  dplyr::mutate(par = 0)
+# results.id <- "108"
+# parameters.df <- read.table(paste(path.list$optimisation.data, results.id, "parameters_conditions.csv", sep = "/"), header = TRUE, sep = ",")
+# parameters.df <-parameters.df %>% 
+#   dplyr::mutate(par = opt) %>%
+#   dplyr::select(-c(opt, init)) %>%
+#   dplyr::mutate(factor = factor*base^par) %>% 
+#   dplyr::mutate(par = 0)
 
 ## no results 
 results.id <- 0 
-data.list$cellsvolumes.summarise
-parameters.conditions
+
 parameters.df <- parameters.conditions
 parameters.df <-parameters.df %>% 
   dplyr::mutate(par = 0)
 
-analyse_name = "volume_ver0-initial"
+analyse_name = "volume_ver2-initial"
 # variables.model[31] <- 0.5*variables.model[31]
 # variables.priming.model[31] <- variables.model[31]
 # parameters.df$par[10] <- 2.5
@@ -126,8 +136,8 @@ analyse_name = "volume_ver0-initial"
 # parameters.df$factor[18] <- 1#parameters.df$factor[18]*5
 
 res <- analyse_model_ut(parameters = parameters.factor,
-   variables.model = variables.model,
-                 variables.priming.model = variables.priming.model,
+                 variables.model = variables,
+                 variables.priming.model = variables.priming,
                  sigmapoints = sigmapoints,
                  analyse_name = analyse_name,
                  model.computations = list(raw = TRUE, priming = TRUE),
@@ -136,7 +146,12 @@ res <- analyse_model_ut(parameters = parameters.factor,
                  fun_modify_input = PrepareModelArguments.ut.multiple,
                  parameters.conditions = parameters.conditions,
                  #plot = FALSE,
-                 fun_parameters_penalty = NULL#fun_parameters_penalty_sigmapoints
+                 fun_parameters_penalty = NULL,#fun_parameters_penalty_sigmapoints
+                 data.list = data.list
                  )
-compare_distribution(data.exp.grouped.optimisation = data.exp.grouped.optimisation, data.model = res$data.model, analyse_name = res$analyse_name)
+compare_distribution(
+  data.exp.grouped.optimisation = data.list$data.exp.grouped.optimisation, data.model = res$data.model, analyse_name = res$analyse_name)
 
+
+
+###

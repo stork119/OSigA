@@ -70,10 +70,11 @@ source(file = "R/optimisation/initialise_optimisation.R")
 
 run_parallel_computations_cv(path.list = path.list,
                           # data.exp.grouped = data.exp.grouped,
-                          no_cores = 12,
+                          fun_model_ode = rmainmean,
+                          no_cores = 1,
                           maxit.tmp   =   1,
                           par.list.ids.part = 1,
-                          computations.ids = 15,
+                          computations.ids = 1,
                           # fun.optimisation = pureCMAES,
                           # optimisation.res.par = "xmin"warni,
                           data.model.list = list(),

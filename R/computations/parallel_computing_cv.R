@@ -92,6 +92,8 @@ run_parallel_computations_cv <- function(
                 computations.list[computation.i,]$par.id,
                 computations.list[computation.i,]$data.id,
                 name ="logger.optimisation")
+
+        
       
       optimisation.res <- do.call(
         fun.optimisation,
@@ -119,13 +121,15 @@ run_parallel_computations_cv <- function(
              stimulation.list = stimulation.list,
              background = background,
              data.exp.grouped = 
-               data.opt.list[[computations.list[computation.i,]$data.id]],
+               data.opt.list[[computations.list[computation.i,]$data.id]] %>% 
+               dplyr::filter(stimulation != 0, time != 0),
              data.exp.summarise =
-               data.opt.summary.list[[computations.list[computation.i,]$data.id]],
+               data.opt.summary.list[[computations.list[computation.i,]$data.id]] %>% 
+               dplyr::filter(stimulation != 0, time != 0),
              fun.likelihood = fun.optimisation.likelihood,
              par.optimised = par.optimised,
              fun_modify_input = fun_modify_input,
-             #sigmapoints = sigmapoints))
+             #sigmapoints = sigmapoints, fun_model_ode = rmainmean))
              ...))
       
       path.optimisation.i <- paste(path.list$optimisation.data, 
@@ -178,13 +182,19 @@ run_parallel_computations_cv <- function(
       #                                    background = background))
       #   
       # }
+      data.exp.opt <- 
+        data.list$data.exp.grouped.optimisation  %>% 
+        dplyr::filter(stimulation != 0, time != 0)
+      data.exp.opt.summarise <- 
+        data.list$data.exp.summarise.optimisation %>% 
+        dplyr::filter(stimulation != 0, time != 0)
       result <- sapply(fun.likelihood.list, 
                        function(fun.likelihood){
                          sum( likelihood( 
                            fun.likelihood = fun.likelihood,
                            data.model = model.simulation$data.model,
-                           data.exp.grouped = data.list$data.exp.grouped.optimisation,
-                           data.exp.summarise = data.list$data.exp.summarise.optimisation))
+                           data.exp.grouped = data.exp.opt,
+                           data.exp.summarise = data.exp.opt.summarise))
                        })
       flog.info("run_parallel_computations 
                 par.id %s
@@ -198,8 +208,8 @@ run_parallel_computations_cv <- function(
       
       model.simulation$data.model$likelihood  <- 
         likelihood(data.model = model.simulation$data.model,
-                   data.exp.grouped = data.list$data.exp.grouped.optimisation,
-                   data.exp.summarise =  data.list$data.exp.summarise.optimisation,
+                   data.exp.grouped = data.exp.opt,
+                   data.exp.summarise =  data.exp.opt.summarise,
                    fun.likelihood = fun.optimisation.likelihood)
       
       model.simulation$data.model$type <- "optimised"
