@@ -73,9 +73,9 @@ run_parallel_computations_cv <- function(
   par.list <- optimisation.initiate$par.list
   computations.list <-optimisation.initiate$computations.list
   
-  
-  computations.list <- computations.list[computations.ids,]
-  
+  if(!is.null(computations.ids)){
+    computations.list <- computations.list[computations.ids,]
+  }
   #### ####
   registerDoParallel(no_cores)
   test <- foreach(computation.i = 1:nrow(computations.list),
