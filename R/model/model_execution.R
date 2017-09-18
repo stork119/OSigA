@@ -37,7 +37,7 @@ normalization_simulation <- function(data.model,
                           background,
                           epsilon = 1){
   data.model$m.norm <- data.model$m/m.scale + background
-  data.model$sd.norm <- data.model$sd/(m.scale^2)
+  data.model$sd.norm <- data.model$sd/(m.scale^2) + background.var
   #data.model$sd.norm <- sapply(data.model$sd.norm, function(sd.norm){ifelse(sd.norm < epsilon, epsilon, sd.norm)})
   data.model$time <- data.model$time
   return(data.model)
