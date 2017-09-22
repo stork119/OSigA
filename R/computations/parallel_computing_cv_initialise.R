@@ -79,7 +79,7 @@ if(!file.exists(optimisation.filename)){
               row.names = FALSE,
               col.names = TRUE)
 } else {
-  optimisation.conditions <- LoadOptimisationConditions(optimisation.filename)
+  optimisation.conditions <- LoadOptimisationConditions(optimisation.filename = optimisation.filename)
 }
 
 #### create computation data ####

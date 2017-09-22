@@ -4,7 +4,7 @@
 
 #### SOURCES ####
 source("R/libraries/library_data_manipulation.R")
-source("R/jakstat_data_library.R")
+#source("R/jakstat_data_library.R")
 source("R/libraries/statistics/likelihood_lmvn.R")
 source("R/libraries/statistics/lmvn.R")
 source("R/jakstat_data.R")
