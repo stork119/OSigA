@@ -83,6 +83,7 @@ gplot.list[[par]] <- ggplot(
   ggtitle(paste("Dependence of likelihood on parameters (",par,")"))
 }
 
+
 do.call(what = ggsave,
                   args = append(plot.args.ggsave,
                                 list(filename = paste(path.list$optimisation.results,
