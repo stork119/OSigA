@@ -466,10 +466,10 @@ fun.computations$compare_parameters <- function(
         colour = -likelihood_round)) +
     geom_point(size = 1.5) +
     geom_line( aes_string(alpha = "l", size = "l")) + scale_size("line", range = c(0,2) ) +
-   # geom_point(parameters.conditions %>% dplyr::filter(lower != upper) , mapping = aes(x = variable, y = upper), color = "black") + 
-    geom_line(parameters.conditions %>% dplyr::filter(lower != upper) , mapping = aes(x = variable, y = upper), color = "black") +
-  #  geom_point(parameters.conditions %>% dplyr::filter(lower != upper) , mapping = aes(x = variable, y = lower), color = "black") + 
-    geom_line(parameters.conditions %>% dplyr::filter(lower != upper) , mapping = aes(x = variable, y = lower), color = "black") +
+   # geom_point(parameters.conditions %>% dplyr::filter(lower != upper) %>% dplyr::mutate(par.id = 0, data.id = 0), mapping = aes(x = variable, y = upper), color = "black") + 
+    geom_line(parameters.conditions %>% dplyr::filter(lower != upper) %>% dplyr::mutate(par.id = 0, data.id = 0), mapping = aes(x = variable, y = upper), color = "black") +
+  #  geom_point(parameters.conditions %>% dplyr::filter(lower != upper)%>% dplyr::mutate(par.id = 0, data.id = 0) , mapping = aes(x = variable, y = lower), color = "black") + 
+    geom_line(parameters.conditions %>% dplyr::filter(lower != upper) %>% dplyr::mutate(par.id = 0, data.id = 0), mapping = aes(x = variable, y = lower), color = "black") +
     do.call(theme_jetka, plot.args) +
     scale_colour_gradient(low = "white", high = "black") +
       ggtitle(paste("data.id", data_id))
@@ -536,7 +536,10 @@ fun.computations$save_best_conditions <- function(
     x = parameters.conditions,
     file = paste(path.list$optimisation.results,
                  "parameters_conditions.csv",
-                 sep = "/"))
+                 sep = "/"),
+    row.names = FALSE,
+    col.names = TRUE,
+    sep = ",")
   
   file.copy(
     from = paste(path.list$optimisation, "optimisation_conditions.csv", sep = "/"),
@@ -566,7 +569,6 @@ fun.computations$run_summary <-
     fun.computations$compare_parameters(...)
     fun.computations$save_best_conditions(...)
   }
-
 #### TODO ####
 
 
