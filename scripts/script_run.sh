@@ -1,1 +1,1 @@
-nohup Rscript ../R/parallel_computing_run.R &
+nohup Rscript ../R/computations/parallel_computing_run.R &
