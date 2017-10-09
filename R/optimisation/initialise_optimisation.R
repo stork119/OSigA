@@ -27,12 +27,13 @@ rm(filename.optimisation,path.optimisation,files.optimisation,comment.optimisati
 
 source("R/computations/parallel_computing_cv.R")
 source("R/computations/load_conditions_cv.R")
+source("R/computations/computations_summary_library.R")
 
 #### ####
 path.list <- 
     LoadOptimisationPaths(
       path.output = "resources/output/",
-      id = "2017-09-08-density_ver2_mean"
+      id = "2017-09-08-density_ver0_mean_1000_55"
     )
   
 

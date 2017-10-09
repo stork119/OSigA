@@ -79,7 +79,7 @@ if(!file.exists(optimisation.filename)){
               row.names = FALSE,
               col.names = TRUE)
 } else {
-  optimisation.conditions <- LoadOptimisationConditions(optimisation.filename)
+  optimisation.conditions <- LoadOptimisationConditions(optimisation.filename = optimisation.filename)
 }
 
 #### create computation data ####
@@ -93,6 +93,14 @@ dir.create(path = path, recursive = TRUE, showWarnings = FALSE)
 write.table(
   x = data.list$data.exp.norm,
   file = paste(path, "data_exp_grouped.csv", sep = "/"),
+  sep = ",",
+  row.names = FALSE,
+  col.names = TRUE)
+
+
+write.table(
+  x = data.list$data.exp.norm,
+  file = paste(path.list$optimisation, "data_exp_grouped.csv", sep = "/"),
   sep = ",",
   row.names = FALSE,
   col.names = TRUE)
