@@ -63,6 +63,9 @@ saveRDS(object = poster.data.list,
 
 
 #### filter data ####
+rds.path <- "/home/knt/Documents/modelling/resources/input/poster/data_ffc.RDS"
+poster.data.list <- readRDS(file = rds.path)
+
 poster.filtered.list <- list(
   list(id = "2016-01-26-KA10-C", well.names = c('A01', 'B01', 'H12')),
   list(id = "2016-01-26-KA10-IFNB" , well.names = c('A02', 'A03', 'A04')),
@@ -71,10 +74,21 @@ poster.filtered.list <- list(
   list(id = '2016-01-28-KA11-IFNB', well.names = c('B01', 'G01', 'H01')),
   list(id = '2016-01-28-KA11-IFNG', well.names = c(paste('A0', 1:3, sep = ''), 'B01', 'C01')),
   list(id = '2017-07-18-KS26', well.names = c('D01')),
-  list(id = '2017-08-25-KZ73-Nuclei', well.names = c('A11', 'B01')),
-  list(id = '2017-08-25-KZ73-Cytoplasm', well.names = c(paste('A0', 1:4, sep = ''), 'A11', 'A12', paste('B0', 1:3, sep = ''), 'H01', 'H12')),
-  list(id = '2017-08-25-KZ73-Cells', well.names = c(paste('A0', 1:4, sep = ''), 'A11', 'A12', paste('B0', 1:3, sep = ''), 'H01', 'H12'))
-)
+  # list(id = '2017-08-25-KZ73-Nuclei', well.names = c('A11', paste(LETTERS[1:8], '01', sep = ""))),
+  # list(id = '2017-08-25-KZ73-Cytoplasm', well.names = c(paste('A0', 1:4, sep = ''), 'A11', 'A12', paste('B0', 1:3, sep = ''), 'H01', 'H12',"well.name")),
+  # list(id = '2017-08-25-KZ73-Cells', well.names = c(paste('A0', 1:4, sep = ''), 'A11', 'A12', paste('B0', 1:3, sep = ''), 'H01', 'H12', "well.name"),
+  list(id = '2017-08-25-KZ73-Nuclei', well.names = c(as.vector(matrix(sapply(LETTERS[c(1,3:8)], function(l) {paste(l, c(paste('0', 3:9, sep = ""), "10", "11", "12"), sep = "")}), ncol = 1)), "A01", "A02")),
+  list(id = '2017-08-25-KZ73-Cells', well.names = c(as.vector(matrix(sapply(LETTERS[c(1,3:8)], function(l) {paste(l, c(paste('0', 3:9, sep = ""), "10", "11", "12"), sep = "")}), ncol = 1)), "A01", "A02")),
+  list(id = '2017-08-25-KZ73-Cytoplasm', well.names = c(as.vector(matrix(sapply(LETTERS[c(1,3:8)], function(l) {paste(l, c(paste('0', 3:9, sep = ""), "10", "11", "12"), sep = "")}), ncol = 1)), "A01", "A02")),
+  list(id = '2017-09-15-KZ78-Nuclei', well.names = c(as.vector(matrix(sapply(LETTERS[c(2)], function(l) {paste(l, c(paste('0', 1:9, sep = ""), "10", "11", "12"), sep = "")}), ncol = 1)), 
+                                                     as.vector(matrix(sapply(LETTERS[1:8], function(l) {paste(l, c("01", "02"), sep = "")}), ncol = 1)))),
+  list(id = '2017-09-15-KZ78-Cells', well.names = c(as.vector(matrix(sapply(LETTERS[c(2)], function(l) {paste(l, c(paste('0', 1:9, sep = ""), "10", "11", "12"), sep = "")}), ncol = 1)), 
+                                                    as.vector(matrix(sapply(LETTERS[1:8], function(l) {paste(l, c("01", "02"), sep = "")}), ncol = 1)))),
+  list(id = '2017-09-15-KZ78-Cytoplasm', well.names = c(as.vector(matrix(sapply(LETTERS[c(2)], function(l) {paste(l, c(paste('0', 1:9, sep = ""), "10", "11", "12"), sep = "")}), ncol = 1)), 
+                                                        as.vector(matrix(sapply(LETTERS[1:8], function(l) {paste(l, c("01", "02"), sep = "")}), ncol = 1))))
+  
+  )
+
 poster.data.list.2 <- poster.data.list
 for(poster.filter in poster.filtered.list){
   #poster.filter <- poster.filtered.list[[1]]
@@ -88,6 +102,9 @@ saveRDS(object = poster.data.list,
 
 
 #### connect data ####
+rds.path <- "/home/knt/Documents/modelling/resources/input/poster/data_ffc_filtered.RDS"
+poster.data.list <- readRDS(file = rds.path)
+
 poster.data.list.new <- list()
 # BetaStat1
 part.list <- list("Nuclei", "Cytoplasm", "Cells")
@@ -241,27 +258,47 @@ poster.data.list.new[["Beta-Gamma-IRF"]] <-
   data.table()
 
 poster.data.list <- poster.data.list.new
-saveRDS(object = poster.data.list.new, 
+saveRDS(object = poster.data.list, 
         file = paste(poster.path.list$input.dir, "data_ffc_joined.RDS", sep = "/"))
 
 #### add zero ####
-
+rds.path <- "/home/knt/Documents/modelling/resources/input/poster/data_ffc_joined.RDS"
+poster.data.list <- readRDS(file = rds.path)
 poster.data.list.new <- poster.data.list
 for(poster.label in labels(poster.data.list)){
-  time.list <- unique(poster.data.list.new[[poster.label]]$time)
-  time.list <- time.list[which(time.list != 0)]
-  data.zero <- poster.data.list.new[[poster.label]]  %>% 
-    dplyr::filter(time == 0 | stimulation == 0)
-  for( t in time.list){
-    poster.data.list.new[[poster.label]] <-
-      poster.data.list.new[[poster.label]] %>%
-      rbind(
-        data.zero %>% 
-          dplyr::mutate(stimulation = 0) %>%
-          dplyr::mutate(time = t)
-      )
+  #experiment.list <- unique(poster.data.list[[poster.label]]$experiment)
+  #data.list.tmp <- list()
+  #for( experiment_ in experiment.list){
+    data.tmp <- poster.data.list[[poster.label]]# %>% dplyr::filter(experiment == experiment_)
+    time.list <- unique(data.tmp$time)
+    time.list <- time.list[which(time.list != 0)]
+    data.zero <- data.tmp  %>% 
+      dplyr::filter(time == 0 | stimulation == 0)
+    for( t in time.list){
+      poster.data.list.new[[poster.label]] <-
+        poster.data.list.new[[poster.label]] %>%
+        rbind(
+          data.zero %>% 
+            dplyr::mutate(stimulation = 0) %>%
+            dplyr::mutate(time = t)
+        )
+    }
   }
-}
+#}
+
+g <- plot_boxplot_group(
+  data = poster.data.list.new$`Beta-Stat-Nuclei` %>% data.frame(),# %>% dplyr::filter(experiment =="2017-09-15-KZ78" ), 
+  x = col_stimulation,#"well.name", 
+  y = col_response, 
+ # boxplot_group = col_time,#"well.name", 
+  facet_grid_group_y = col_time,
+  save_plot = FALSE
+#  ylim_max_const = TRUE,
+#  plot_title = poster.label
+  #ylim_max = max(quantile(x = data[,col_response], na.rm = TRUE, probs = 0.95)[[1]], 1500)
+  )
+
+
 poster.data.list <- poster.data.list.new
 saveRDS(object = poster.data.list.new, 
         file = paste(poster.path.list$input.dir, "data_ffc_zero_added.RDS", sep = "/"))

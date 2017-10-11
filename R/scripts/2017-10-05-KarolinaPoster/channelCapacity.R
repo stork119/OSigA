@@ -59,11 +59,12 @@ ggsave(filename = paste(poster.path.list$output.dir, paste("experiments", ".pdf"
 #### channel capacity compuation ####
 #no_cores <- 6
 #registerDoParallel(no_cores)
-foreach(poster.label = labels(poster.data.list)) %do% {
+foreach(poster.label = labels(poster.data.list)[1]) %do% {
   #poster.label <- labels(poster.data.list)[2]
   tryCatch({
     print(poster.label)
-    data <- poster.data.list[[poster.label]] %>% data.frame()
+    data <- poster.data.list[[poster.label]] %>% data.frame() %>% 
+      dplyr::filter(stimulation %in% c(1.8,900))
     
     if("time" %in% colnames(data)){
       col_time <- "time"
@@ -89,7 +90,7 @@ foreach(poster.label = labels(poster.data.list)) %do% {
     } else {
       col_response <- "Intensity_MeanIntensity_Alexa555"
     }
-    
+    poster.label <- paste(poster.label, "-test", sep = "")
     path <- paste(poster.path.list$output.dir, poster.label, sep = "/")
     dir.create(path = path, recursive = TRUE, showWarnings = FALSE)
     gplot.list <- list()
@@ -169,8 +170,8 @@ foreach(poster.label = labels(poster.data.list)) %do% {
                                       signal = col_stimulation,
                                       response = col_response,
                                       #                                forumla_string =
-                                      cc_maxit = 50,
-                                      lr_maxit = 2000,
+                                      # cc_maxit = 50,
+                                      # lr_maxit = 2000,
                                       output_path = output_path)
     #  cc.list[[as.character(t)]] <- 
       return(list(time = t, cc = cc.output$cc))
