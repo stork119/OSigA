@@ -13,11 +13,11 @@ source("R/optimisation/initialise_optimisation.R")
 library(e1071)
 library(CapacityLogReg)
 
-# rds.path <- "/home/knt/Documents/modelling/resources/input/poster/data_ffc.RDS"
-# poster.data.list <- readRDS(file = rds.path)
-# poster.path.list <- list()
+rds.path <- "/home/knt/Documents/modelling/resources/input/poster/data_ffc_filtered.RDS"
+poster.data.list <- readRDS(file = rds.path)
+poster.path.list <- list()
 poster.path.list$input.dir <- "resources/input/poster/"
-poster.path.list$output.dir <- "resources/output/poster/joined_zeroadded/"
+poster.path.list$output.dir <- "resources/output/poster/filtered/"
 
 #### plots by wells ####
 gplot.list <- list()
@@ -33,9 +33,6 @@ r <-foreach(poster.label = labels(poster.data.list)) %do% {
   } else {
     col_response <- "Intensity_MeanIntensity_Alexa555"
   }
-  
-  path <- paste(poster.path.list$output.dir, poster.label, sep = "/")
-  dir.create(path = path, recursive = TRUE, showWarnings = FALSE)
   
   gplot.list[[poster.label]]  <- 
     plot_boxplot_group(
@@ -59,12 +56,16 @@ ggsave(filename = paste(poster.path.list$output.dir, paste("experiments", ".pdf"
 #### channel capacity compuation ####
 #no_cores <- 6
 #registerDoParallel(no_cores)
-foreach(poster.label = labels(poster.data.list)[1]) %do% {
-  #poster.label <- labels(poster.data.list)[2]
+
+sample.num <- 100
+foreach(poster.label = labels(poster.data.list)[-c(1,12,14)]) %do% {
+  #poster.label <- labels(poster.data.list)[1]
   tryCatch({
     print(poster.label)
-    data <- poster.data.list[[poster.label]] %>% data.frame() %>% 
-      dplyr::filter(stimulation %in% c(1.8,900))
+    data <- poster.data.list[[poster.label]] %>% 
+      data.frame() 
+    
+    col_well <- "well.name"
     
     if("time" %in% colnames(data)){
       col_time <- "time"
@@ -90,7 +91,9 @@ foreach(poster.label = labels(poster.data.list)[1]) %do% {
     } else {
       col_response <- "Intensity_MeanIntensity_Alexa555"
     }
-    poster.label <- paste(poster.label, "-test", sep = "")
+  
+    
+    poster.label <- paste(poster.label, sep = "")
     path <- paste(poster.path.list$output.dir, poster.label, sep = "/")
     dir.create(path = path, recursive = TRUE, showWarnings = FALSE)
     gplot.list <- list()
@@ -160,21 +163,74 @@ foreach(poster.label = labels(poster.data.list)[1]) %do% {
     registerDoParallel(no_cores)
     cc.list <- foreach(t = (data %>% dplyr::distinct_(col_time))[,col_time]) %dopar% {
       print(paste(poster.label, t))
-    #for(t in (data %>% dplyr::distinct_(col_time))[,col_time]){
-      output_path <- paste(path, "channel_capacity", t, "/", sep = "/")
+      data.time <- data %>% dplyr::filter_(paste(col_time, "==", t))
+      cc.list.samples <- 
+        foreach(sample.i = 1:sample.num) %do% {
+          wells.df <- data.time %>% dplyr::group_by_(col_stimulation) %>% dplyr::distinct(well.name)
+          wells.list <- c()
+          for(stm in (wells.df %>% dplyr::distinct_(col_stimulation) %>% data.frame())[,col_stimulation]){
+            wells <- as.character((wells.df %>% dplyr::filter_(paste(col_stimulation, '==', stm)) %>% data.frame())[, col_well])
+            wells.list <- append(x = wells.list, values = sample(x = wells, size = 1))
+          }
+          
+          output_path <- paste(path, "channel_capacity", t, sample.i, "/", sep = "/")
+          dir.create(output_path, recursive = TRUE, showWarnings = FALSE)
+          write.table(x = data.frame(wells = wells.list), 
+                      file = paste(output_path, "wells.csv", sep = "/"),
+                      row.names = FALSE,
+                      col.names = FALSE,
+                      sep = ",")
+          cc.output <- capacity_logreg_main(data.time %>% 
+                                              dplyr::filter_(
+                                                paste(
+                                                  col_well, 
+                                                  '%in%', 
+                                                  'c(', 
+                                                  paste("'", wells.list,"'", collapse = ",", sep = ""),
+                                                  ')')),
+                                            graphs = FALSE,
+                                            plot_width = plot.args$width,
+                                            plot_height = plot.args$height,
+                                            signal = col_stimulation,
+                                            response = col_response,
+                                          #                                forumla_string =
+                                          # cc_maxit = 50,
+                                          # lr_maxit = 2000,
+                                          output_path = output_path)
+          file.remove(paste(output_path, "output.rds", sep = "/"))
+          write.table(x = data.frame(cc = cc.output$cc, time = t, sample = sample.i), 
+                      row.names = FALSE, 
+                      col.names = TRUE, 
+                      sep = ",", 
+                      file = paste(output_path, "channel_capacity.csv", sep = "/"))
+          return(list(time = t, cc = cc.output$cc, sample = sample.i))
+      }
+      #  cc.list[[as.character(t)]] <- 
+      sample.i <- 0
+      output_path <- paste(path, "channel_capacity", t, sample.i, "/", sep = "/")
       dir.create(output_path, recursive = TRUE, showWarnings = FALSE)
-      cc.output <- capacity_logreg_main(data %>% dplyr::filter_(paste(col_time, "==", t)),
-                                                         graphs = TRUE,plot_width = plot.args$width,
-                                                         plot_height = plot.args$height,
-                                                          
-                                      signal = col_stimulation,
-                                      response = col_response,
-                                      #                                forumla_string =
-                                      # cc_maxit = 50,
-                                      # lr_maxit = 2000,
-                                      output_path = output_path)
-    #  cc.list[[as.character(t)]] <- 
-      return(list(time = t, cc = cc.output$cc))
+      cc.output <- capacity_logreg_main(data.time,
+                                        graphs = TRUE,
+                                        plot_width = plot.args$width,
+                                        plot_height = plot.args$height,
+                                        signal = col_stimulation,
+                                        response = col_response,
+                                        output_path = output_path)
+      write.table(x = data.frame(cc = cc.output$cc, time = t, sample = sample.i), 
+                  row.names = FALSE, 
+                  col.names = TRUE, 
+                  sep = ",", 
+                  file = paste(output_path, "channel_capacity.csv", sep = "/"))
+      cc.list.samples[[sample.num + 1]] <- list(time = t, cc = cc.output$cc, sample = sample.i)
+      cc.df <- do.call(rbind, cc.list.samples) 
+      output_path <- paste(path, "channel_capacity", t, "/", sep = "/")
+      write.table(x = cc.df, 
+                  row.names = FALSE, 
+                  col.names = TRUE, 
+                  sep = ",", 
+                  file = paste(output_path, "channel_capacity.csv", sep = "/"))
+      return(cc.df)
+      ### prepare output 
     }
     stopImplicitCluster()
     cc.df <- do.call(rbind, cc.list)  
@@ -189,9 +245,44 @@ foreach(poster.label = labels(poster.data.list)[1]) %do% {
 #stopImplicitCluster()
 
 #### channel capacity plot ####
+
+poster.labels.df <- data.frame(label = sort(labels(poster.data.list)))
+poster.labels.df$title[1] = "pSTAT in nuclei; stm: gamma"
+poster.labels.df$position[1] = 1
+poster.labels.df$title[2] = "pSTAT in nuclei; stm: beta + gamma"
+poster.labels.df$position[2] = 3
+poster.labels.df$title[3] = "pSTAT in nuclei; stm: gamma + gamma"
+poster.labels.df$position[3] = 4
+poster.labels.df$title[4] = "pSTAT in nuclei; stm: gamma"
+poster.labels.df$position[4] = 1
+poster.labels.df$title[5] = "pSTAT in nuclei; stm: beta + gamma"
+poster.labels.df$position[5] = 3
+poster.labels.df$title[6] = "pSTAT in nuclei; stm: gamma + gamma"
+poster.labels.df$position[6] = 4
+poster.labels.df$title[7] = "IRF1 in nuclei; stm: gamma"
+poster.labels.df$position[7] = 8
+poster.labels.df$title[8] = "IRF1 in nuclei; stm: beta + gamma"
+poster.labels.df$position[8] = 9
+poster.labels.df$title[9] = "pSTAT in nuclei; stm: beta"
+poster.labels.df$position[9] = 2
+poster.labels.df$title[10] = "STAT in cells; stm: beta"
+poster.labels.df$position[10] = 6
+poster.labels.df$title[11] = "STAT in cytoplasm; stm: beta"
+poster.labels.df$position[11] = 7
+poster.labels.df$title[12] = "STAT in nuclei; stm: beta"
+poster.labels.df$position[12] = 5
+poster.labels.df$title[13] = "STAT in cells; stm: beta"
+poster.labels.df$position[13] = 6
+poster.labels.df$title[14] = "STAT in cytoplasm; stm: beta"
+poster.labels.df$position[14] = 7
+poster.labels.df$title[15] = "STAT in nuclei; stm: beta"
+poster.labels.df$position[15] = 5
+poster.labels.df <- poster.labels.df %>% arrange(position, label)
 gplot.list <- list()
-r <- foreach(poster.label = labels(poster.data.list)) %do% {
+r <- foreach(poster.label.i = 1:nrow(poster.labels.df)) %do% {
   #poster.label <- labels(poster.data.list)[3]
+  poster.label <- as.character(poster.labels.df[poster.label.i,]$label)
+  poster.title <- as.character(poster.labels.df[poster.label.i,]$title)
   print(poster.label)
   data <- poster.data.list[[poster.label]] %>% data.frame()
   
@@ -219,10 +310,18 @@ r <- foreach(poster.label = labels(poster.data.list)) %do% {
     col_response <- "Intensity_MeanIntensity_Alexa555"
   }
   path <- paste(poster.path.list$output.dir, poster.label, sep = "/")
-  cc.df <- read.table(paste(path,"channel_capacity.csv", sep =  "/"), header = TRUE, sep = ",")
+  cc.df <- read.table(paste(path,"channel_capacity.csv", sep =  "/"), header = TRUE, sep = ",") %>%
+    dplyr::group_by(time) %>%
+    dplyr::summarise(cc.mean = mean(cc), cc.sd = sqrt(var(cc)))
   stimulation.list <- unique(data[,col_stimulation])
-  cc.df$stimulation <- floor(length(stimulation.list)/2)
+  cc.df[,col_stimulation] <- floor(length(stimulation.list)/2)
   cc.df[,col_time] <- cc.df$time
+  
+  cc.df.0 <-  read.table(paste(path,"channel_capacity.csv", sep =  "/"), header = TRUE, sep = ",") %>%
+    dplyr::filter(sample == 0)
+  cc.df.0[,col_stimulation] <- floor(length(stimulation.list)/2)
+  cc.df.0[,col_time] <- cc.df.0$time
+  
   
   gplot.list[[poster.label]]  <- 
     plot_boxplot_group(
@@ -232,9 +331,12 @@ r <- foreach(poster.label = labels(poster.data.list)) %do% {
       facet_grid_group_y =  col_time,
       save_plot = FALSE,
       ylim_max_const = TRUE,
-      plot_title = poster.label,
+      plot_title = paste(poster.title, poster.label),
       ylim_max = max(quantile(x = data[,col_response], na.rm = TRUE, probs = 0.95)[[1]], 1500)) +
-    geom_text(data = cc.df, mapping = aes(label = round(cc,2), y = 1200), size = 20, color = "red")
+    geom_text(data = cc.df, mapping = aes(label = paste(round(cc.mean,2), "+",  round(cc.sd,3), sep = "")
+                                                        , y = 1200), size = 10, color = "red") +
+    geom_text(data = cc.df.0, mapping = aes(label = paste(round(cc,2), sep = "")
+                                          , y = 1000), size = 10, color = "blue")
 
   return()
 }
