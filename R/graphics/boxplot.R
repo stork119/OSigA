@@ -74,10 +74,14 @@ plot_boxplot_group <- function(data,
     xlab(xlab) +
     ylab(ylab) + 
     ggtitle(plot_title) +
-    facet_grid(paste(facet_grid_group_x, "~", facet_grid_group_y, sep = " "),
-               scale ="free",
-               space = "free") +
     theme_jetka(...)
+  if(facet_grid_group_x != "" || facet_grid_group_y != ""){
+    gplot <- 
+      gplot + 
+      facet_grid(paste(facet_grid_group_x, "~", facet_grid_group_y, sep = " "),
+                 scale ="free",
+                 space = "free")
+  }
   try({
     if(save_plot){
       output_path <- normalizePath(output_path, "/")
