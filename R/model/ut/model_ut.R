@@ -38,6 +38,7 @@ PrepareModelArguments.ut.multiple <-
            variables.priming,
            priming_constant = 3.4,
            parameters.conditions,
+           p1p6_constant = 1.635657e-07,
            ...) {
     
     flog.debug("model_ut.R PrepareModelArguments.ut.multiple", name="logger.optimisation")
@@ -50,6 +51,9 @@ PrepareModelArguments.ut.multiple <-
     
     parameters.priming.model[parameters.conditions$parameters.priming[which(parameters.conditions$parameters.priming != 0)]] <- 
       parameters[which(parameters.conditions$parameters.priming != 0)]
+    
+    parameters.model[1] <- parameters.model[6]*p1p6_constant
+    parameters.priming.model[1] <- parameters.priming.model[6]*p1p6_constant
     
     return(list(parameters = parameters.model,
                 parameters.priming = parameters.priming.model,

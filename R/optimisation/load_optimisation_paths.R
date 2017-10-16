@@ -4,10 +4,17 @@
 
 LoadOptimisationPaths <- function(
   path.output,
-  id
+  id,
+  id.list = NULL
 ){
   path.list <- list() 
-  path.list$id          <- id
+  
+  if(!is.null(id.list)){
+    id <- paste(id.list, sep = "/", collapse = "/")
+    path.list$id  <- paste(id.list, sep = "-", collapse = "-")
+  } else {
+    path.list$id          <- id
+  }
   path.list$optimisation          <- paste(path.output, "optimisation", id, "/", sep = "/")
   path.list$optimisation.data     <- paste(path.list$optimisation, "data/", sep = "/")
   path.list$optimisation.results  <- paste(path.list$optimisation, "results/", sep = "/")
