@@ -35,10 +35,12 @@ run_parallel_computations_cv <- function(
   
   #TODO get path to logfile$path outside
   logfile <- list()
-  logfile$name <- paste("optimisation", path.list$id, Sys.time(), sep = "-")
+  logfile$name <- paste("optimisation", path.list.par$id, Sys.time(), sep = "-")
   logfile$path <- "scripts/"
+ # dir.create(path.list$optimisation.data, showWarnings = FALSE, recursive = TRUE)
   logfile$filename <- paste(logfile$path, logfile$name, ".log", sep = "")
-
+  print(logfile$filename)
+  
   InitLogging(filename = logfile$filename)
   #remove(logfile)
   

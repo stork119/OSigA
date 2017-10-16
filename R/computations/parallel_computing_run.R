@@ -68,6 +68,12 @@ source(file = "R/optimisation/initialise_optimisation.R")
 # )
 
 
+path.list <-
+    LoadOptimisationPaths(
+      path.output = "resources/output/",
+      id = "2017-09-08-density_ver0_mean_1000_55"
+    )
+
 run_parallel_computations_cv(path.list = path.list,
                           # data.exp.grouped = data.exp.grouped,
                           fun_model_ode = rmainmean,

@@ -37,9 +37,14 @@ library("PerformanceAnalytics")
 parameters.estimated <- parameters.estimated %>% 
   dplyr::filter(likelihood < -50000)
 
-parameters.estimated <- parameters.estimated %>% 
+parameters.estimated.2 <- parameters.estimated %>% 
   #dplyr::mutate(p1p6 = p11*p21*p1/(p6+p19*p11))
-  dplyr::mutate(p1p6 = p1/p6)
+  dplyr::mutate(p1p6 = p1/p6) %>%
+  dplyr::arrange(likelihood) %>%
+  dplyr::filter(likelihood < -54278.41) %>%
+  dplyr::summarise(p1p6 = mean(p1p6))
+
+parameters.estimated.2$p1p6[1]
 
 df <- parameters.estimated[, c(paste("p",c(2,3,8,9,10), sep = ""), "p1p6")]
 
@@ -58,15 +63,17 @@ dev.off()
 parameters.estimated <- parameters.estimated %>% 
   dplyr::mutate(p1p6 = p1/p6) %>%
   dplyr::mutate(p9p10 = p9/p10) %>%
-  dplyr::mutate(p8p9 = p8*p9*p10) 
+  dplyr::mutate(p8p9 = p8*p9*p10) %>%
+  dplyr::mutate(p2p8 = -42237642*p2+ 3.752908*p8) %>%
+dplyr::mutate(p9p10 = -0.183*p9+ 259*p10) 
 parameters.estimated.melt <- parameters.estimated %>% 
   melt(id.vars = c("likelihood", "par.id", "data.id")) %>%
   data.table()
 parameters.estimated.melt <- parameters.estimated.melt %>% dplyr::mutate(variable = as.character(variable))
 
-par <- "p1p6"
+par <- "p9p10"
 q <- quantile(parameters.estimated.melt$likelihood, probs = c(0.75))[[1]]
-colnames(df)
+cols <- c(colnames(df), "p2p8")
 gplot.list <- list()
 for(par in colnames(df)){
 gplot.list[[par]] <- ggplot(
@@ -90,3 +97,16 @@ do.call(what = ggsave,
                                                       "parameters_dependence.pdf", sep ="/"),
                                      plot = marrangeGrob(grobs = gplot.list, ncol = 1, nrow = 1))))
 
+
+#### canoncial correlations ####
+df.params <- as.matrix(parameters.estimated[, c(paste("p",c(2,3,8,9,10), sep = ""), "p1p6")])
+df.likelihood <- matrix(parameters.estimated[, "likelihood"],ncol = 1)
+cov(x = df.params, y = df.likelihood)
+
+# install.packages("CCA")
+# require("CCA")acepack
+ccor <- cc(X = df.params[,c(4,5)], Y = df.likelihood)
+ccor$cor
+?cc
+
+est

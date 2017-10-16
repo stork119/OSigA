@@ -5,5 +5,5 @@
 InitLogging <- function(filename){
   print(filename)
   flog.appender(appender.file(filename))
-  flog.threshold(DEBUG, name='logger.optimisation')
+  flog.threshold(INFO, name='logger.optimisation')
 }
