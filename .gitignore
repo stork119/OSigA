@@ -79,3 +79,4 @@ vignettes/*.pdf
 *.out
 *.app
 .Rproj.user
+.Rproj
