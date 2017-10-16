@@ -18,10 +18,12 @@ poster.data.list <- readRDS(file = rds.path)
 poster.path.list <- list()
 poster.path.list$input.dir <- "resources/input/poster/"
 poster.path.list$output.dir <- "resources/output/poster/filtered/"
-
+dir.create(path = poster.path.list$output.dir, 
+           showWarnings = FALSE,
+           recursive = TRUE)
 #### plots by wells ####
 gplot.list <- list()
-r <-foreach(poster.label = labels(poster.data.list)) %do% {
+r <-foreach(poster.label = labels(poster.data.list)[c(10)]) %do% {
   #poster.label <- labels(poster.data.list)[3]
   print(poster.label)
   data <- poster.data.list[[poster.label]] %>% data.frame()
@@ -58,7 +60,7 @@ ggsave(filename = paste(poster.path.list$output.dir, paste("experiments", ".pdf"
 #registerDoParallel(no_cores)
 
 sample.num <- 100
-foreach(poster.label = labels(poster.data.list)[-c(1,12,14)]) %do% {
+foreach(poster.label = labels(poster.data.list)[c(10)]) %do% {
   #poster.label <- labels(poster.data.list)[1]
   tryCatch({
     print(poster.label)
@@ -246,7 +248,11 @@ foreach(poster.label = labels(poster.data.list)[-c(1,12,14)]) %do% {
 
 #### channel capacity plot ####
 
+plot_fun <- "geom_boxplot"
+plot_fun <- "geom_violin"
+
 poster.labels.df <- data.frame(label = sort(labels(poster.data.list)))
+poster.labels.df[,col_well] <- 0
 poster.labels.df$title[1] = "pSTAT in nuclei; stm: gamma"
 poster.labels.df$position[1] = 1
 poster.labels.df$title[2] = "pSTAT in nuclei; stm: beta + gamma"
@@ -263,22 +269,28 @@ poster.labels.df$title[7] = "IRF1 in nuclei; stm: gamma"
 poster.labels.df$position[7] = 8
 poster.labels.df$title[8] = "IRF1 in nuclei; stm: beta + gamma"
 poster.labels.df$position[8] = 9
+poster.labels.df$title[10] = "IRF1 in nuclei; stm: gamma"
+poster.labels.df$position[10] = 8
+poster.labels.df$title[11] = "IRF1 in nuclei; stm: beta + gamma"
+poster.labels.df$position[11] = 9
 poster.labels.df$title[9] = "pSTAT in nuclei; stm: beta"
 poster.labels.df$position[9] = 2
-poster.labels.df$title[10] = "STAT in cells; stm: beta"
-poster.labels.df$position[10] = 6
-poster.labels.df$title[11] = "STAT in cytoplasm; stm: beta"
-poster.labels.df$position[11] = 7
-poster.labels.df$title[12] = "STAT in nuclei; stm: beta"
-poster.labels.df$position[12] = 5
-poster.labels.df$title[13] = "STAT in cells; stm: beta"
-poster.labels.df$position[13] = 6
-poster.labels.df$title[14] = "STAT in cytoplasm; stm: beta"
-poster.labels.df$position[14] = 7
-poster.labels.df$title[15] = "STAT in nuclei; stm: beta"
-poster.labels.df$position[15] = 5
+poster.labels.df$title[12] = "STAT in cells; stm: beta"
+poster.labels.df$position[12] = 6
+poster.labels.df$title[13] = "STAT in cytoplasm; stm: beta"
+poster.labels.df$position[13] = 7
+poster.labels.df$title[14] = "STAT in nuclei; stm: beta"
+poster.labels.df$position[14] = 5
+poster.labels.df$title[15] = "STAT in cells; stm: beta"
+poster.labels.df$position[15] = 6
+poster.labels.df$title[16] = "STAT in cytoplasm; stm: beta"
+poster.labels.df$position[16] = 7
+poster.labels.df$title[17] = "STAT in nuclei; stm: beta"
+poster.labels.df$position[17] = 5
 poster.labels.df <- poster.labels.df %>% arrange(position, label)
+
 gplot.list <- list()
+gplot.list.wells <- list()
 r <- foreach(poster.label.i = 1:nrow(poster.labels.df)) %do% {
   #poster.label <- labels(poster.data.list)[3]
   poster.label <- as.character(poster.labels.df[poster.label.i,]$label)
@@ -316,13 +328,60 @@ r <- foreach(poster.label.i = 1:nrow(poster.labels.df)) %do% {
   stimulation.list <- unique(data[,col_stimulation])
   cc.df[,col_stimulation] <- floor(length(stimulation.list)/2)
   cc.df[,col_time] <- cc.df$time
+  cc.df[,col_well] <- 0
   
   cc.df.0 <-  read.table(paste(path,"channel_capacity.csv", sep =  "/"), header = TRUE, sep = ",") %>%
     dplyr::filter(sample == 0)
   cc.df.0[,col_stimulation] <- floor(length(stimulation.list)/2)
   cc.df.0[,col_time] <- cc.df.0$time
+  cc.df.0[,col_well] <- 0
   
+  d <- data %>% 
+    dplyr::group_by_(
+      col_stimulation,
+      col_time,
+      col_well) %>% 
+    dplyr::summarise(n = n()) %>%
+    data.frame()
+  d[,col_stimulation] <- factor(d[,col_stimulation])
   
+  gplot.list.wells[[poster.label]]  <- 
+    plot_boxplot_group(
+      data = data, 
+      x = col_stimulation, 
+      y = col_response, 
+      boxplot_group = col_well,
+      facet_grid_group_y =  col_time,
+      save_plot = FALSE,
+      ylim_max_const = TRUE,
+      plot_title = paste(poster.title, poster.label),
+      plot_fun = plot_fun,
+      ylim_max = max(quantile(x = data[,col_response], na.rm = TRUE, probs = 0.95)[[1]], 1500)) +
+    geom_text(data = cc.df, 
+              mapping = aes(
+                label = paste(round(cc.mean,2), "+",  round(cc.sd,3), sep = ""),
+                y = 1400),
+              size = 10,
+              color = "red") +
+    geom_text(data = cc.df.0,
+              mapping = aes(
+                label = paste(round(cc,2), sep = ""),
+                y = 1300),
+              size = 10,
+              color = "blue") +
+    geom_text(data =  d,
+              mapping = aes_string(
+                label = "n",
+                y = 1000,
+                x = col_stimulation,
+                group = col_well),
+              inherit.aes = TRUE,
+              position = position_dodge(width = 1),
+              angle = 90,
+              size = 5,
+              color = "blue")
+  
+
   gplot.list[[poster.label]]  <- 
     plot_boxplot_group(
       data = data, 
@@ -332,15 +391,30 @@ r <- foreach(poster.label.i = 1:nrow(poster.labels.df)) %do% {
       save_plot = FALSE,
       ylim_max_const = TRUE,
       plot_title = paste(poster.title, poster.label),
+      plot_fun = plot_fun,
       ylim_max = max(quantile(x = data[,col_response], na.rm = TRUE, probs = 0.95)[[1]], 1500)) +
-    geom_text(data = cc.df, mapping = aes(label = paste(round(cc.mean,2), "+",  round(cc.sd,3), sep = "")
-                                                        , y = 1200), size = 10, color = "red") +
-    geom_text(data = cc.df.0, mapping = aes(label = paste(round(cc,2), sep = "")
-                                          , y = 1000), size = 10, color = "blue")
-
+    geom_text(data = cc.df, 
+              mapping = aes(
+                label = paste(round(cc.mean,2), "+",  round(cc.sd,3), sep = ""),
+                y = 1200),
+              size = 10,
+              color = "red") +
+    geom_text(data = cc.df.0,
+              mapping = aes(
+                label = paste(round(cc,2), sep = ""),
+                y = 1000),
+              size = 10,
+              color = "blue")
+  
   return()
 }
-ggsave(filename = paste(poster.path.list$output.dir, paste("channel_capacity", ".pdf", sep = ""), sep = "/"), 
+ggsave(filename = paste(poster.path.list$output.dir, paste("channel_capacity_wells_", plot_fun, ".pdf", sep = ""), sep = "/"), 
+       plot = marrangeGrob(grobs = gplot.list.wells, ncol = 1, nrow =1),
+       width = plot.args$width,
+       height =plot.args$height,
+       useDingbats = plot.args$useDingbats)
+
+ggsave(filename = paste(poster.path.list$output.dir, paste("channel_capacity_", plot_fun, ".pdf", sep = ""), sep = "/"), 
        plot = marrangeGrob(grobs = gplot.list, ncol = 1, nrow =1),
        width = plot.args$width,
        height =plot.args$height,

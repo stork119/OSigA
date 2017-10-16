@@ -22,6 +22,8 @@ poster.path.list$experiments <-
     list(id = "2016-01-28-KA11-IFNG"),
     list(id = "2017-07-18-KS25", path = "2017-07-18-KS25/488"),
     list(id = "2017-07-18-KS26", path = "2017-07-18-KS26/488"),
+    list(id = "2017-07-25-KS27", path = "2017-07-25-KS27/488"),
+    list(id = "2017-07-25-KS28", path = "2017-07-25-KS28/488"),
     list(id = "2017-07-19-KZ63", path = "2017-07-19-KZ63/488"),
     list(id = "2017-08-25-KZ73", path = "2017-08-25-KZ73/555", output_id = "2017-08-25-KZ73-Nuclei"),
     list(id = "2017-09-15-KZ78", path = "2017-09-15-KZ78/555", output_id = "2017-09-15-KZ78-Nuclei"),
@@ -32,7 +34,7 @@ poster.path.list$experiments <-
     )
 
 
-for(experiment in poster.path.list$experiments[-c(12,13)]){
+for(experiment in poster.path.list$experiments){
   if(is.null(experiment[["file"]])){
     experiment$file <- "ShrinkedNuclei.csv"
   }
@@ -74,6 +76,8 @@ poster.filtered.list <- list(
   list(id = '2016-01-28-KA11-IFNB', well.names = c('B01', 'G01', 'H01')),
   list(id = '2016-01-28-KA11-IFNG', well.names = c(paste('A0', 1:3, sep = ''), 'B01', 'C01')),
   list(id = '2017-07-18-KS26', well.names = c('D01')),
+  list(id = '2017-07-25-KS27', well.names = c('D02','F01', 'F02', 'F10', 'H04')),
+  list(id = '2017-07-25-KS28', well.names = c('D02', 'D03')),
   # list(id = '2017-08-25-KZ73-Nuclei', well.names = c('A11', paste(LETTERS[1:8], '01', sep = ""))),
   # list(id = '2017-08-25-KZ73-Cytoplasm', well.names = c(paste('A0', 1:4, sep = ''), 'A11', 'A12', paste('B0', 1:3, sep = ''), 'H01', 'H12',"well.name")),
   # list(id = '2017-08-25-KZ73-Cells', well.names = c(paste('A0', 1:4, sep = ''), 'A11', 'A12', paste('B0', 1:3, sep = ''), 'H01', 'H12', "well.name"),
