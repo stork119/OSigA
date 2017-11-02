@@ -68,20 +68,19 @@ source(file = "R/optimisation/initialise_optimisation.R")
 # )
 
 
-path.list <-
-    LoadOptimisationPaths(
-      path.output = "resources/output/",
-      id = "2017-09-08-density_ver0_mean_1000_55"
-    )
-
+path.list <- 
+  LoadOptimisationPaths(
+    path.output = "resources/output/",
+    id = "2017-10-17-1"
+  )
 run_parallel_computations_cv(path.list = path.list,
                           # data.exp.grouped = data.exp.grouped,
                           fun_model_ode = rmainmean,
-                          no_cores = 33,
+                           no_cores = 33,
                           stopfitness = -56000,
-                          # maxit.tmp   =   1,
-                          # par.list.ids.part = 1,
-                          # computations.ids = 1,
+                           # maxit.tmp   =   1,
+                           # par.list.ids.part = 1,
+                           # computations.ids = 1,
                           # fun.optimisation = pureCMAES,
                           # optimisation.res.par = "xmin"warni,
                           data.model.list = list(),

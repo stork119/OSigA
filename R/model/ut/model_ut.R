@@ -52,9 +52,9 @@ PrepareModelArguments.ut.multiple <-
     parameters.priming.model[parameters.conditions$parameters.priming[which(parameters.conditions$parameters.priming != 0)]] <- 
       parameters[which(parameters.conditions$parameters.priming != 0)]
     
-    parameters.model[1] <- parameters.model[6]*p1p6_constant
-    parameters.priming.model[1] <- parameters.priming.model[6]*p1p6_constant
-    
+    # parameters.model[1] <- parameters.model[6]*p1p6_constant
+    # parameters.priming.model[1] <- parameters.priming.model[6]*p1p6_constant
+    # 
     return(list(parameters = parameters.model,
                 parameters.priming = parameters.priming.model,
                 variables = variables,

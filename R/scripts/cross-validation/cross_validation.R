@@ -22,7 +22,7 @@ model.parameters.dt <- data.table(
   theta_num = c(16, 17, 17)
 )
 
-analyse_name = "cross-validation-2"
+analyse_name = "cross-validation-3"
 
 fun.likelihood <- fun.likelihood.list.sd
 data_sample_size.list <- 250#seq(from = 250, to = 2000, by = 250)
@@ -46,9 +46,7 @@ for(model in model.list[c(1,2,3)]){
   
   gplot.list <- list()
   optimisation.conditions.toload <-
-    LoadOptimisationConditions(path.optimisation = path.list$optimisation,
-                               path.optimisation.data = path.list$optimisation.data,
-                               maxit.tmp = Inf)
+    LoadOptimisationConditions(optimisation.path =  path.list$optimisation)
   rm(list = labels(optimisation.conditions.toload))
   attach(optimisation.conditions.toload)
   
@@ -150,6 +148,9 @@ for(model in model.list[c(1,2,3)]){
 likelihood.df.all <- do.call(rbind, likelihood.df.list)
 
 #### plotting ####
+results <- saveRDS(object = likelihood.df.all, file = "resources/output/cross_validation/cross-validation-3/cross_valid.RDS")
+
+results <- readRDS("resources/output/cross_validation/cross-validation-3/cross_valid.RDS")
 
 likelihood.df.all %>% 
   left_join(model.parameters.dt, by = "model") %>%
@@ -175,6 +176,45 @@ ggplot(likelihood.df.all %>%
   geom_ribbon(alpha = 0.5) +
   do.call(theme_jetka, args = plot.args)
 
-ggplot(likelihood.df.all %>% dplyr::filter(sample_size == 250),
-       aes(x = log(-likelihood), color = model)) +
-  geom_density()
+likelihood.df.all.2 <- likelihood.df.all
+likelihood.df.all.2$model <- "model_all"
+likelihood.df.all <- likelihood.df.all %>%
+  rbind(likelihood.df.all.2)
+models.name.list <- 
+  list(
+    "modelfull" = 0,
+    "model_p1" = 1, 
+    "model_p4p10" = 4, 
+    "model_p10" = 10,
+    "model_all" = 2)
+
+likelihood.df.all <-
+  likelihood.df.all %>%
+  dplyr::mutate(model = as.character(model)) %>%
+  dplyr::mutate(model_new = models.name.list[as.character(model)][[1]])
+
+g <- ggplot(likelihood.df.all %>% dplyr::filter(sample_size == 250, model != "model_p4"),
+       aes(x = likelihood,#log(-likelihood), 
+           color = factor(model), 
+         #  fill = model,
+           alpha = 0.0001)) +
+  geom_density() +
+  theme_jetka()
+do.call(what = ggsave,
+        args = append(plot.args.ggsave,
+                      list(filename = "resources/output/cross_validation/cross-validation-3/densities-poster-2017-10-24.pdf",
+                           plot = g)))
+
+
+  quantile(ks.1, c(.99, .1))
+###
+ks.1 <- (likelihood.df.all %>% dplyr::filter(sample_size == 250, model == "modelfull"))$likelihood
+ks.2 <- (likelihood.df.all %>% dplyr::filter(sample_size == 250, model == "model_p1"))$likelihood 
+ks.2 <- (likelihood.df.all %>% dplyr::filter(sample_size == 250, model == "model_p4"))$likelihood 
+ks.2 <- (likelihood.df.all %>% dplyr::filter(sample_size == 250, model == "model_p10"))$likelihood 
+ks.2 <- (likelihood.df.all %>% dplyr::filter(sample_size == 250, model == "model_p4p10"))$likelihood
+ks.2 <- (likelihood.df.all %>% dplyr::filter(sample_size == 250, model == "model_all"))$likelihood
+ks.test(x = ks.1, y = ks.2)
+ks.df <- data.frame(ks1 = sort(ks.1), ks2 = sort(ks.2))
+ks.df$x <- 1:nrow(ks.df)
+ggplot(ks.df, aes(x= x, y = ks1)) + geom_point() + geom_point(aes(x= x, y = ks2))

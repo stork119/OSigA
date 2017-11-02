@@ -33,7 +33,7 @@ if(file.exists(parameters.filename)){
 }
 par.optimised   <- which(par.lower != par.upper)
 
-lhs.res <- randomLHS(1000, length(par.optimised))
+lhs.res <- randomLHS(25, length(par.optimised))
 
 write.table(x = rbind(matrix(0.5 + 0*par.optimised, nrow = 1), lhs.res),
             file = paste(path.list$optimisation, "parameters_list.csv", sep = ""),
@@ -107,17 +107,19 @@ write.table(
 
 data.opt.list <- list()
 data.opt.list[[1]] <- data.list$data.exp.norm
-for(i in 2:(optimisation.conditions$cross_validation_num+1)){
-  data.opt.list[[i]] <- 
-    get_equal_data(
-      data = data.list$data.exp.norm,
-      sample_size = optimisation.conditions$data.opt.size)
-  path <- paste(path.list$optimisation.conditions, i, sep = "/")
-  dir.create(path = path, recursive = TRUE, showWarnings = FALSE)
-  write.table(
-    x = data.opt.list[[i]],
-    file = paste(path, "data_exp_grouped.csv", sep = "/"),
-    sep = ",",
-    row.names = FALSE,
-    col.names = TRUE)
+if(optimisation.conditions$cross_validation_num > 1){
+  for(i in 2:(optimisation.conditions$cross_validation_num+1)){
+    data.opt.list[[i]] <- 
+      get_equal_data(
+        data = data.list$data.exp.norm,
+        sample_size = optimisation.conditions$data.opt.size)
+    path <- paste(path.list$optimisation.conditions, i, sep = "/")
+    dir.create(path = path, recursive = TRUE, showWarnings = FALSE)
+    write.table(
+      x = data.opt.list[[i]],
+      file = paste(path, "data_exp_grouped.csv", sep = "/"),
+      sep = ",",
+      row.names = FALSE,
+      col.names = TRUE)
+  }
 }

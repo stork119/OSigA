@@ -164,17 +164,19 @@ fun.computations$global_summary <- function(
                               likelihood = numeric(),
                               par.id = numeric())
   for(id in par.ids){
-    local_summary.list[[as.character(id)]] <-
-      fun.computations$local_summary(path.list = path.list,
-                        par.id = id,
-                        optimisation.name = optimisation.name)
-    if(!is.null(local_summary.list[[as.character(id)]]$likelihood) &&
-       sum(colnames(likelihood.df) != colnames(local_summary.list[[as.character(id)]]$likelihood)) == 0
-    ){
-      likelihood.df <- rbind(
-        likelihood.df,
-        local_summary.list[[as.character(id)]]$likelihood)
-    }
+    tryCatch({
+      local_summary.list[[as.character(id)]] <-
+        fun.computations$local_summary(path.list = path.list,
+                          par.id = id,
+                          optimisation.name = optimisation.name)
+      if(!is.null(local_summary.list[[as.character(id)]]$likelihood) &&
+         sum(colnames(likelihood.df) != colnames(local_summary.list[[as.character(id)]]$likelihood)) == 0
+      ){
+        likelihood.df <- rbind(
+          likelihood.df,
+          local_summary.list[[as.character(id)]]$likelihood)
+      }
+    }, error = function(e){print(e)})
   }
   
   write.table(file = paste(path.list$optimisation.results,

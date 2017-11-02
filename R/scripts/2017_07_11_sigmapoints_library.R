@@ -31,6 +31,8 @@ analyse_model_ut <- function(variables.model,
   results$path <- path
   par.optimised <- which(parameters.df$lower != parameters.df$upper)
   
+  parameters.conditions$factor <- parameters.df$factor*parameters.df$base^parameters.df$par
+  
   model<- run_model_ut(
     par = parameters.df$par[par.optimised],
     parameters.base = parameters.df$base,
