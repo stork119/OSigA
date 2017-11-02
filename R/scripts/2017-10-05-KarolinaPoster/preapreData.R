@@ -306,3 +306,44 @@ g <- plot_boxplot_group(
 poster.data.list <- poster.data.list.new
 saveRDS(object = poster.data.list.new, 
         file = paste(poster.path.list$input.dir, "data_ffc_zero_added.RDS", sep = "/"))
+
+
+#### ####
+rds.path <- "/home/knt/Documents/modelling/resources/input/poster/data_ffc_filtered.RDS"
+poster.data.list <- readRDS(file = rds.path)
+poster.data.labels <- labels(poster.data.list)
+r <- foreach(poster.label.i = 1:length(poster.data.labels) %do% {
+  
+ poster.label <- poster.data.labels[poster.label.i]
+ data <- poster.data.list[[poster.label]] %>% data.frame()
+  
+  if("time" %in% colnames(data)){
+    col_time <- "time"
+  } else if ("time.2.1" %in% colnames(data)){
+    col_time <- "time.2.1"
+  } else {
+    col_time <- "time.1.1"
+  }
+  data[,"time"]  <- data[,col_time]
+ 
+  if("stimulation" %in% colnames(data)){
+    col_stimulation <- "stimulation"
+  } else if ("stimulation.2.1" %in% colnames(data)){
+    col_stimulation <- "stimulation.2.1"
+  } else {
+    col_stimulation <- "stimulation.1.1"
+  }
+  data[,"stimulation"]  <- data[,col_stimulation]
+  
+  if("Intensity_MeanIntensity_Alexa" %in% colnames(data)){
+    col_response <- "Intensity_MeanIntensity_Alexa"
+  } else if("Intensity_MeanIntensity_Alexa488" %in% colnames(data)){
+    col_response <- "Intensity_MeanIntensity_Alexa488"
+  } else {
+    col_response <- "Intensity_MeanIntensity_Alexa555"
+  }
+  data[,"intensity"]  <- data[,col_response]
+  
+  poster.data.list.new[[poster.label]] <- data
+}
+  
