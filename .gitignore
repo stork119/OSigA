@@ -1,5 +1,8 @@
 #### project
 
+# logging
+*.log
+
 # graphics
 .pdf
 
@@ -8,6 +11,7 @@ resources/
 
 #### linux
 *.swp
+*.swo
 
 #### R
 # History files
@@ -78,5 +82,4 @@ vignettes/*.pdf
 *.exe
 *.out
 *.app
-.Rproj.user
-.Rproj
+
