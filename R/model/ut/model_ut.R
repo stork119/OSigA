@@ -122,6 +122,13 @@ simulate_model_ut <- function(
   tmesh.list.tmp = NULL,
   stimulation.list,
   background,
+  model_type = 0,
+  t0 = 0.0,
+  t1 = 1.0,
+  tmult = 1.0,
+  tnout = 100,
+  t_stm_start = 0,
+  t_stm_end = 5,
   time_interval = 100,
   time_computation = 1000*60*5,
   model.computations = list(raw = TRUE, priming = TRUE),
@@ -157,6 +164,13 @@ simulate_model_ut <- function(
              variables = variables, 
              stm = stm, 
              tmesh = tmesh, 
+             model_type = model_type,
+             t0 = t0,
+             t1 = t1,
+             tmult = tmult,
+             tnout = tnout,
+             t_stm_start = t_stm_start,
+             t_stm_end = t_stm_end,
              time_interval = time_interval, 
              time_computation = time_computation)
       )
@@ -179,10 +193,18 @@ simulate_model_ut <- function(
     if(model.computations$priming){
       res.priming <- do.call(
         fun_model_ode,
+        
         list(parameters = parameters.priming.model, 
              variables = variables.priming, 
              stm = stm, 
              tmesh = tmesh, 
+             model_type = model_type,
+             t0 = t0,
+             t1 = t1,
+             tmult = tmult,
+             tnout = tnout,
+             t_stm_start = t_stm_start,
+             t_stm_end = t_stm_end,
              time_interval = time_interval, 
              time_computation = time_computation))
       # print(res$success)

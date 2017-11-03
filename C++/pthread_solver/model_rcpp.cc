@@ -10,10 +10,6 @@
 
 /* Problem Constants */
 
-#define T0    RCONST(0.0)      /* initial time           */
-#define T1    RCONST(1.0)      /* first output time      */
-#define TMULT RCONST(1.0)     /* output time factor     */
-#define NOUT  100               /* number of output times */
 #define RTOL  RCONST(1.0e-4)   /* scalar relative tolerance            */
 #define ATOL RCONST(1.0e-4) 
 
@@ -58,6 +54,12 @@ struct threadArgs {
     int solver_flag;
     int neq;
     int npar;
+    double t0;
+    double t1;
+    double tmult;
+    int tnout;
+    double t_stm_start;
+    double t_stm_end;
 };
 
 /*
@@ -66,7 +68,7 @@ struct threadArgs {
  *---------------------------------
  */
 solverData run_solver(
-  double* parameters, double* variables, double stm, int neq, int npar)
+  double* parameters, double* variables, double stm, int neq, int npar, double t0, double t1, double tmult, int tnout, double t_stm_start, double t_stm_end)
 {
 
   static int (*f)(realtype t, N_Vector yith, N_Vector ydot, void *_user_data);
@@ -126,9 +128,9 @@ solverData run_solver(
   }
   
   /* Call CVodeInit to initialize the integrator memory and specify the
-   * user's right hand side function in y'=f(t,y), the inital time T0, and
+   * user's right hand side function in y'=f(t,y), the inital time t0, and
    * the initial dependent variable vector y. */
-  flag = CVodeInit(cvode_mem, f, T0, y);
+  flag = CVodeInit(cvode_mem, f, t0, y);
   if (check_flag(&flag, "CVodeInit", 1)){
     return(solver_results);
   }
@@ -153,10 +155,10 @@ solverData run_solver(
   }
 
   /* In loop, call CVode, print results, and test for error.
-     Break out of loop when NOUT preset output times have been reached.  */
+     Break out of loop when tnout preset output times have been reached.  */
   solver_results.solver_flag = 1;
   iout = 0;
-  tout = T1;
+  tout = t1;
   while(1) {
     flag = CVode(cvode_mem, tout, y, &t, CV_NORMAL);
     std::vector<double> yvector;  
@@ -173,9 +175,9 @@ solverData run_solver(
     }
     if (flag == CV_SUCCESS) {
       iout++;
-      tout = tout + TMULT;
+      tout = tout + tmult;
     }
-    if (iout == NOUT) break;
+    if (iout == tnout) break;
   }
   //fclose(outputFile);
  
@@ -201,7 +203,15 @@ void *run_solver_pthread(void* thread_args_ptr){
     thread_args->variables,
     thread_args->stm,
     thread_args->neq,
-    thread_args->npar);
+    thread_args->npar,
+    thread_args->t0,
+    thread_args->t1,
+    thread_args->tmult,
+    thread_args->tnout,
+    thread_args->t_stm_start,
+    thread_args->t_stm_end 
+  );
+
   thread_args->output = output.trajectory;	
   thread_args->solver_flag = output.solver_flag;	
   *(thread_args->cancel_flag) = 1;	
@@ -220,7 +230,14 @@ Rcpp::List rmainmean(
   std::vector<double> parameters,
   std::vector<double> variables,
   std::vector<double> tmesh,
+  int model_type,
   double stm,
+  double t0,
+  double t1,
+  double tmult,
+  int tnout,
+  double t_stm_start,
+  double t_stm_end,
   unsigned long time_interval,
   unsigned long time_computation
 )
@@ -268,6 +285,13 @@ Rcpp::List rmainmean(
     thread_args.cancel_flag = &cancel_flag;
     thread_args.neq = model_data.neq;
     thread_args.npar = model_data.npar;
+    thread_args.t0 = t0;
+    thread_args.t1 = t1;
+    thread_args.tmult = tmult;
+    thread_args.tnout = tnout;   
+    thread_args.t_stm_start = t_stm_start;    
+    thread_args.t_stm_end = t_stm_end;    
+
 
     pthread_t thread;
     pthread_create(&thread, NULL, run_solver_pthread, (void *) &thread_args);
