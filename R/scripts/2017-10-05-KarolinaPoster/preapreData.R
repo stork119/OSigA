@@ -311,8 +311,9 @@ saveRDS(object = poster.data.list.new,
 #### ####
 rds.path <- "/home/knt/Documents/modelling/resources/input/poster/data_ffc_filtered.RDS"
 poster.data.list <- readRDS(file = rds.path)
+poster.data.list.new <- list()
 poster.data.labels <- labels(poster.data.list)
-r <- foreach(poster.label.i = 1:length(poster.data.labels) %do% {
+r <- foreach(poster.label.i = 1:length(poster.data.labels)) %do% {
   
  poster.label <- poster.data.labels[poster.label.i]
  data <- poster.data.list[[poster.label]] %>% data.frame()
@@ -346,4 +347,5 @@ r <- foreach(poster.label.i = 1:length(poster.data.labels) %do% {
   
   poster.data.list.new[[poster.label]] <- data
 }
-  
+saveRDS(object = poster.data.list.new, 
+        file = paste(poster.path.list$input.dir, "data_ffc_filtered_oranized.RDS", sep = "/"))
