@@ -1,0 +1,9 @@
+y1 0    "free stat1 in cyto"
+y2 0    "p-stat1"
+y3 0    "pstat1-pstat1 dimmer in cytoplasm"
+y4 0    "pstat1-pstat1 dimmer in nucleus"
+y5 0    "stat1  in nucleus cascade"
+y6 0   "inactive receptors"
+y7 0   "active receptors"
+y8 0   "endocyted receptors"
+
