@@ -68,15 +68,15 @@ source(file = "R/optimisation/initialise_optimisation.R")
 # )
 
 
-path.list <- 
-  LoadOptimisationPaths(
-    path.output = "resources/output/",
-    id = "2017-10-17-1"
-  )
+# path.list <- 
+#   LoadOptimisationPaths(
+#     path.output = "resources/output/",
+#     id = "2017-10-17-1"
+#   )
 run_parallel_computations_cv(path.list = path.list,
                           # data.exp.grouped = data.exp.grouped,
                           fun_model_ode = rmainmean,
-                           no_cores = 33,
+                          no_cores = 16,
                           stopfitness = -56000,
                            # maxit.tmp   =   1,
                            # par.list.ids.part = 1,
@@ -95,7 +95,6 @@ run_parallel_computations_cv(path.list = path.list,
 )
 
 fun.computations$run_summary(path.list = path.list, data.list = data.list)
-
 
 #### testing ####
 # fun_model_ode = rmainmean
