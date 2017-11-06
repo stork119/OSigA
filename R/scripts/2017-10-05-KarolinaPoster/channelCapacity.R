@@ -289,6 +289,17 @@ poster.labels.df$title[17] = "STAT in nuclei; stm: beta"
 poster.labels.df$position[17] = 5
 poster.labels.df <- poster.labels.df %>% arrange(position, label)
 
+# write.table(x = poster.labels.df,
+#             file = 
+#               paste(
+#                 poster.path.list$output.dir, 
+#                 "experiments_description.csv", 
+#                 sep = "/"), 
+#             sep = ",", 
+#             row.names = FALSE, 
+#             col.names = TRUE) 
+              
+
 gplot.list <- list()
 gplot.list.wells <- list()
 r <- foreach(poster.label.i = 1:nrow(poster.labels.df)) %do% {
