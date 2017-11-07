@@ -139,7 +139,7 @@ for(part in part.list){
 
 # Beta-pStat
 exp.id <- "2017-07-19-KZ63"
-poster.data.list.new[["Beta-pStat"]] <- 
+poster.data.list.new[["Beta-pStat-Nuclei"]] <- 
   poster.data.list[[exp.id]] %>%
   dplyr::mutate(well.name = paste(exp.id, well.name, sep = "-")) %>%
   dplyr::mutate(experiment = exp.id)  %>%
@@ -152,7 +152,7 @@ poster.data.list.new[["Beta-pStat"]] <-
 # Beta-gamma
 
 exp.id <- "2016-01-26-KA10-C"
-poster.data.list.new[["Gamma-pStat"]] <- 
+poster.data.list.new[["Gamma-pStat-Nuclei"]] <- 
   poster.data.list[[exp.id]] %>%
   dplyr::mutate(well.name = paste(exp.id, well.name, sep = "-")) %>%
   dplyr::mutate(experiment = exp.id)  %>%
@@ -163,8 +163,8 @@ poster.data.list.new[["Gamma-pStat"]] <-
   data.table()
 
 exp.id <- "2016-01-28-KA11-C"
-poster.data.list.new[["Gamma-pStat"]] <- 
-  poster.data.list.new[["Gamma-pStat"]] %>%
+poster.data.list.new[["Gamma-pStat-Nuclei"]] <- 
+  poster.data.list.new[["Gamma-pStat-Nuclei"]] %>%
   rbind(
     poster.data.list[[exp.id]] %>%
     dplyr::mutate(well.name = paste(exp.id, well.name, sep = "-")) %>%
@@ -187,7 +187,7 @@ poster.data.list.new[["Gamma-pStat"]] <-
 
 # Beta-Gamma-pStat
 exp.id <- "2016-01-26-KA10-IFNG"
-poster.data.list.new[["Gamma-Gamma-pStat"]] <- 
+poster.data.list.new[["Gamma-Gamma-pStat-Nuclei"]] <- 
   poster.data.list[[exp.id]] %>%
   dplyr::mutate(well.name = paste(exp.id, well.name, sep = "-")) %>%
   dplyr::mutate(experiment = exp.id)  %>%
@@ -198,8 +198,8 @@ poster.data.list.new[["Gamma-Gamma-pStat"]] <-
   data.table()
 
 exp.id <- "2016-01-28-KA11-IFNG"
-poster.data.list.new[["Gamma-Gamma-pStat"]] <- 
-  poster.data.list.new[["Gamma-Gamma-pStat"]] %>%
+poster.data.list.new[["Gamma-Gamma-pStat-Nuclei"]] <- 
+  poster.data.list.new[["Gamma-Gamma-pStat-Nuclei"]] %>%
   rbind(
     poster.data.list[[exp.id]] %>%
       dplyr::mutate(well.name = paste(exp.id, well.name, sep = "-")) %>%
@@ -213,7 +213,7 @@ poster.data.list.new[["Gamma-Gamma-pStat"]] <-
 
 # Beta-Beta-pStat
 exp.id <- "2016-01-26-KA10-IFNB"
-poster.data.list.new[["Beta-Gamma-pStat"]] <- 
+poster.data.list.new[["Beta-Gamma-pStat-Nuclei"]] <- 
   poster.data.list[[exp.id]] %>%
   dplyr::mutate(well.name = paste(exp.id, well.name, sep = "-")) %>%
   dplyr::mutate(experiment = exp.id)  %>%
@@ -224,8 +224,8 @@ poster.data.list.new[["Beta-Gamma-pStat"]] <-
   data.table()
 
 exp.id <- "2016-01-28-KA11-IFNB"
-poster.data.list.new[["Beta-Gamma-pStat"]] <- 
-  poster.data.list.new[["Beta-Gamma-pStat"]] %>%
+poster.data.list.new[["Beta-Gamma-pStat-Nuclei"]] <- 
+  poster.data.list.new[["Beta-Gamma-pStat-Nuclei"]] %>%
   rbind(
     poster.data.list[[exp.id]] %>%
       dplyr::mutate(well.name = paste(exp.id, well.name, sep = "-")) %>%
@@ -239,7 +239,7 @@ poster.data.list.new[["Beta-Gamma-pStat"]] <-
 
 # Beta-IRF
 exp.id <- "2017-07-18-KS25"
-poster.data.list.new[["Beta-IRF"]] <- 
+poster.data.list.new[["Gamma-IRF-Nuclei"]] <- 
   poster.data.list[[exp.id]] %>%
   dplyr::mutate(well.name = paste(exp.id, well.name, sep = "-")) %>%
   dplyr::mutate(experiment = exp.id)  %>%
@@ -249,9 +249,22 @@ poster.data.list.new[["Beta-IRF"]] <-
   dplyr::select(experiment, well.name, time, priming, stimulation, Intensity_MeanIntensity_Alexa) %>%
   data.table()
 
+exp.id <- "2017-07-25-KS27"
+poster.data.list.new[["Gamma-IRF-Nuclei"]] <- 
+  poster.data.list.new[["Gamma-IRF-Nuclei"]] %>%
+  rbind(
+    poster.data.list[[exp.id]] %>%
+      dplyr::mutate(well.name = paste(exp.id, well.name, sep = "-")) %>%
+      dplyr::mutate(experiment = exp.id)  %>%
+      dplyr::mutate(time = time.2.1) %>%
+      dplyr::mutate(priming = priming.1.1) %>%
+      dplyr::mutate(stimulation = stimulation.1.1) %>%
+      dplyr::select(experiment, well.name, time, priming, stimulation, Intensity_MeanIntensity_Alexa) %>%
+      data.table()
+  )
 # Beta-Gamma-IRF
 exp.id <- "2017-07-18-KS26"
-poster.data.list.new[["Beta-Gamma-IRF"]] <- 
+poster.data.list.new[["Beta-Gamma-IRF-Nuclei"]] <- 
   poster.data.list[[exp.id]] %>%
   dplyr::mutate(well.name = paste(exp.id, well.name, sep = "-")) %>%
   dplyr::mutate(experiment = exp.id)  %>%
@@ -260,6 +273,20 @@ poster.data.list.new[["Beta-Gamma-IRF"]] <-
   dplyr::mutate(stimulation = stimulation.1.1) %>%
   dplyr::select(experiment, well.name, time, priming, stimulation, Intensity_MeanIntensity_Alexa) %>%
   data.table()
+
+exp.id <- "2017-07-25-KS28"
+poster.data.list.new[["Beta-Gamma-IRF-Nuclei"]] <- 
+  poster.data.list.new[["Beta-Gamma-IRF-Nuclei"]] %>%
+  rbind(
+    poster.data.list[[exp.id]] %>%
+      dplyr::mutate(well.name = paste(exp.id, well.name, sep = "-")) %>%
+      dplyr::mutate(experiment = exp.id)  %>%
+      dplyr::mutate(time = time.2.1) %>%
+      dplyr::mutate(priming = priming.1.1) %>%
+      dplyr::mutate(stimulation = stimulation.1.1) %>%
+      dplyr::select(experiment, well.name, time, priming, stimulation, Intensity_MeanIntensity_Alexa) %>%
+      data.table()
+  )
 
 poster.data.list <- poster.data.list.new
 saveRDS(object = poster.data.list, 

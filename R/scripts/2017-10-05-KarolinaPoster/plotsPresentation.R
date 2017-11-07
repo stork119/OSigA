@@ -20,13 +20,48 @@ poster.path.list$output.dir <- "resources/output/poster/joined/"
  plot.fill <- data.frame(fill = c("#ffffff", "#a4d09e", "#a4d09e", "#7abd6f", "#7abd6f", "#50af43", "#50af43", "#1fa637", "#177d34", "#175929"),
                         stm  =  c(0, 1.8, 3.6, 12, 9,   18, 36, 90,  180, 900),
                         stmnew  =  c(0, 2, 4,  10, 10,   20, 40,  100,  200, 1000))  
-
+  
+  #### Beta-Stat-Nuclei ####
   poster.label <- labels(poster.data.list)[1]
   ylimmax <- 1000 #1000
+  stimulation.list <- list(c(10,1000))  
+  plot.fill <- data.frame(fill = c("#ffffff", "#a4d09e", "#a4d09e", "#7abd6f", "#7abd6f", "#50af43", "#50af43", "#1fa637", "#177d34", "#175929"),
+                          stm  =  c(0, 1.8, 3.6, 12, 9,   18, 36, 90,  180, 900),
+                          stmnew  =  c(0, 2, 4,  10, 10,   20, 40,  100,  200, 1000))  
+  
+  #### Beta-pStat-Nuclei ####  
   poster.label <- labels(poster.data.list)[4]
   ylimmax <- 300 #1000
-  stimulation.list <- list(c(10,1000))  
+  stimulation.list <- NULL #list(c(10,1000))  
+  plot.fill <- data.frame(fill = c("#ffffff", "#a4d09e", "#a4d09e", "#7abd6f", "#7abd6f", "#50af43", "#50af43", "#1fa637", "#177d34", "#175929"),
+                          stm  =  c(0, 1.8, 3.6, 12, 9,   18, 36, 90,  180, 900),
+                          stmnew  =  c(0, 2, 4,  10, 10,   20, 40,  100,  200, 1000))  
   
+  #### Gamma-pStat-Nuclei ####  
+  poster.label <- labels(poster.data.list)[5]
+  ylimmax <- 1000 #1000
+  stimulation.list <- NULL #list(c(10,1000))  
+  plot.fill <- data.frame(fill = c("#ffffff", "#bdd0ed", "#bdd0ed", "#7f9bd0", "#7e9fd3" ,"#6185c3", "#567abc", "#325aa6", "#325aa6"),
+                          stm  =  c(0, 0.01, 0.05, 0.1, 0.25,   0.5, 1, 5, 10),
+                          stmnew  =  c(0, 0.01, 0.05, 0.1, 0.25,   0.5, 1, 5, 5))  
+  
+  #### Gamma-Gamma-pStat-Nuclei ####  
+  poster.label <- labels(poster.data.list)[6]
+  ylimmax <- 1000 #1000
+  stimulation.list <- NULL #list(c(10,1000))  
+  plot.fill <- data.frame(fill = c("#ffffff", "#bdd0ed", "#bdd0ed", "#7f9bd0", "#7e9fd3" ,"#6185c3", "#567abc", "#325aa6", "#325aa6"),
+                          stm  =  c(0, 0.01, 0.05, 0.1, 0.25,   0.5, 1, 5, 10),
+                          stmnew  =  c(0, 0.01, 0.05, 0.1, 0.25,   0.5, 1, 5, 5))  
+  
+  #### Beta-Gamma-pStat-Nuclei ####  
+  poster.label <- labels(poster.data.list)[7]
+  ylimmax <- 1000 #1000
+  stimulation.list <- NULL #list(c(10,1000))  
+  plot.fill <- data.frame(fill = c("#ffffff", "#bdd0ed", "#bdd0ed", "#7f9bd0", "#7e9fd3" ,"#6185c3", "#567abc", "#325aa6", "#325aa6"),
+                          stm  =  c(0, 0.01, 0.05, 0.1, 0.25,   0.5, 1, 5, 10),
+                          stmnew  =  c(0, 0.01, 0.05, 0.1, 0.25,   0.5, 1, 5, 5))  
+  
+    #### Gamma-IRF-Nuclei ####
   poster.label <- labels(poster.data.list)[8]
   ylimmax <- 600 #1000
   plot.fill <- data.frame(fill = c("#ffffff", "#bdd0ed", "#bdd0ed", "#7f9bd0", "#7e9fd3" ,"#6185c3", "#567abc", "#325aa6"),
@@ -34,11 +69,17 @@ poster.path.list$output.dir <- "resources/output/poster/joined/"
                           stmnew  =  c(0, 0.01, 0.05, 0.1, 0.25,   0.5, 1, 5))  
   stimulation.list <- NULL 
   
+  #### Beta-Gamma-IRF-Nuclei ####
+  poster.label <- labels(poster.data.list)[9]
+  ylimmax <- 600 #1000
+  plot.fill <- data.frame(fill = c("#ffffff", "#bdd0ed", "#bdd0ed", "#7f9bd0", "#7e9fd3" ,"#6185c3", "#567abc", "#325aa6"),
+                          stm  =  c(0, 0.01, 0.05, 0.1, 0.25,   0.5, 1, 10),
+                          stmnew  =  c(0, 0.01, 0.05, 0.1, 0.25,   0.5, 1, 5))  
+  stimulation.list <- NULL 
   
   
+  #### ####
   plot_title <- poster.labels.df[poster.labels.df$label  == poster.label,]$title
-   
-
   tryCatch({
     print(poster.label)
     data <- poster.data.list[[poster.label]] %>% 
@@ -120,19 +161,23 @@ poster.path.list$output.dir <- "resources/output/poster/joined/"
                showWarnings = FALSE, recursive = TRUE)
     ggsave(filename = paste(poster.path.list$output.dir, 
                             poster.label,
-                            paste("Y_fluorescent_X_stimulation.pdf", sep = ""), sep = "/"), 
+                            paste(poster.label,
+                                  "_Y_fluorescent_X_stimulation.pdf",
+                                  sep = ""),
+                            sep = "/"), 
            plot = marrangeGrob(grobs = gplot.list, ncol = 1, nrow =1),
            width = 8,
            height = 8,
            useDingbats = plot.args$useDingbats)
+    
+    data <- data %>% dplyr::left_join(plot.fill)
+    data[,col_stimulation] <- data[,"stmnew"]
     if(is.null(stimulation.list)){
       stimulation.list <- sort(unique(data[,col_stimulation]))
     }
     gplot.list <- list()
     for(stimulation.i in 1:length(stimulation.list)){
       stimulations <- stimulation.list[[stimulation.i]]
-      data <- data %>% dplyr::left_join(plot.fill)
-      data[,col_stimulation] <- data[,"stmnew"]
       colors.list <- 
         unique(
           as.character(
@@ -172,7 +217,8 @@ poster.path.list$output.dir <- "resources/output/poster/joined/"
     }
     ggsave(filename = paste(poster.path.list$output.dir, 
                             poster.label,
-                            paste("Y_fluorescent_X_time_", 
+                            paste(poster.label, 
+                                  "_Y_fluorescent_X_time_", 
                                   ".pdf", sep = ""), sep = "/"), 
            plot = marrangeGrob(grobs = gplot.list, ncol = 1, nrow =1),
            width = 8,
