@@ -1,6 +1,16 @@
 #### ####
 #### model simulation ####
+
+setwd("~/Documents/modelling/")
+source("R/optimisation/initialise_optimisation.R")
 source("R/scripts/2017_07_11_sigmapoints_library.R")
+
+path.list <- 
+  LoadOptimisationPaths(
+    path.output = "resources/output/",
+    id = "2017-09-08-density_ver0_mean_1000_55"
+  )
+
 gplot.list <- list()
 optimisation.initiate <- InitiateOptimisation(
   path.list = path.list)
@@ -25,7 +35,7 @@ sigmapoints <- LoadSigmapointsConditions(path.optimisation = path.list$optimisat
 
 ##
 # results.id <- "108"
-# parameters.df <- read.table(paste(path.list$optimisation.data, results.id, "parameters_conditions.csv", sep = "/"), header = TRUE, sep = ",")
+#parameters.df <- read.table(paste(path.list$optimisation.data, results.id, "parameters_conditions.csv", sep = "/"), header = TRUE, sep = ",")
 # parameters.df <-parameters.df %>% 
 #   dplyr::mutate(par = opt) %>%
 #   dplyr::select(-c(opt, init)) %>%
@@ -36,10 +46,11 @@ sigmapoints <- LoadSigmapointsConditions(path.optimisation = path.list$optimisat
 results.id <- 0 
 
 parameters.df <- parameters.conditions
+parameters.df <- read.table(paste(path.list$optimisation.results, "parameters_conditions.csv", sep = "/"), header = TRUE, sep = ",")
 parameters.df <-parameters.df %>% 
   dplyr::mutate(par = 0)
 
-analyse_name = "volume_ver2-initial"
+analyse_name = "2017-11-08"
 # variables.model[31] <- 0.5*variables.model[31]
 # variables.priming.model[31] <- variables.model[31]
 # parameters.df$par[10] <- 2.5
@@ -78,32 +89,49 @@ data.model <- res$data.model  %>%
 
 data.model[5,]$intensity <- 177
 
-gplot <- 
-  ggplot(data = data.list$data.exp.grouped %>% 
-           dplyr::filter(stimulation == 1), 
-         mapping = aes(x = time, 
-                       y = intensity, 
-                       group = interaction(time, stimulation, priming),
-                       fill = factor(priming))) +
-  geom_boxplot() +
-  geom_line(data = data.model,
-            mapping = aes( x = time, 
-                           y = intensity, 
-                           group = interaction(priming),
-                           color = factor(priming))) +
-  geom_errorbar(data = data.model,
-                mapping = aes( x = time, 
-                               y = intensity, 
-                               ymin = intensity - sqrt(sd.norm),
-                               ymax = intensity + sqrt(sd.norm),
-                               
-                               group = interaction(priming),
-                               color = factor(priming))) +
-  do.call(theme_jetka, args = plot.args) +
-  facet_grid(priming~.) +
-  ylim(c(0,1000))
+fill.data <- "#567abc"
+color.data <- list()
+color.data[["0"]] <- "#000000"
+color.data[["1000"]] <- "#175929"
+color.model <- list()
+color.model[["0"]]  <- "#ea5b18"
+color.model[["1000"]]  <- "#7c3a8e"
 
+type <- "nonpriming"
+type <- "priming"
+gplot.list <- list() 
+for(type in c(0,1000)){
+  gplot.list[[type]] <- 
+    ggplot(data = data.list$data.exp.grouped %>% 
+             dplyr::filter(stimulation == 1) %>% 
+             dplyr::filter(priming == type), 
+           mapping = aes(x = time, 
+                         y = intensity, 
+                         group = interaction(time, stimulation, priming))) +
+    geom_boxplot(fill = fill.data, 
+                 color = color.data[[as.character(type)]]) +
+    geom_line(data = data.model %>% 
+                dplyr::filter(priming == type),
+              mapping = aes( x = time, 
+                             y = intensity, 
+                             group = interaction(priming)),
+              color = color.model[[as.character(type)]]
+              ) +
+    geom_errorbar(data = data.model %>% 
+                    dplyr::filter(priming == 0),
+                  mapping = aes( x = time, 
+                                 ymin = intensity - sqrt(sd.norm),
+                                 ymax = intensity + sqrt(sd.norm),
+                                 group = interaction(priming)),
+                  color = color.model[[as.character(type)]]) +
+    do.call(theme_jetka, args = plot.args) +
+    ylim(c(0,600)) +
+    ggtitle(as.character(type))
+}
+  
 do.call(what = ggsave,
-        args = append(plot.args.ggsave,
-                      list(filename = paste(path.list$optimisation.analysis, paste(analyse_name, sep = "/"), "intensity_stm_1.pdf", sep = "/"),
-                           plot = gplot)))
+        args = append(list( width = 8,
+                            height = 8,
+                            useDingbats = plot.args$useDingbats),
+                      list(filename = paste(path.list$optimisation.analysis, paste(analyse_name, sep = "/"), "compare_model_to_data.pdf", sep = "/"),
+                           plot = marrangeGrob(grobs = gplot.list, ncol = 1, nrow =1))))
