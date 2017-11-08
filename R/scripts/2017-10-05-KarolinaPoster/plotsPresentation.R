@@ -39,8 +39,8 @@ poster.path.list$output.dir <- "resources/output/poster/joined/"
   
   #### Gamma-pStat-Nuclei ####  
   poster.label <- labels(poster.data.list)[5]
-  ylimmax <- 1000 #1000
-  stimulation.list <- NULL #list(c(10,1000))  
+  ylimmax <- 300 #1000
+  stimulation.list <- NULL# list(c(0.1,1))  
   plot.fill <- data.frame(fill = c("#ffffff", "#bdd0ed", "#bdd0ed", "#7f9bd0", "#7e9fd3" ,"#6185c3", "#567abc", "#325aa6", "#325aa6"),
                           stm  =  c(0, 0.01, 0.05, 0.1, 0.25,   0.5, 1, 5, 10),
                           stmnew  =  c(0, 0.01, 0.05, 0.1, 0.25,   0.5, 1, 5, 5))  
@@ -84,7 +84,7 @@ poster.path.list$output.dir <- "resources/output/poster/joined/"
     print(poster.label)
     data <- poster.data.list[[poster.label]] %>% 
       data.frame() 
-    
+    data <- data %>% dplyr::filter_(paste(col_time, "!=", 42))  %>% dplyr::filter_(paste(col_time, "!=", 36))
     col_well <- "well.name"
     
     if("time" %in% colnames(data)){
@@ -113,7 +113,7 @@ poster.path.list$output.dir <- "resources/output/poster/joined/"
     plot.fill[,col_stimulation] <- plot.fill[,"stm"] 
     
     data.0 <-  data %>% 
-      dplyr::filter_(paste(col_time, "==", 0))
+      dplyr::filter_(paste(col_time, "==", 0)) 
     if(nrow(data.0) > 0){
       data.0[,col_stimulation] <- 0
     }
@@ -211,7 +211,7 @@ poster.path.list$output.dir <- "resources/output/poster/joined/"
       if(length(colors.list) == 1){
         g <- g +  geom_boxplot(fill = colors.list) 
       }  else {
-        g <- g + scale_fill_manual(values = colors.list)
+        g <- g + geom_boxplot() + scale_fill_manual(values = colors.list)
      }
      gplot.list[[stimulation.i]] <- g
     }
