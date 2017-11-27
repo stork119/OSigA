@@ -101,7 +101,7 @@ type <- "nonpriming"
 type <- "priming"
 gplot.list <- list() 
 for(type in c(0,1000)){
-  gplot.list[[type]] <- 
+  gplot.list[[as.character(type)]] <- 
     ggplot(data = data.list$data.exp.grouped %>% 
              dplyr::filter(stimulation == 1) %>% 
              dplyr::filter(priming == type), 
@@ -118,7 +118,7 @@ for(type in c(0,1000)){
               color = color.model[[as.character(type)]]
               ) +
     geom_errorbar(data = data.model %>% 
-                    dplyr::filter(priming == 0),
+                    dplyr::filter(priming == type),
                   mapping = aes( x = time, 
                                  ymin = intensity - sqrt(sd.norm),
                                  ymax = intensity + sqrt(sd.norm),
@@ -130,7 +130,7 @@ for(type in c(0,1000)){
 }
   
 do.call(what = ggsave,
-        args = append(list( width = 8,
+        args = append(list( width = 12,
                             height = 8,
                             useDingbats = plot.args$useDingbats),
                       list(filename = paste(path.list$optimisation.analysis, paste(analyse_name, sep = "/"), "compare_model_to_data.pdf", sep = "/"),
