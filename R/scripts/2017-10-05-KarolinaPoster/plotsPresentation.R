@@ -29,6 +29,14 @@ poster.path.list$output.dir <- "resources/output/poster/joined/"
                           stm  =  c(0, 1.8, 3.6, 12, 9,   18, 36, 90,  180, 900),
                           stmnew  =  c(0, 2, 4,  10, 10,   20, 40,  100,  200, 1000))  
   
+  #### Beta-Stat-Cytoplasm ####
+  poster.label <- labels(poster.data.list)[2]
+  ylimmax <- 600 #1000
+  stimulation.list <- list(c(1000))  
+  plot.fill <- data.frame(fill = c("#ffffff", "#a4d09e", "#a4d09e", "#7abd6f", "#7abd6f", "#50af43", "#50af43", "#1fa637", "#177d34", "#175929"),
+                          stm  =  c(0, 1.8, 3.6, 12, 9,   18, 36, 90,  180, 900),
+                          stmnew  =  c(0, 2, 4,  10, 10,   20, 40,  100,  200, 1000))  
+  
   #### Beta-pStat-Nuclei ####  
   poster.label <- labels(poster.data.list)[4]
   ylimmax <- 300 #1000
@@ -84,7 +92,8 @@ poster.path.list$output.dir <- "resources/output/poster/joined/"
     print(poster.label)
     data <- poster.data.list[[poster.label]] %>% 
       data.frame() 
-    data <- data %>% dplyr::filter_(paste(col_time, "!=", 42))  %>% dplyr::filter_(paste(col_time, "!=", 36))
+    data <- data %>% dplyr::filter(stimulation != 0)
+    # data <- data %>% dplyr::filter_(paste(col_time, "!=", 42))  %>% dplyr::filter_(paste(col_time, "!=", 36))
     col_well <- "well.name"
     
     if("time" %in% colnames(data)){
@@ -230,3 +239,8 @@ poster.path.list$output.dir <- "resources/output/poster/joined/"
     
     
   
+  
+  
+  
+  
+  #### ###
