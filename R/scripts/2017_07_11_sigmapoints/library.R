@@ -3,7 +3,8 @@
 ### ###
 
 #### analyse_model_ut ####
-analyse_model_ut <- function(variables.model,
+analyse_model_ut <- function(fun_model_ode,
+                              variables.model,
                              variables.priming.model,
                              save = TRUE,
                              plot = TRUE,
