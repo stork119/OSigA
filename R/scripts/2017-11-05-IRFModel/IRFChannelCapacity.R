@@ -1,0 +1,195 @@
+### ###
+### IRF channel capacity
+### ###
+
+
+library(e1071)
+library(CapacityLogReg)
+source("R/scripts/2017-11-05-IRFModel/IRFlibrary.R")
+
+#### read model ####
+irfmodel.path.list$optimisation.id <- "2017-12-14-summarise-id"
+irfmodel.path.list$output.path <-
+  paste(irfmodel.path.list$output.dir,
+        irfmodel.path.list$optimisation.id, sep = "/")
+results <- readRDS(
+  file = paste(irfmodel.path.list$output.path, "IRFmodel.RDS", sep = "/"))
+
+par <- results$par#[ranges.opt]
+ranges.factor <- results$ranges.factor
+ranges.base <- results$ranges.base
+ranges.opt <- results$ranges.opt
+params <- ranges.factor
+params[ranges.opt] <- ranges.factor[ranges.opt]*ranges.base[ranges.opt]^par.new
+
+stimulations <- results$stimulations
+
+sd <- params[c(3,4)]
+
+data.model <- model_fun_stm(
+  stimulations = stimulations,
+  hn = params[c(1, 2)],
+  sd = sd,
+  theta = params[c(5, 6, 7, 8)], 
+  scale = params[c(9, 10)],
+  #  bck = c(0,0)
+  bck = params[c(11, 12)] 
+)
+
+data <- data.model %>% dplyr::left_join(data.raw.sum, by = "stimulation", suffix = c(".model", ".data"))
+#data <- data[data$stimulation != 0.01, ]
+
+data <-
+  data %>% 
+  dplyr::mutate(pstat.mean = pstat.model, 
+                pstat.sd   =   pstat.sd.data,
+                irf.mean   =  irf.model,
+                irf.sd     = irf.sd.data) %>%
+  dplyr::select(stimulation,
+                pstat.mean, 
+                pstat.sd,
+                irf.mean,
+                irf.sd)
+
+#### model sampling ####
+model.sampling <- function(
+  data,
+  n.sample
+){
+  sample.list <- list()
+  sample.list <- foreach(i = 1:nrow(data)) %do% {
+    data.frame(signal   = data[i,]$stimulation,
+               response.pstat = 
+                 exp(
+                   rnorm(n = n.sample,
+                         mean = data[i,]$pstat.mean,
+                         sd =  data[i,]$pstat.sd)
+                 ),
+               response.irf = 
+                 exp(
+                   rnorm(n = n.sample,
+                         mean = data[i,]$irf.mean,
+                         sd   = data[i,]$irf.sd)
+                 ))
+  }
+  sample.df <- do.call(rbind, sample.list)
+  return(sample.df)
+}
+#### ####
+no_cores <- 6
+n.sample <- 1000
+rep.sample <- 1
+sd.list.irf <- seq(from = 0, to = 0.5, by = 0.01)
+sd.list.pstat <- seq(from = 0, to = 0.5, by = 0.01)
+
+sd.list <- data.frame(irf   = sd.list.irf,
+                      pstat = sd.list.pstat)
+
+registerDoParallel(no_cores)
+cc.list <- foreach( sd.i = 1:nrow(sd.list)) %dopar% {
+  
+  sd.irf <- sd.list[sd.i,]$irf
+  data$irf.sd <- sd.irf
+  sd.pstat <- sd.list[sd.i,]$pstat
+  data$pstat.sd <- sd.pstat
+  
+  cc.sample.list <- foreach( sample.i = 1:rep.sample) %do% {
+    
+    sample.df <- model.sampling(
+      data = data,
+      n.sample = n.sample)
+    
+    col_signal   <- "signal"
+    col_response <- "response.pstat"
+    
+    cc.df <- data.frame(
+      sd.pstat =  sd.pstat,
+      sd.irf   =  sd.irf,
+      id = sample.i)
+    
+    cc.output.pstat <- 
+      capacity_logreg_main( 
+        sample.df,
+        graphs = FALSE,
+        signal = col_signal,
+        response = col_response,
+        model_out = FALSE,
+        output_path = paste(irfmodel.path.list$output.path, "/", sep = "")
+      )
+    cc.df$pstat <- cc.output.pstat$cc
+    
+    col_response <- "response.irf"
+    cc.output.irf <- 
+      capacity_logreg_main(
+        sample.df,
+        graphs = FALSE,
+        signal = col_signal,
+        response = col_response,
+        model_out = FALSE,
+        output_path = paste(irfmodel.path.list$output.path, "/", sep = "")
+      )
+    cc.df$irf <- cc.output.irf$cc
+    return(cc.df)
+  }
+  return(do.call(rbind, cc.sample.list))
+}
+stopImplicitCluster()
+
+cc.df <- do.call(rbind, cc.list)
+
+#### plotting chhannel capacity ####
+g.cc.list <- list()
+
+col_response <- "pstat"
+col_noise <- "sd.pstat"
+cc.df.sum <- cc.df %>% 
+  dplyr::group_by_(col_noise) %>%
+  dplyr::summarise_("mean" = paste("mean(", col_response, ")"),
+                   "sd" = paste("sd(", col_response, ")"))
+
+g.cc.list[[col_response]] <- 
+  ggplot(cc.df.sum, 
+       aes_string( y = "mean",
+                   ymin = "mean - sd",
+                   ymax = "mean + sd",
+                   x = col_noise)) +
+  geom_errorbar() + 
+  ggtitle(col_response) +
+  ylim(c(0,3)) +
+  ylab("Channel capacity") +
+  do.call(theme_jetka, args = plot.args)
+
+col_response <- "irf"
+col_noise <- "sd.irf"
+cc.df.sum <- cc.df %>% 
+  dplyr::group_by_(col_noise) %>%
+  dplyr::summarise_("mean" = paste("mean(", col_response, ")"),
+                    "sd" = paste("sd(", col_response, ")")) 
+
+
+g.cc.list[[col_response]] <- 
+  ggplot(cc.df.sum, 
+         aes_string( y = "mean",
+                     ymin = "mean - sd",
+                     ymax = "mean + sd",
+                     x = col_noise)) +
+  geom_errorbar() + 
+  ggtitle(col_response) +
+  ylim(c(0,3)) +
+  ylab("Channel capacity") + 
+  do.call(theme_jetka, args = plot.args)
+  
+do.call(what = ggsave,
+        args = append(plot.args.ggsave,
+                      list(filename = paste(irfmodel.path.list$output.path, "cc_noise.pdf", sep = "/"),
+                           plot = marrangeGrob(grobs = g.cc.list, ncol = 1, nrow = 1))))
+
+saveRDS(
+  file = paste(irfmodel.path.list$output.path, "cc_noise.RDS", sep = "/"),
+  object = list(
+    plots = g.cc.list,
+    cc.df = cc.df,
+    n.sample  = n.sample,
+    rep.sample = rep.sample,
+    sd.list = sd.list
+  ))   
