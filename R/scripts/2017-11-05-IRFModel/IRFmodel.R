@@ -3,19 +3,7 @@
 ### ###
 #### libraries ####
 source("R/optimisation/initialise_optimisation.R")
-#### read input ####
-poster.path.list <- list()
-poster.path.list$input.dir <- "resources/input/poster/"
-
-poster.path.list$output.dir <- "resources/output/poster/"
-
-irfmodel.path.list <- list()
-irfmodel.path.list$output.dir <- "resources/output/IRFmodel"
-dir.create(irfmodel.path.list$output.dir)
-
-irfmodel.path.list$rds.path <- "/home/knt/Documents/modelling/resources/input/poster/data_ffc_joined.RDS"
-poster.data.list <- readRDS(file = irfmodel.path.list$rds.path)
-
+source("R/scripts/2017-11-05-IRFModel/IRFlibrary.R")
 #### organize data IRF ####
 irfmodel.data.list <- list()
   
@@ -70,9 +58,9 @@ data.raw.sum <-
   irfmodel.data.list$pSTATsum %>% 
   dplyr::full_join(irfmodel.data.list$irfsum, by = c("stimulation")) %>%
   dplyr::mutate(pstat = logresponse.x, 
-                pstat.sd = logresponse.x, 
+                pstat.sd = logresponse.sd.x, 
                 irf   = logresponse.y,
-                irf.sd = logresponse.y, 
+                irf.sd = logresponse.sd.y, 
                 type  = "data") %>%
   dplyr::select(stimulation, pstat, pstat.sd, irf, irf.sd, type) %>%
   data.frame()
@@ -131,10 +119,11 @@ optimise.fun <- function(par,
                      data.raw.list,
                      ranges.factor,
                      ranges.base,
+                     ranges.opt,
                      ...
                      ){
-  
-  params <- ranges.factor*ranges.base^par
+  params <- ranges.factor
+  params[ranges.opt] <- ranges.factor[ranges.opt]*ranges.base[ranges.opt]^par
   sd <- params[c(3,4)]
   
   data.model <- model_fun_stm(
@@ -147,6 +136,9 @@ optimise.fun <- function(par,
   )
   likelihood.list <- foreach( data.i = 1:length(data.raw.list) ) %do% {
       data  <- data.raw.list[[data.i]]
+      normalise <- (data %>%
+                      dplyr::mutate(normalise = (logresponse^2)/(logresponse.sd^2)) %>%
+                      dplyr::summarise(normalise = mean(normalise)))$normalise
       likelihood <-
         (data %>% 
         left_join(
@@ -156,24 +148,32 @@ optimise.fun <- function(par,
                 "logmodel" = data.model.colnames[data.i]))[, 
                                                            c("logmodel", 
                                                              "stimulation")])) %>%
-        dplyr::mutate(likelihood = ((logresponse - logmodel)^2)/(sd[data.i]^2)  + log(sd[data.i]^2))) #%>%
-        #dplyr::summarise(likelihood = sum(likelihood)))$likelihood
-      return(likelihood)         
+        #dplyr::mutate(likelihood = ((logresponse - logmodel)^2)/(sd[data.i]^2)  + log(sd[data.i]^2))) #%>%
+          dplyr::mutate(likelihood = ((logresponse - logmodel)^2)/(logresponse.sd^2)) %>%
+        #  dplyr::mutate(likelihood = ((logresponse - logmodel)^2)/(logresponse^2)) %>%
+        dplyr::summarise(likelihood = sum(likelihood)))$likelihood
+      return(likelihood/normalise)
+      #return(likelihood)         
   }
   likelihood <- sum(likelihood.list[[1]],likelihood.list[[2]])
-  return(likelihood)
+  # print(likelihood)
+  # print("\n")
+  # print(par)
+  return(as.numeric(likelihood))
 }
 
 #### optimisation initialisation ####
 # hn_pstat hn_irf sd_pstat sd_irf theta1 theta2 theta3 theta4 scale_pstat scale_irf bck_stat bck_irf
-ranges.min <- c(-4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4, -4)
-ranges.max <- c(4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4)
+ranges.min <- 2*c(-4, -4, 4, 4, -4, -4, -4, -4, -4, -4, -4, -4)
+ranges.max <- 2*c(4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4)
 ranges.base <- c(2, 2, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2)
 ranges.factor <- c(1, 1, 1, 1, 1, 1, 1, 1, ymax - ymin, ymin)
-par <- 0*ranges.base
+ranges.opt <- which(ranges.min != ranges.max)
+#par <- 0*ranges.opt 
+par <- par.new
 data.model.colnames <- c("pstat", "irf")
 
-stopfitness <- -20000000
+stopfitness <- 0
 fun.optimisation = cma_es
 maxit <- 1000
 #### optimisation running ####
@@ -195,24 +195,31 @@ optimisation.res <- do.call(
      control = list(maxit = maxit,
                     stopfitness = stopfitness,
                     diag.sigma = TRUE,
+                    keep.best = TRUE,
                     diag.eigen = TRUE,
                     diag.pop = TRUE,
                     diag.value = TRUE),
-     lower = ranges.min,
-     upper = ranges.max,
+     lower = ranges.min[ranges.opt],
+     upper = ranges.max[ranges.opt],
      data.raw.list = data.raw.list,
      stimulations = stimulations,
      ranges.base = ranges.base,
-     ranges.factor = ranges.factor)
+     ranges.factor = ranges.factor,
+     ranges.opt = ranges.opt)
   )
-       
-#### ####
-par <- optimisation.res$par
-par.new <- par
+    
+#### ####drtymoteuszzychchaoskiprparkowaniesejmmorawiecki
+irfmodel.path.list$optimisation.id <- "2017-12-14-summarise-id"
+optimisation.res$value
+par.new <- optimisation.res$par
+#par.new <- par
 # par.new[c(12)] <- c(-100)
 # ranges.factor[c(3,4)] <- c(4,4)
 # par.new[c(3,4)] <- c(0,0)
-params <- ranges.factor*(ranges.base^par.new)
+#par.new <- par
+#par.new[c(9,10)] <- par.new[c(9,10)] + c(1.3,0.2)
+params <- ranges.factor
+params[ranges.opt] <- ranges.factor[ranges.opt]*ranges.base[ranges.opt]^par.new
 sd <- params[c(3,4)]
 
 data.model <- model_fun_stm(
@@ -222,7 +229,7 @@ data.model <- model_fun_stm(
   theta = params[c(5, 6, 7, 8)], 
   scale = params[c(9, 10)],
 #  bck = c(0,0)
-  bck = params[c(11, 12)]
+  bck = params[c(11, 12)] 
 )
 
 data <- rbind(data.raw.sum,
@@ -232,43 +239,87 @@ data <- data[!is.na(data$irf), ]
 data <- data.frame(data)
 data$type <- factor(data$type)
 
-data <- data[data$stimulation != 0.01, ]
+#data <- data[data$stimulation != 0.01, ]
 
 g.list <- list()
 g.list[["pstat"]] <- ggplot(data = data, 
        mapping = aes(
          x = stimulation,
          y = pstat, 
-         ymin = pstat - pstat.sd,
-         ymax = pstat + pstat.sd,
+         #ymin = pstat - pstat.sd,
+         #ymax = pstat + pstat.sd,
          group = type, 
          color = type
          ))+
   #geom_errorbar() +
   geom_point() +
   geom_line() +
-  ggtitle("pstat")
-
+  ggtitle("pstat") + 
+  do.call(theme_jetka, args = plot.args)
+g.list[["pstat"]]
 
 g.list[["irf"]] <- ggplot(data = data, 
        mapping = aes(
          x = stimulation,
          y = irf, 
-         ymin = irf - irf.sd,
-         ymax = irf + irf.sd,
+         #ymin = irf - irf.sd,
+         #ymax = irf + irf.sd,
          group = type, 
          color = type))+
   #geom_errorbar() +
   geom_point() +
   geom_line() +
-  ggtitle("irf")
+  ggtitle("irf") + 
+  do.call(theme_jetka, args = plot.args)
+g.list[["irf"]]
 
-optimisation.res$value
+do.call(what = ggsave,
+        args = append(plot.args.ggsave,
+                      list(filename = paste(irfmodel.path.list$output.path, "IRFmodel.pdf", sep = "/"),
+                           plot = marrangeGrob(grobs = g.list, ncol = 1, nrow = 1))))
 
+irfmodel.path.list$output.path <-
+  paste(irfmodel.path.list$output.dir,
+        irfmodel.path.list$optimisation.id, sep = "/")
+dir.create(irfmodel.path.list$output.path, 
+           recursive = TRUE)
+saveRDS(
+  file = paste(irfmodel.path.list$output.path, "IRFmodel.RDS", sep = "/"),
+  object = list(
+    optimisation = optimisation.res,
+    likelihood = optimisation.res$value,
+    par = par.new, 
+    ranges.min = ranges.min,
+    ranges.min = ranges.min,
+    ranges.opt = ranges.opt,
+    #data.raw.list = data.raw.list,
+    stimulations = stimulations,
+    ranges.base = ranges.base,
+    ranges.factor = ranges.factor,
+    plots = g.list,
+    stopfitness = stopfitness,
+    fun.optimisation = fun.optimisation,
+    maxit = maxit
+  ))   
 
 #### ####
-optimise.fun(  par = par.new,
-               data.raw.list = data.raw.list,
-               stimulations = stimulations,
-               ranges.base = ranges.base,
-               ranges.factor = ranges.factor)
+optimise.fun(
+  par = par.new,
+  data.raw.list = data.raw.list,
+  stimulations = stimulations,
+  ranges.base = ranges.base,
+  ranges.factor = ranges.factor,
+  ranges.opt = ranges.opt
+)
+#### load RDS  ####
+irfmodel.path.list$optimisation.id <- "2017-12-13-summarise"
+irfmodel.path.list$output.path <-
+  paste(irfmodel.path.list$output.dir,
+        irfmodel.path.list$optimisation.id, sep = "/")
+results <- readRDS(
+  file = paste(irfmodel.path.list$output.path, "IRFmodel.RDS", sep = "/"))
+  par <- results$par#[ranges.opt]
+  
+## [1]  0.093594553 -0.001356297 -1.073560733 -0.103776065 -1.733805262 -0.523462295  0.640583619  3.960325670
+##  [9] -3.225818492 -0.357628990
+  
