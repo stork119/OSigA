@@ -76,9 +76,10 @@ model.sampling <- function(
   return(sample.df)
 }
 #### ####
+cc.id <- "_n_1000_rep_25"
 no_cores <- 6
 n.sample <- 1000
-rep.sample <- 1
+rep.sample <- 25
 sd.list.irf <- seq(from = 0, to = 0.5, by = 0.01)
 sd.list.pstat <- seq(from = 0, to = 0.5, by = 0.01)
 
@@ -140,6 +141,35 @@ cc.df <- do.call(rbind, cc.list)
 #### plotting chhannel capacity ####
 g.cc.list <- list()
 
+### together
+#cc.df$num <- 1:nrow(cc.df)
+cc.df.melt <- reshape2::melt(cc.df, 
+                             id.vars = c("id", "sd.irf", "sd.pstat"),
+                             measure.vars = c("irf", "pstat"))
+cc.df.melt.sum <- cc.df.melt %>% 
+  dplyr::group_by(variable, sd.irf, sd.pstat) %>%
+  dplyr::summarise(mean = mean(value),
+                   sd = sd(value))
+
+g.cc.list[["all_together"]] <- 
+  ggplot(cc.df.melt.sum, 
+         aes_string( y = "mean",
+                     ymin = "mean - sd",
+                     ymax = "mean + sd",
+                     color = "variable",
+                     x = "sd.irf")) +
+  ylim(c(0,3)) +
+  ylab("Channel capacity") + 
+  do.call(theme_jetka, args = plot.args)
+
+
+if(rep.sample > 5){
+  g.cc.list[["together"]]  <- g.cc.list[["together"]] + geom_errorbar()
+} else {
+  g.cc.list[["together"]]  <- g.cc.list[["together"]] + geom_point()
+}
+
+### pstat
 col_response <- "pstat"
 col_noise <- "sd.pstat"
 cc.df.sum <- cc.df %>% 
@@ -153,12 +183,18 @@ g.cc.list[[col_response]] <-
                    ymin = "mean - sd",
                    ymax = "mean + sd",
                    x = col_noise)) +
-  geom_errorbar() + 
   ggtitle(col_response) +
   ylim(c(0,3)) +
   ylab("Channel capacity") +
   do.call(theme_jetka, args = plot.args)
 
+if(rep.sample > 5){
+  g.cc.list[[col_response]]  <- g.cc.list[[col_response]] + geom_errorbar()
+} else {
+  g.cc.list[[col_response]]  <- g.cc.list[[col_response]] + geom_point()
+}
+
+### irf
 col_response <- "irf"
 col_noise <- "sd.irf"
 cc.df.sum <- cc.df %>% 
@@ -173,19 +209,30 @@ g.cc.list[[col_response]] <-
                      ymin = "mean - sd",
                      ymax = "mean + sd",
                      x = col_noise)) +
-  geom_errorbar() + 
   ggtitle(col_response) +
   ylim(c(0,3)) +
   ylab("Channel capacity") + 
   do.call(theme_jetka, args = plot.args)
+
+if(rep.sample > 5){
+  g.cc.list[[col_response]]  <- g.cc.list[[col_response]] + geom_errorbar()
+} else {
+  g.cc.list[[col_response]]  <- g.cc.list[[col_response]] + geom_point()
+}
   
+
+
+irfmodel.path.list$cc.output.path <- 
+  paste(irfmodel.path.list$output.path, cc.id, sep = "/")
+dir.create(irfmodel.path.list$cc.output.path, 
+           recursive = TRUE)
 do.call(what = ggsave,
         args = append(plot.args.ggsave,
-                      list(filename = paste(irfmodel.path.list$output.path, "cc_noise.pdf", sep = "/"),
+                      list(filename = paste(irfmodel.path.list$cc.output.path, "cc_noise.pdf", sep = "/"),
                            plot = marrangeGrob(grobs = g.cc.list, ncol = 1, nrow = 1))))
 
 saveRDS(
-  file = paste(irfmodel.path.list$output.path, "cc_noise.RDS", sep = "/"),
+  file = paste(irfmodel.path.list$cc.output.path, "cc_noise.RDS", sep = "/"),
   object = list(
     plots = g.cc.list,
     cc.df = cc.df,
