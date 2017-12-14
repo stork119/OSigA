@@ -16,6 +16,7 @@ results <- readRDS(
   file = paste(irfmodel.path.list$output.path, "IRFmodel.RDS", sep = "/"))
 
 par <- results$par#[ranges.opt]
+par.new <- par
 ranges.factor <- results$ranges.factor
 ranges.base <- results$ranges.base
 ranges.opt <- results$ranges.opt
@@ -76,10 +77,10 @@ model.sampling <- function(
   return(sample.df)
 }
 #### ####
-cc.id <- "_n_1000_rep_25"
 no_cores <- 6
 n.sample <- 1000
-rep.sample <- 25
+rep.sample <- 1
+cc.id <- paste("_n", n.sample, "rep", rep.sample, sep = "_")
 sd.list.irf <- seq(from = 0, to = 0.5, by = 0.01)
 sd.list.pstat <- seq(from = 0, to = 0.5, by = 0.01)
 
@@ -164,9 +165,9 @@ g.cc.list[["all_together"]] <-
 
 
 if(rep.sample > 5){
-  g.cc.list[["together"]]  <- g.cc.list[["together"]] + geom_errorbar()
+  g.cc.list[["all_together"]]  <- g.cc.list[["all_together"]] + geom_errorbar()
 } else {
-  g.cc.list[["together"]]  <- g.cc.list[["together"]] + geom_point()
+  g.cc.list[["all_together"]]  <- g.cc.list[["all_together"]] + geom_point()
 }
 
 ### pstat
