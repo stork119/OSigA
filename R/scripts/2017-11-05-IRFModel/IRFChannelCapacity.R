@@ -8,7 +8,7 @@ library(CapacityLogReg)
 source("R/scripts/2017-11-05-IRFModel/IRFlibrary.R")
 
 #### read model ####
-irfmodel.path.list$optimisation.id <- "2017-12-14-summarise-id"
+#irfmodel.path.list$optimisation.id <- "2017-12-14-summarise-id"
 irfmodel.path.list$output.path <-
   paste(irfmodel.path.list$output.dir,
         irfmodel.path.list$optimisation.id, sep = "/")
@@ -25,29 +25,34 @@ params[ranges.opt] <- ranges.factor[ranges.opt]*ranges.base[ranges.opt]^par.new
 
 stimulations <- results$stimulations
 
-sd <- params[c(3,4)]
-
-data.model <- model_fun_stm(
+data.model <- model_fun_stm_params(
   stimulations = stimulations,
-  hn = params[c(1, 2)],
-  sd = sd,
-  theta = params[c(5, 6, 7, 8)], 
-  scale = params[c(9, 10)],
-  #  bck = c(0,0)
-  bck = params[c(11, 12)] 
-)
+  params = params)
 
 data <- data.model %>% dplyr::left_join(data.raw.sum, by = "stimulation", suffix = c(".model", ".data"))
 #data <- data[data$stimulation != 0.01, ]
 
+
+# data <-
+#   data %>%
+#   dplyr::mutate(pstat.mean = pstat.model.model,
+#                 pstat.sd   =   pstat.sd.data,
+#                 irf.mean   =  irf.model.model,
+#                 irf.sd     = irf.sd.data) %>%
+#   dplyr::select(stimulation,
+#                 pstat.mean,
+#                 pstat.sd,
+#                 irf.mean,
+#                 irf.sd)
+
 data <-
-  data %>% 
-  dplyr::mutate(pstat.mean = pstat.model, 
+  data %>%
+  dplyr::mutate(pstat.mean = pstat.model,
                 pstat.sd   =   pstat.sd.data,
                 irf.mean   =  irf.model,
                 irf.sd     = irf.sd.data) %>%
   dplyr::select(stimulation,
-                pstat.mean, 
+                pstat.mean,
                 pstat.sd,
                 irf.mean,
                 irf.sd)
@@ -64,13 +69,13 @@ model.sampling <- function(
                  exp(
                    rnorm(n = n.sample,
                          mean = data[i,]$pstat.mean,
-                         sd =  data[i,]$pstat.sd)
+                         sd =  data[i,]$pstat.mean*data[i,]$pstat.sd)
                  ),
                response.irf = 
                  exp(
                    rnorm(n = n.sample,
                          mean = data[i,]$irf.mean,
-                         sd   = data[i,]$irf.sd)
+                         sd   = data[i,]$pstat.mean*data[i,]$irf.sd)
                  ))
   }
   sample.df <- do.call(rbind, sample.list)
@@ -79,13 +84,21 @@ model.sampling <- function(
 #### ####
 no_cores <- 6
 n.sample <- 1000
-rep.sample <- 1
-cc.id <- paste("_n", n.sample, "rep", rep.sample, sep = "_")
-sd.list.irf <- seq(from = 0, to = 0.5, by = 0.01)
-sd.list.pstat <- seq(from = 0, to = 0.5, by = 0.01)
+rep.sample <- 25
 
-sd.list <- data.frame(irf   = sd.list.irf,
-                      pstat = sd.list.pstat)
+# cc.id <- paste("_model", "n", n.sample, "rep", rep.sample, sep = "_")
+# sd.list.pstat <- seq(from = 0, to = 0.05, by = 0.001)
+# sd.list.irf <- seq(from = 0, to = 0.05, by = 0.001)
+
+###sd.list mowi jaki procent sredniej jest odchylenie standardowe
+cc.id <- paste("_data", "n", n.sample, "rep", rep.sample, sep = "_")
+sd.list.pstat <- seq(from = 0, to = 0.5, by = 0.01)#*(params[c(9)]^2)
+sd.list.irf <- seq(from = 0, to = 0.5, by = 0.01)#*(params[c(10)]^2)
+
+sd.list <- expand.grid(irf = sd.list.irf, pstat = sd.list.pstat)
+
+# sd.list <- data.frame(irf   = sd.list.irf,
+#                       pstat = sd.list.pstat)
 
 registerDoParallel(no_cores)
 cc.list <- foreach( sd.i = 1:nrow(sd.list)) %dopar% {
