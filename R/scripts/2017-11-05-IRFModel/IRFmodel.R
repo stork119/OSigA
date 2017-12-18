@@ -114,11 +114,16 @@ model_fun_stm <- function(
 #### model computation ####
 model_fun_stm_params <- 
   function(params,
+           sd = c(1,1),
            ...){
+    if(length(params) > 9){
+      sd <- params[c(10,11)]
+    }
     data.model <- model_fun_stm(
       hn = params[c(1, 2)],
       theta = params[3:7], 
       scale = params[c(8, 9)],
+      sd    = sd,
       ...
     )
     return(data.model)
@@ -153,15 +158,17 @@ optimise.fun <- function(par,
           by =  "stimulation",
           ((data.model %>% 
               dplyr::mutate_(
-                "logmodel" = data.model.colnames[data.i]))[, 
+                "logmodel" = data.model.colnames[data.i],
+                "logmodel.sd" = paste(data.model.colnames[data.i], "sd", sep = ".")
+                ))[, 
                                                            c("logmodel", 
+                                                             "logmodel.sd",
                                                              "stimulation")])) %>%
-        #dplyr::mutate(likelihood = ((logresponse - logmodel)^2)/(sd[data.i]^2)  + log(sd[data.i]^2))) #%>%
-          dplyr::mutate(likelihood = ((logresponse - logmodel)^2)/(logresponse.sd^2)) %>%
+        dplyr::mutate(likelihood = ((logresponse - logmodel)^2)/(2*(logmodel.sd^2))  + log(logmodel.sd)) %>%
+        #dplyr::mutate(likelihood = ((logresponse - logmodel)^2)/(logresponse.sd^2)) %>%
         #  dplyr::mutate(likelihood = ((logresponse - logmodel)^2)/(logresponse^2)) %>%
         dplyr::summarise(likelihood = sum(likelihood)))$likelihood
-      return(likelihood/normalise)
-      #return(likelihood)         
+      return(likelihood/normalise)         
   }
   likelihood <- sum(likelihood.list[[1]],likelihood.list[[2]])
   # print(likelihood)
@@ -171,32 +178,33 @@ optimise.fun <- function(par,
 }
 
 #### optimisation initialisation ####
-# hn_pstat hn_irf sd_pstat sd_irf theta1 theta2 theta4 theta5 scale_pstat scale_irf bck_stat bck_irf
-
+# hn_pstat hn_irf theta1 theta2 theta4 theta5 scale_pstat scale_irf sd_pstat sd_irf
+sd_irf <- mean(data.raw.sum$irf.sd[!is.na(data.raw.sum$irf.sd)])
+sd_pstat <- mean(data.raw.sum$pstat.sd[!is.na(data.raw.sum$pstat.sd)])
 ymin <- c(min(irfmodel.data.list$irfsum$logresponse), 
           min(irfmodel.data.list$pSTATsum$logresponse))
 ymax <- c(max(irfmodel.data.list$irfsum$logresponse), 
           max(irfmodel.data.list$pSTATsum$logresponse))
-ranges.min <- 2*c(-4, -4,  -4, -4, -4, -4, -4, -4, -4)
-ranges.max <- 2*c(4, 4, 4, 4, 4, 4, 4, 4, 4)
-ranges.base <- c(2, 2, 2, 2, 2, 2, 2, 2, 2)
-ranges.factor <- c(1, 1, 1, 1, 1, 1, 1, ymax - ymin)
+ranges.min <- 2*c(-4, -4,  -4, -4, -4, -4, -4, -4, -4, -4, -4)
+ranges.max <- 2*c(4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4)
+ranges.base <- c(2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2)
+ranges.factor <- c(1, 1, 1, 1, 1, 1, 1, ymax - ymin, sd_irf, sd_pstat)
 ranges.opt <- which(ranges.min != ranges.max)
 #par <- 0*ranges.opt 
-#par <- par.new
+#par <- par.new[ranges.opt]
+#par[1:length(par.new)] <- par.new
 data.model.colnames <- c("pstat", "irf")
 
-stopfitness <- 0
+stopfitness <- -1000
 fun.optimisation = cma_es
 maxit <- 1000
 #### optimisation running ####
-data.raw.list <-
-  list(irfmodel.data.list$pSTATsum %>% dplyr::filter(stimulation %in% stimulations),
-       irfmodel.data.list$irfsum %>% dplyr::filter(stimulation %in% stimulations))
 stimulations.pSTAT <- irfmodel.data.list$pSTAT %>% dplyr::distinct(stimulation) 
 stimulations.irf <- irfmodel.data.list$irf %>% dplyr::distinct(stimulation)
 stimulations  <- (stimulations.pSTAT %>% dplyr::inner_join(stimulations.irf))$stimulation
-
+data.raw.list <-
+  list(irfmodel.data.list$pSTATsum %>% dplyr::filter(stimulation %in% stimulations),
+       irfmodel.data.list$irfsum %>% dplyr::filter(stimulation %in% stimulations))
 optimisation.res <- do.call(
   fun.optimisation,
   list(par = par,
@@ -217,8 +225,8 @@ optimisation.res <- do.call(
      ranges.opt = ranges.opt)
   )
     
-#### ####drtymoteuszzychchaoskiprparkowaniesejmmorawiecki
-irfmodel.path.list$optimisation.id <- "2017-12-16-newmodel"
+#### plotting ####
+irfmodel.path.list$optimisation.id <- "2017-12-16-newmodel-sd-2"
 optimisation.res$value
 par.new <- optimisation.res$par
 #par.new <- par
@@ -248,12 +256,12 @@ g.list[["pstat"]] <- ggplot(data = data,
        mapping = aes(
          x = stimulation,
          y = pstat, 
-         #ymin = pstat - pstat.sd,
-         #ymax = pstat + pstat.sd,
+         ymin = pstat - pstat.sd,
+         ymax = pstat + pstat.sd,
          group = type, 
          color = type
          ))+
-  #geom_errorbar() +
+  geom_errorbar() +
   geom_point() +
   geom_line() +
   ggtitle("pstat") + 
@@ -264,11 +272,11 @@ g.list[["irf"]] <- ggplot(data = data,
        mapping = aes(
          x = stimulation,
          y = irf, 
-         #ymin = irf - irf.sd,
-         #ymax = irf + irf.sd,
+         ymin = irf - irf.sd,
+         ymax = irf + irf.sd,
          group = type, 
          color = type))+
-  #geom_errorbar() +
+  geom_errorbar() +
   geom_point() +
   geom_line() +
   ggtitle("irf") + 

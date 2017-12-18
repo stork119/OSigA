@@ -2,6 +2,8 @@
 ### IRF library 
 ###
 
+library(e1071)
+library(CapacityLogReg)
 #### read input ####
 poster.path.list <- list()
 poster.path.list$input.dir <- "resources/input/poster/"
