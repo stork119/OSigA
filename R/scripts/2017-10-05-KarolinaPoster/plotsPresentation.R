@@ -22,12 +22,12 @@ poster.path.list$output.dir <- "resources/output/poster/joined/"
                         stmnew  =  c(0, 2, 4,  10, 10,   20, 40,  100,  200, 1000))  
   
   #### Beta-Stat-Nuclei ####
-  poster.label <- labels(poster.data.list)[1]
-  ylimmax <- 1000 #1000
-  stimulation.list <- list(c(10,1000))  
-  plot.fill <- data.frame(fill = c("#ffffff", "#a4d09e", "#a4d09e", "#7abd6f", "#7abd6f", "#50af43", "#50af43", "#1fa637", "#177d34", "#175929"),
-                          stm  =  c(0, 1.8, 3.6, 12, 9,   18, 36, 90,  180, 900),
-                          stmnew  =  c(0, 2, 4,  10, 10,   20, 40,  100,  200, 1000))  
+ poster.label <- labels(poster.data.list)[1]
+ ylimmax <- 1000 #1000
+ stimulation.list <- list(c(10,1000))  
+ plot.fill <- data.frame(fill = c("#ffffff", "#a4d09e", "#a4d09e", "#7abd6f", "#7abd6f", "#50af43", "#50af43", "#1fa637", "#177d34", "#175929"),
+                         stm  =  c(0, 1.8, 3.6, 12, 9,   18, 36, 90,  180, 900),
+                         stmnew  =  c(0, 2, 4,  10, 10,   20, 40,  100,  200, 1000))  
   
   #### Beta-Stat-Cytoplasm ####
   poster.label <- labels(poster.data.list)[2]

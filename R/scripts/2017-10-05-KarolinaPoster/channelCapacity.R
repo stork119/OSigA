@@ -13,42 +13,41 @@ source("R/optimisation/initialise_optimisation.R")
 library(e1071)
 library(CapacityLogReg)
 
-rds.path <- "/home/knt/Documents/modelling/resources/input/poster/data_ffc_filtered.RDS"
+#### ####
+#rds.path <- "/home/knt/Documents/modelling/resources/input/poster/data_ffc_filtered.RDS"
+rds.path <- "/home/knt/Documents/modelling/resources/input/poster/rds/data_ffc.RDS"
 poster.data.list <- readRDS(file = rds.path)
 poster.path.list <- list()
 poster.path.list$input.dir <- "resources/input/poster/"
-poster.path.list$output.dir <- "resources/output/poster/filtered/"
-dir.create(path = poster.path.list$output.dir, 
+poster.path.list$output.dir <- "resources/output/poster/ffc/"
+dir.create(path = poster.path.list$output.dir,
            showWarnings = FALSE,
            recursive = TRUE)
 #### plots by wells ####
 gplot.list <- list()
-r <-foreach(poster.label = labels(poster.data.list)[c(10)]) %do% {
-  #poster.label <- labels(poster.data.list)[3]
-  print(poster.label)
-  data <- poster.data.list[[poster.label]] %>% data.frame()
-  
-  if("Intensity_MeanIntensity_Alexa" %in% colnames(data)){
-    col_response <- "Intensity_MeanIntensity_Alexa"
-  } else if("Intensity_MeanIntensity_Alexa488" %in% colnames(data)){
-    col_response <- "Intensity_MeanIntensity_Alexa488"
-  } else {
-    col_response <- "Intensity_MeanIntensity_Alexa555"
-  }
-  
-  gplot.list[[poster.label]]  <- 
-    plot_boxplot_group(
-      data = data, 
-      x = "well.name", 
-      y = col_response, 
-      save_plot = FALSE,
-      ylim_max_const = TRUE,
-      plot_title = poster.label,
-      ylim_max = quantile(x = data[,col_response], na.rm = TRUE, probs = 0.95)[[1]])
+r <-foreach(poster.label = labels(poster.data.list)) %do% {
+  #poster.label <- labels(poster.data.list)[1]
+  tryCatch({
+    print(poster.label)
+    data <- poster.data.list[[poster.label]]$data %>% data.frame()
+    
+    column.names <- getColumnNames(data)
+
+    gplot.list[[poster.label]]  <-
+      plot_boxplot_group(
+        data = data,
+        x = column.names,
+        y = col_response,
+        save_plot = FALSE,
+        ylim_max_const = TRUE,
+        plot_title = poster.label,
+        ylim_max = quantile(x = data[,col_response], na.rm = TRUE, probs = 0.95)[[1]]
+        )
+  }, error = function(e){print(e)})
   return()
 }
 
-ggsave(filename = paste(poster.path.list$output.dir, paste("experiments", ".pdf", sep = ""), sep = "/"), 
+ggsave(filename = paste(poster.path.list$output.dir, paste("experiments", ".pdf", sep = ""), sep = "/"),
        plot = marrangeGrob(grobs = gplot.list, ncol = 1, nrow =1),
        width = plot.args$width,
        height =plot.args$height,
@@ -64,7 +63,7 @@ foreach(poster.label = labels(poster.data.list)[c(10)]) %do% {
   #poster.label <- labels(poster.data.list)[1]
   tryCatch({
     print(poster.label)
-    data <- poster.data.list[[poster.label]] %>% 
+    data <- poster.data.list[[poster.label]]$data %>% 
       data.frame() 
     
     col_well <- "well.name"
@@ -244,8 +243,8 @@ foreach(poster.label = labels(poster.data.list)[c(10)]) %do% {
     print(cc.df)
   }, error = function(e){print(e)})
 }
-#stopImplicitCluster()
 
+#stopImplicitCluster()
 #### channel capacity plot ####
 
 plot_fun <- "geom_boxplot"
@@ -299,7 +298,6 @@ poster.labels.df <- poster.labels.df %>% arrange(position, label)
 #             row.names = FALSE, 
 #             col.names = TRUE) 
               
-
 gplot.list <- list()
 gplot.list.wells <- list()
 r <- foreach(poster.label.i = 1:nrow(poster.labels.df)) %do% {
@@ -307,7 +305,7 @@ r <- foreach(poster.label.i = 1:nrow(poster.labels.df)) %do% {
   poster.label <- as.character(poster.labels.df[poster.label.i,]$label)
   poster.title <- as.character(poster.labels.df[poster.label.i,]$title)
   print(poster.label)
-  data <- poster.data.list[[poster.label]] %>% data.frame()
+  data <- poster.data.list[[poster.label]]$data %>% data.frame()
   
   if("time" %in% colnames(data)){
     col_time <- "time"
