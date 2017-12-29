@@ -46,23 +46,27 @@ optimisation.res <- do.call(
        stimulations = stimulations,
        ranges.base = ranges$base,
        ranges.factor = ranges$factor,
-       ranges.opt = ranges$opt)
+       ranges.opt = ranges$opt,
+       model_fun = model_fun_stm_params.ps1,
+       data.model.colnames = data.model.colnames)
 )
 
 #### plotting ####
 irfmodel.path.list$optimisation.id <- "2017-12-28-pSTAT"
 #par.ps1 <- par.new
 optimisation.res$value
-par.new <- optimisation.res$par
+par.ps1 <- optimisation.res$par
+
+ranges <- GetParametersRanges.ps1()
 params <- ranges$factor
-params[ranges$opt] <- ranges$factor[ranges$opt]*ranges$base[ranges$opt]^par.new
+params[ranges$opt] <- ranges$factor[ranges$opt]*ranges$base[ranges$opt]^par.ps1
 
 data.model <- model_fun_stm_params.ps1(
   stimulations = unique(data.raw.sum$stimulation),
   params = params)
 
 data <- rbind(data.raw.sum %>% dplyr::select(-c(irf, irf.sd)),
-              data.model %>% dplyr::select(-c(pstat.model)))
+              data.model %>% dplyr::select(-c(pstat.model, pstat.model.sd)))
 data <- data[!is.na(data$pstat), ]
 data <- data.frame(data)
 data$type <- factor(data$type)
@@ -109,10 +113,10 @@ dir.create(irfmodel.path.list$output.path,
 
 do.call(what = ggsave,
         args = append(plot.args.ggsave,
-                      list(filename = paste(irfmodel.path.list$output.path, "IRFmodel.pdf", sep = "/"),
+                      list(filename = paste(irfmodel.path.list$output.path, "IRFmodel-pstat.pdf", sep = "/"),
                            plot = marrangeGrob(grobs = g.list, ncol = 1, nrow = 1))))
 saveRDS(
-  file = paste(irfmodel.path.list$output.path, "IRFmodel.RDS", sep = "/"),
+  file = paste(irfmodel.path.list$output.path, "IRFmodel-pstat.RDS", sep = "/"),
   object = list(
     optimisation = optimisation.res,
     likelihood = optimisation.res$value,
