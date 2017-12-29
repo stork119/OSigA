@@ -2,7 +2,6 @@
 ### IRF model
 ### ###
 #install.packages("entropy")
-library(entropy)
 library(FNN)
 #### GetParametersRanges.irf1 ####
 # hn_pstat hn_irf theta1 theta2 theta3 theta4 theta5 scale_pstat scale_irf sd_pstat sd_irf
@@ -104,9 +103,8 @@ simulateModel.irf <- function(
     ) %>%
     data.table()
     
-  sample.list <- list()
   registerDoParallel(no_cores)
-  sample.list <- foreach(i = 1:nrow(data.model)) %do% {
+  sample.list <- foreach(i = 1:nrow(data.model)) %dopar% {
     return(
       data.frame(
         response.irf = 
@@ -140,7 +138,8 @@ optimise.fun.stochastic.irf1 <- function(
         ...)
     
     stimulation.list <- (data.sample.irf1 %>% dplyr::distinct(stimulation))$stimulation
-    kl.list <- foreach(stm = stimulation.list) %do% {
+    registerDoParallel(no_cores)
+    kl.list <- foreach(stm = stimulation.list) %dopar% {
       kl.div <- KL.divergence(
         X = (irfmodel.data.list$irf %>% 
                dplyr::filter(stimulation == stm))$logresponse,
@@ -149,6 +148,7 @@ optimise.fun.stochastic.irf1 <- function(
         k = k)[k]
       return(kl.div)
     }
+    stopImplicitCluster()
     
     kl <- do.call(sum, kl.list)
     return(kl)
@@ -181,3 +181,5 @@ model_fun_mean.irf1 <-
       data.table()
     return(data.model.irf1)
   }
+
+#### ####

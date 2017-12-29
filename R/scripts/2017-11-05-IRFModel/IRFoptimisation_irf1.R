@@ -122,6 +122,13 @@ saveRDS(
 
 
 #### stochastic model ####
+
+fun.optimisation = cma_es
+stimulations.pSTAT <- irfmodel.data.list$pSTAT %>% dplyr::distinct(stimulation) 
+stimulations.irf <- irfmodel.data.list$irf %>% dplyr::distinct(stimulation)
+stimulations  <- (stimulations.pSTAT %>% dplyr::inner_join(stimulations.irf))$stimulation
+
+
 nsimulations <- 1000
 ranges.ps1 <- GetParametersRanges.ps1()
 data.sample.ps1 <- simulateModel.ps1(ranges = ranges.ps1,
@@ -130,7 +137,7 @@ data.sample.ps1 <- simulateModel.ps1(ranges = ranges.ps1,
                                      nsimulations = nsimulations)
 
 k <- 4
-
+ranges.irf1 <- GetParametersRanges.irf1(scale.max = -4, sd.max = -4)
 params <- ranges.irf1$factor
 params[ranges.irf1$opt] <- ranges.irf1$factor[ranges.irf1$opt]*ranges.irf1$base[ranges.irf1$opt]^par.irf1
 params.list <- GetParametersList.irf1(params = params)
@@ -145,9 +152,10 @@ ranges.irf1.stochastic <- GetParametersRanges.irf1(
   scale.factor = params.list$scale
   )
 
-maxit <- 1
+ranges.irf1.stochastic$par <- optimisation.res.irf1.stochastic$par
+maxit <- 100
 stopfitness <- 0 
-
+no_cores <-8 
 optimisation.res.irf1.stochastic <- do.call(
   fun.optimisation,
   list(par = ranges.irf1.stochastic$par,
@@ -166,5 +174,22 @@ optimisation.res.irf1.stochastic <- do.call(
        ranges = ranges.irf1.stochastic,
        irfmodel.data.list = irfmodel.data.list,
        k = k,
-       nsimulations = nsimulations)
+       nsimulations = nsimulations,
+       no_cores = no_cores)
 )
+
+#### load pars ####
+
+irfmodel.path.list$optimisation.id <- "2017-12-28-pSTAT"
+
+irfmodel.path.list$output.path <-
+  paste(irfmodel.path.list$output.dir,
+        irfmodel.path.list$optimisation.id, sep = "/")
+
+irfmodel.results.ps1 <- readRDS(file = 
+                                  paste(irfmodel.path.list$output.path, "IRFmodel-pstat.RDS", sep = "/"))
+par.ps1 <- irfmodel.results.ps1$par
+
+irfmodel.results.irf1 <- readRDS(file = 
+                                  paste(irfmodel.path.list$output.path, "IRFmodel-irf.RDS", sep = "/"))
+par.irf1 <- irfmodel.results.irf1$par
