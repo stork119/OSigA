@@ -1,9 +1,12 @@
 ###
 ### IRF library 
 ###
-
+setwd("../../../")
+source("R/optimisation/initialise_optimisation.R")
+source("R/scripts/2017-11-05-IRFModel/IRFlibrary.R")
 library(e1071)
 library(CapacityLogReg)
+
 #### read input ####
 poster.path.list <- list()
 poster.path.list$input.dir <- "resources/input/poster/"
