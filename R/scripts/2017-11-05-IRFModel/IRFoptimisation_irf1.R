@@ -64,9 +64,27 @@ par.irf1 <- optimisation.res.irf1$par
 # par.irf1[5] <- 0.8
 
 #### ####
+
+ranges.irf1 <- GetParametersRanges.irf1(scale.max = -4, sd.max = -4)
+params <- ranges.irf1$factor
+params[ranges.irf1$opt] <- ranges.irf1$factor[ranges.irf1$opt]*ranges.irf1$base[ranges.irf1$opt]^par.irf1
+params.list <- GetParametersList.irf1(params = params)
+params.list$sd <- par.irf.stochastic
+ranges.irf1 <- GetParametersRanges.irf1(
+  sd.max = 4, 
+  hn.max = -4,
+  theta.max = c(-4, -4, -4, -4),
+  scale.max = -4,
+  hn.factor = params.list$hn,
+  theta.factor = params.list$theta,
+  sd.factor = params.list$sd,
+  scale.factor = params.list$scale
+)
+
+
 params.irf1 <- ranges.irf1$factor
-params.irf1[ranges.irf1$opt] <- 
-  ranges.irf1$factor[ranges.irf1$opt]*ranges.irf1$base[ranges.irf1$opt]^par.irf1
+# params.irf1[ranges.irf1$opt] <- 
+#   ranges.irf1$factor[ranges.irf1$opt]*ranges.irf1$base[ranges.irf1$opt]^par.irf1
 
 
 data.model.irf1 <- model_fun_mean.irf1(params = params.irf1,
@@ -153,7 +171,7 @@ ranges.irf1.stochastic <- GetParametersRanges.irf1(
   )
 
 ranges.irf1.stochastic$par <- optimisation.res.irf1.stochastic$par
-maxit <- 100
+maxit <- 1000
 stopfitness <- 0 
 no_cores <-8 
 optimisation.res.irf1.stochastic <- do.call(
@@ -177,6 +195,8 @@ optimisation.res.irf1.stochastic <- do.call(
        nsimulations = nsimulations,
        no_cores = no_cores)
 )
+
+## par.irf.stochastic <- 2.812659
 
 #### load pars ####
 
