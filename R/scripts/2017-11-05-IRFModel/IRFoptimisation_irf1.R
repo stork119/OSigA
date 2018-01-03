@@ -11,20 +11,22 @@ data.model.ps1 <- model_fun_stm_params.ps1(
 )
 
 par.irf1 <- ranges.irf1$par
+
+#### optimisation running ####
 stopfitness <- -10000
 fun.optimisation = cma_es
 maxit <- 1000
-#### optimisation running ####
 stimulations.pSTAT <- irfmodel.data.list$pSTAT %>% dplyr::distinct(stimulation) 
 stimulations.irf <- irfmodel.data.list$irf %>% dplyr::distinct(stimulation)
 stimulations  <- (stimulations.pSTAT %>% dplyr::inner_join(stimulations.irf))$stimulation
 
 data.model.colnames <- c("irf")
- 
 data.raw.list <-
   list(irfmodel.data.list$irfsum %>% dplyr::filter(stimulation %in% stimulations))
 
-optimisation.res <- do.call(
+ranges.irf1 <- GetParametersRanges.irf1(scale.max = -4, sd.max = -4)
+
+optimisation.res.irf <- do.call(
   fun.optimisation,
   list(par = par.irf1,
        fn = optimise.fun,
@@ -46,50 +48,38 @@ optimisation.res <- do.call(
        data.model.colnames = data.model.colnames,
        data.model.ps1 = data.model.ps1)
 )
-par.irf1 <- optimisation.res$par 
+par.irf1 <- optimisation.res.irf$par 
 #### ####
-irfmodel.path.list$optimisation.id <- "2017-12-28-pSTAT"
-
-params.ps1 <- ranges.ps1$factor
-params.ps1[ranges.ps1$opt] <- 
-  ranges.ps1$factor[ranges.ps1$opt]*ranges.ps1$base[ranges.ps1$opt]^par.ps1
-data.model.ps1 <- model_fun_stm_params.ps1(
-  stimulations = stimulations,
-  params = params.ps1
-)
-
-par.irf1 <- optimisation.res.irf1$par
 # par.irf1[1] <- -1
 # par.irf1[4] <- 4
 # par.irf1[5] <- 0.8
 
 #### ####
 
+## ? o co mi chodzilo
 ranges.irf1 <- GetParametersRanges.irf1(scale.max = -4, sd.max = -4)
-params <- ranges.irf1$factor
-params[ranges.irf1$opt] <- ranges.irf1$factor[ranges.irf1$opt]*ranges.irf1$base[ranges.irf1$opt]^par.irf1
-params.list <- GetParametersList.irf1(params = params)
-params.list$sd <- par.irf.stochastic
-ranges.irf1 <- GetParametersRanges.irf1(
-  sd.max = 4, 
-  hn.max = -4,
-  theta.max = c(-4, -4, -4, -4),
-  scale.max = -4,
-  hn.factor = params.list$hn,
-  theta.factor = params.list$theta,
-  sd.factor = params.list$sd,
-  scale.factor = params.list$scale
-)
-
+# params <- ranges.irf1$factor
+# params[ranges.irf1$opt] <- ranges.irf1$factor[ranges.irf1$opt]*ranges.irf1$base[ranges.irf1$opt]^par.irf1
+# params.list <- GetParametersList.irf1(params = params)
+# params.list$sd <- par.irf.stochastic
+# ranges.irf1 <- GetParametersRanges.irf1(
+#   sd.max = 4, 
+#   hn.max = -4,
+#   theta.max = c(-4, -4, -4, -4),
+#   scale.max = -4,
+#   hn.factor = params.list$hn,
+#   theta.factor = params.list$theta,
+#   sd.factor = params.list$sd,
+#   scale.factor = params.list$scale
+# )
 
 params.irf1 <- ranges.irf1$factor
-# params.irf1[ranges.irf1$opt] <- 
-#   ranges.irf1$factor[ranges.irf1$opt]*ranges.irf1$base[ranges.irf1$opt]^par.irf1
+params.irf1[ranges.irf1$opt] <-
+  ranges.irf1$factor[ranges.irf1$opt]*ranges.irf1$base[ranges.irf1$opt]^par.irf1
 
 
 data.model.irf1 <- model_fun_mean.irf1(params = params.irf1,
                                        data.model.ps1 = data.model.ps1)
-
 
 data <- rbind(data.raw.sum %>% dplyr::select(-c(pstat, pstat.sd)),
               data.model.irf1 %>% dplyr::select(-c(pstat, pstat.sd, pstat.model, pstat.model.sd)))
@@ -113,35 +103,25 @@ g.list[["irf"]] <- ggplot(data = data,
   do.call(theme_jetka, args = plot.args)
 g.list[["irf"]]
 
-irfmodel.path.list$output.path <-
-  paste(irfmodel.path.list$output.dir,
-        irfmodel.path.list$optimisation.id, sep = "/")
-dir.create(irfmodel.path.list$output.path, 
-           recursive = TRUE)
+saveResults(
+  model.type = "irf", #"pstat"
+  irfmodel.path.list = irfmodel.path.list,
+  optimisation.res = optimisation.res.irf1,
+  likelihood = optimisation.res.irf1$value, 
+  par = optimisation.res.irf1$par,  
+  ranges = ranges.irf1,
+  stimulations = stimulations,
+  stopfitness = stopfitness,
+  fun.optimisation = fun.optimisation,
+  maxit = maxit,
+  g.list = g.list
+)
 
-do.call(what = ggsave,
-        args = append(plot.args.ggsave,
-                      list(filename = paste(irfmodel.path.list$output.path, "IRFmodel-irf.pdf", sep = "/"),
-                           plot = marrangeGrob(grobs = g.list, ncol = 1, nrow = 1))))
-saveRDS(
-  file = paste(irfmodel.path.list$output.path, "IRFmodel-irf.RDS", sep = "/"),
-  object = list(
-    optimisation = optimisation.res,
-    likelihood = optimisation.res$value,
-    par = par.new, 
-    ranges = ranges,
-    #data.raw.list = data.raw.list,
-    stimulations = stimulations,
-    plots = g.list,
-    stopfitness = stopfitness,
-    fun.optimisation = fun.optimisation,
-    maxit = maxit
-  ))   
 
 
 #### stochastic model ####
 
-fun.optimisation = cma_es
+fun.optimisation = "cma_es"
 stimulations.pSTAT <- irfmodel.data.list$pSTAT %>% dplyr::distinct(stimulation) 
 stimulations.irf <- irfmodel.data.list$irf %>% dplyr::distinct(stimulation)
 stimulations  <- (stimulations.pSTAT %>% dplyr::inner_join(stimulations.irf))$stimulation
@@ -196,20 +176,16 @@ optimisation.res.irf1.stochastic <- do.call(
        no_cores = no_cores)
 )
 
-## par.irf.stochastic <- 2.812659
 
-#### load pars ####
-
-irfmodel.path.list$optimisation.id <- "2017-12-28-pSTAT"
-
-irfmodel.path.list$output.path <-
-  paste(irfmodel.path.list$output.dir,
-        irfmodel.path.list$optimisation.id, sep = "/")
-
-irfmodel.results.ps1 <- readRDS(file = 
-                                  paste(irfmodel.path.list$output.path, "IRFmodel-pstat.RDS", sep = "/"))
-par.ps1 <- irfmodel.results.ps1$par
-
-irfmodel.results.irf1 <- readRDS(file = 
-                                  paste(irfmodel.path.list$output.path, "IRFmodel-irf.RDS", sep = "/"))
-par.irf1 <- irfmodel.results.irf1$par
+saveResults(
+  model.type = "irf-stochastic", #"pstat"
+  irfmodel.path.list = irfmodel.path.list,
+  optimisation.res = optimisation.res.irf1.stochastic,
+  likelihood = optimisation.res.irf1.stochastic$value, 
+  par = optimisation.res.irf1.stochastic$par,  
+  ranges = ranges.irf1.stochastic,
+  stimulations = stimulations,
+  stopfitness = stopfitness,
+  fun.optimisation = fun.optimisation,
+  maxit = maxit
+)
