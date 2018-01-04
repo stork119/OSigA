@@ -78,12 +78,19 @@ model_fun.ps1 <- function(
 #### model model_fun_stm.ps1 ####
 model_fun_stm.ps1 <- function(
   stimulations,
+  sd,
+  sd.const = TRUE,
+  data.exp = NULL,
   ...
 ){
   y.list <- list()
   foreach( stm = stimulations ) %do% {
+    if(!sd.const & !is.null(data.exp)){
+      sd <- (data.exp %>% dplyr::filter(stimulation == stm))$logresponse.sd  
+    }
     result <-  model_fun.ps1(
       stm  = stm,
+      sd   = sd,
       ...)
     y.list[[as.character(stm)]] <-
     data.frame( 
@@ -113,53 +120,7 @@ model_fun_stm_params.ps1 <-
       ...
     )
     return(data.model)
-}
-
-# #### optimisation function ####
-# optimise.fun.ps1 <- function(par,
-#                      stimulations,
-#                      data.raw.list,
-#                      ranges.factor,
-#                      ranges.base,
-#                      ranges.opt,
-#                      ...
-#                      ){
-#   params <- ranges.factor
-#   params[ranges.opt] <- ranges.factor[ranges.opt]*ranges.base[ranges.opt]^par
-#   
-#   data.model <- model_fun_stm_params.ps1(
-#     stimulations = stimulations,
-#     params = params
-#   )
-#   likelihood.list <- foreach( data.i = 1:length(data.raw.list) ) %do% {
-#       data  <- data.raw.list[[data.i]]
-#       normalise <- (data %>%
-#                       dplyr::mutate(normalise = (logresponse^2)/(logresponse.sd^2)) %>%
-#                       dplyr::summarise(normalise = mean(normalise)))$normalise
-#       likelihood <-
-#         (data %>% 
-#         left_join(
-#           by =  "stimulation",
-#           ((data.model %>% 
-#               dplyr::mutate_(
-#                 "logmodel" = data.model.colnames[data.i],
-#                 "logmodel.sd" = paste(data.model.colnames[data.i], "sd", sep = ".")
-#                 ))[, 
-#                                                            c("logmodel", 
-#                                                              "logmodel.sd",
-#                                                              "stimulation")])) %>%
-#         dplyr::mutate(likelihood = ((logresponse - logmodel)^2)/(2*(logmodel.sd^2))  + log(logmodel.sd)) %>%
-#         #dplyr::mutate(likelihood = ((logresponse - logmodel)^2)/(logresponse.sd^2)) %>%
-#         #  dplyr::mutate(likelihood = ((logresponse - logmodel)^2)/(logresponse^2)) %>%
-#         dplyr::summarise(likelihood = sum(likelihood)))$likelihood
-#       return(likelihood/normalise)         
-#   }
-#   likelihood <- do.call(what = sum, args = likelihood.list)
-#   # print(likelihood)
-#   # print("\n")
-#   # print(par)
-#   return(as.numeric(likelihood))
-# }
+  }
 
 #### simulateModel ####
 simulateModel.ps1 <- function(
@@ -167,13 +128,22 @@ simulateModel.ps1 <- function(
   par = ranges$par,
   stimulations,
   nsimulations = 1000,
+  scaled = FALSE,
   ...
 ){
+  if(scaled){
+    col.mean <- "pstat"
+    col.sd <- "pstat.sd"
+  } else {
+    col.mean <- "pstat.model"
+    col.sd <- "pstat.model.sd"
+  }
   params <- ranges$factor
   params[ranges$opt] <- ranges$factor[ranges$opt]*ranges$base[ranges$opt]^par
   data.model <- model_fun_stm_params.ps1(
     stimulations = stimulations,
-    params = params
+    params = params,
+    ...
   )
   sample.list <- list()
   sample.list <- foreach(i = 1:nrow(data.model)) %do% {
@@ -182,8 +152,8 @@ simulateModel.ps1 <- function(
         response.pstat = 
           exp(
             rnorm(n = nsimulations, 
-                  mean = data.model[i,]$pstat.model, 
-                  sd = data.model[i,]$pstat.model.sd)),
+                  mean = data.model[i,col.mean], 
+                  sd = data.model[i,col.sd])),
           stimulation = data.model[i,]$stimulation
         )
       )

@@ -61,6 +61,7 @@ model_fun.irf1 <- function(
   stm = 0,
   hn,
   scale = ymax - ymin,
+  sd,
   ...){
   
   x <- theta[4]*((theta[1]*ps1)^hn[1])/((theta[1]*ps1)^hn[1] + theta[2]^hn[1]) + theta[3] 
@@ -74,8 +75,8 @@ model_fun.df.irf1 <- function(
   return((model_fun.irf1(...))$y)
 }
 
-#### simulateModel.irf ####
-simulateModel.irf <- function(
+#### simulateMeanModel.irf ####
+simulateMeanModel.irf <- function(
   ranges,
   par = ranges$par,
   data.sample,
@@ -102,7 +103,25 @@ simulateModel.irf <- function(
       response.irf1.sd = params.list$sd
     ) %>%
     data.table()
-    
+  return(data.model)
+}
+
+
+#### simulateModel.irf ####
+simulateModel.irf <- function(
+  ranges,
+  par = ranges$par,
+  data.sample,
+  nsimulations = 1000,
+  no_cores = 6,
+  ...
+){
+  data.model <- simulateMeanModel.irf(ranges = ranges,
+                                      par = ranges$par,
+                                      data.sample = data.sample,
+                                      nsimulations = nsimulations,
+                                      no_cores = no_cores,
+                                      ...)
   registerDoParallel(no_cores)
   sample.list <- foreach(i = 1:nrow(data.model)) %dopar% {
     return(
@@ -169,11 +188,11 @@ model_fun_mean.irf1 <-
       dplyr::mutate(
         irf = 
           model_fun.df.irf1(
-            hn    = params.list$hn,
-            theta = params.list$theta,
-            scale = params.list$scale,
-            sd    =  params.list$sd,
-            ps1   = exp(pstat.model) 
+            hn    = params.list[["hn"]],
+            theta = params.list[["theta"]],
+            scale = params.list[["scale"]],
+            sd    =  params.list[["sd"]],
+            ps1   =  exp(pstat.model) 
           )) %>%
       dplyr::mutate(
         irf.sd = params.list$sd

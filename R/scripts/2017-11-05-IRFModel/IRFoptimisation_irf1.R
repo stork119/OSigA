@@ -2,6 +2,9 @@
 ### IRFoptimisation_irf1
 ### ###
 
+source("R/scripts/2017-11-05-IRFModel/IRFcomputation.R")
+
+#### ps1 simulations ####
 params.ps1 <- ranges.ps1$factor
 params.ps1[ranges.ps1$opt] <- 
   ranges.ps1$factor[ranges.ps1$opt]*ranges.ps1$base[ranges.ps1$opt]^par.ps1
@@ -10,23 +13,21 @@ data.model.ps1 <- model_fun_stm_params.ps1(
   params = params.ps1
 )
 
-par.irf1 <- ranges.irf1$par
-
 #### optimisation running ####
 stopfitness <- -10000
 fun.optimisation = cma_es
 maxit <- 1000
 stimulations.pSTAT <- irfmodel.data.list$pSTAT %>% dplyr::distinct(stimulation) 
 stimulations.irf <- irfmodel.data.list$irf %>% dplyr::distinct(stimulation)
-stimulations  <- (stimulations.pSTAT %>% dplyr::inner_join(stimulations.irf))$stimulation
+stimulations  <- sort((stimulations.pSTAT %>% dplyr::inner_join(stimulations.irf))$stimulation)
 
 data.model.colnames <- c("irf")
 data.raw.list <-
   list(irfmodel.data.list$irfsum %>% dplyr::filter(stimulation %in% stimulations))
 
 ranges.irf1 <- GetParametersRanges.irf1(scale.max = -4, sd.max = -4)
-
-optimisation.res.irf <- do.call(
+par.irf1 <- ranges.irf1$par #
+optimisation.res.irf1 <- do.call(
   fun.optimisation,
   list(par = par.irf1,
        fn = optimise.fun,
@@ -48,7 +49,7 @@ optimisation.res.irf <- do.call(
        data.model.colnames = data.model.colnames,
        data.model.ps1 = data.model.ps1)
 )
-par.irf1 <- optimisation.res.irf$par 
+par.irf1 <- optimisation.res.irf1$par 
 #### ####
 # par.irf1[1] <- -1
 # par.irf1[4] <- 4
@@ -57,7 +58,7 @@ par.irf1 <- optimisation.res.irf$par
 #### ####
 
 ## ? o co mi chodzilo
-ranges.irf1 <- GetParametersRanges.irf1(scale.max = -4, sd.max = -4)
+#ranges.irf1 <- GetParametersRanges.irf1(scale.max = -4, sd.max = -4)
 # params <- ranges.irf1$factor
 # params[ranges.irf1$opt] <- ranges.irf1$factor[ranges.irf1$opt]*ranges.irf1$base[ranges.irf1$opt]^par.irf1
 # params.list <- GetParametersList.irf1(params = params)
@@ -102,6 +103,21 @@ g.list[["irf"]] <- ggplot(data = data,
   ggtitle("irf") +
   do.call(theme_jetka, args = plot.args)
 g.list[["irf"]]
+
+g.list[["irf-factor"]] <- ggplot(data = data,
+                          mapping = aes(
+                            x = factor(stimulation),
+                            y = irf,
+                            ymin = irf - irf.sd,
+                            ymax = irf + irf.sd,
+                            group = type,
+                            color = type))+
+  geom_errorbar() +
+  geom_point() +
+  geom_line() +
+  ggtitle("irf") +
+  do.call(theme_jetka, args = plot.args)
+g.list[["irf-factor"]]
 
 saveResults(
   model.type = "irf", #"pstat"
@@ -150,13 +166,14 @@ ranges.irf1.stochastic <- GetParametersRanges.irf1(
   scale.factor = params.list$scale
   )
 
-ranges.irf1.stochastic$par <- optimisation.res.irf1.stochastic$par
-maxit <- 1000
+par.irf1.stochastic <- ranges.irf1.stochastic$par # optimisation.res.irf1.stochastic$par
+#ranges.irf1.stochastic$par <- optimisation.res.irf1.stochastic$par
+maxit <- 10
 stopfitness <- 0 
 no_cores <-8 
 optimisation.res.irf1.stochastic <- do.call(
   fun.optimisation,
-  list(par = ranges.irf1.stochastic$par,
+  list(par = par.irf1.stochastic,
        fn = optimise.fun.stochastic.irf1,
        control = list(maxit = maxit,
                       stopfitness = stopfitness,
@@ -176,9 +193,10 @@ optimisation.res.irf1.stochastic <- do.call(
        no_cores = no_cores)
 )
 
+par.irf1.stochastic <- optimisation.res.irf1.stochastic$par 
 
 saveResults(
-  model.type = "irf-stochastic", #"pstat"
+  model.type = "irf-stochastic",
   irfmodel.path.list = irfmodel.path.list,
   optimisation.res = optimisation.res.irf1.stochastic,
   likelihood = optimisation.res.irf1.stochastic$value, 

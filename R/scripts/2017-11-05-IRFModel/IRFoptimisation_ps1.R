@@ -2,6 +2,7 @@
 ### IRF model optimisation
 ### ###
 
+source("R/scripts/2017-11-05-IRFModel/IRFcomputation.R")
 
 #### optimisation initialisation ####
 
@@ -11,13 +12,15 @@
 #data.model.colnames <- c("pstat", "irf")
 data.model.colnames <- c("pstat")
 
-ranges <- GetParametersRanges.ps1()
-par <- 0*ranges$opt
+ranges.ps1 <- GetParametersRanges.ps1()
+par.ps1 <- 0*ranges.ps1$opt # lub ustawic swoje par.ps1
 
+
+#### optimisation running ####
 stopfitness <- -1000
 fun.optimisation = cma_es
 maxit <- 1000
-#### optimisation running ####
+
 stimulations.pSTAT <- irfmodel.data.list$pSTAT %>% dplyr::distinct(stimulation) 
 stimulations.irf <- irfmodel.data.list$irf %>% dplyr::distinct(stimulation)
 stimulations  <- (stimulations.pSTAT %>% dplyr::inner_join(stimulations.irf))$stimulation
@@ -29,37 +32,35 @@ stimulations  <- (stimulations.pSTAT %>% dplyr::inner_join(stimulations.irf))$st
 data.raw.list <-
     list(irfmodel.data.list$pSTATsum %>% dplyr::filter(stimulation %in% stimulations))
 
-optimisation.res <- do.call(
+optimisation.res.ps1 <- do.call(
   fun.optimisation,
-  list(par = par,
+  list(par = par.ps1,
        fn = optimise.fun,
        control = list(maxit = maxit,
                       stopfitness = stopfitness,
-                      diag.sigma  = FALSE,
-                      #keep.best  = TRUE,
-                      diag.eigen  = FALSE,
-                      diag.pop    = FALSE,
-                      diag.value  = FALSE),
-       lower = ranges$min[ranges$opt],
-       upper = ranges$max[ranges$opt],
+                      diag.sigma  = TRUE,
+                      keep.best  = TRUE,
+                      diag.eigen  = TRUE,
+                      diag.pop    = TRUE,
+                      diag.value  = TRUE),
+       lower = ranges.ps1$min[ranges.ps1$opt],
+       upper = ranges.ps1$max[ranges.ps1$opt],
        data.raw.list = data.raw.list,
        stimulations = stimulations,
-       ranges.base = ranges$base,
-       ranges.factor = ranges$factor,
-       ranges.opt = ranges$opt,
+       ranges.base = ranges.ps1$base,
+       ranges.factor = ranges.ps1$factor,
+       ranges.opt = ranges.ps1$opt,
        model_fun = model_fun_stm_params.ps1,
        data.model.colnames = data.model.colnames)
 )
 
 #### plotting ####
-irfmodel.path.list$optimisation.id <- "2017-12-28-pSTAT"
 #par.ps1 <- par.new
-optimisation.res$value
-par.ps1 <- optimisation.res$par
+optimisation.res.ps1$value
+par.ps1 <- optimisation.res.ps1$par
 
-ranges <- GetParametersRanges.ps1()
-params <- ranges$factor
-params[ranges$opt] <- ranges$factor[ranges$opt]*ranges$base[ranges$opt]^par.ps1
+params <- ranges.ps1$factor
+params[ranges.ps1$opt] <- ranges.ps1$factor[ranges.ps1$opt]*ranges.ps1$base[ranges.ps1$opt]^par.ps1
 
 data.model <- model_fun_stm_params.ps1(
   stimulations = unique(data.raw.sum$stimulation),
@@ -90,45 +91,37 @@ g.list[["pstat"]] <- ggplot(data = data,
   do.call(theme_jetka, args = plot.args)
 g.list[["pstat"]]
 
-# g.list[["irf"]] <- ggplot(data = data, 
-#                           mapping = aes(
-#                             x = stimulation,
-#                             y = irf, 
-#                             ymin = irf - irf.sd,
-#                             ymax = irf + irf.sd,
-#                             group = type, 
-#                             color = type))+
-#   geom_errorbar() +
-#   geom_point() +
-#   geom_line() +
-#   ggtitle("irf") + 
-#   do.call(theme_jetka, args = plot.args)
-# g.list[["irf"]]
 
-irfmodel.path.list$output.path <-
-  paste(irfmodel.path.list$output.dir,
-        irfmodel.path.list$optimisation.id, sep = "/")
-dir.create(irfmodel.path.list$output.path, 
-           recursive = TRUE)
+g.list[["pstat-factor"]] <- ggplot(data = data, 
+                            mapping = aes(
+                              x = factor(stimulation),
+                              y = pstat, 
+                              ymin = pstat - pstat.sd,
+                              ymax = pstat + pstat.sd,
+                              group = type, 
+                              color = type
+                            ))+
+  geom_errorbar() +
+  geom_point() +
+  geom_line() +
+  ggtitle("pstat") + 
+  do.call(theme_jetka, args = plot.args)
+g.list[["pstat-factor"]]
 
-do.call(what = ggsave,
-        args = append(plot.args.ggsave,
-                      list(filename = paste(irfmodel.path.list$output.path, "IRFmodel-pstat.pdf", sep = "/"),
-                           plot = marrangeGrob(grobs = g.list, ncol = 1, nrow = 1))))
-saveRDS(
-  file = paste(irfmodel.path.list$output.path, "IRFmodel-pstat.RDS", sep = "/"),
-  object = list(
-    optimisation = optimisation.res,
-    likelihood = optimisation.res$value,
-    par = par.new, 
-    ranges = ranges,
-    #data.raw.list = data.raw.list,
-    stimulations = stimulations,
-    plots = g.list,
-    stopfitness = stopfitness,
-    fun.optimisation = fun.optimisation,
-    maxit = maxit
-  ))   
+saveResults(
+  model.type = "pstat",
+  irfmodel.path.list = irfmodel.path.list,
+  optimisation.res = optimisation.res.ps1,
+  likelihood = optimisation.res.ps1$value, 
+  par = optimisation.res.ps1$par,  
+  ranges = ranges.ps1,
+  stimulations = stimulations,
+  stopfitness = stopfitness,
+  fun.optimisation = fun.optimisation,
+  maxit = maxit,
+  g.list = g.list
+)
+
 
 #### ####
 # optimise.fun(
