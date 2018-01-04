@@ -3,24 +3,30 @@
 ### ###
 
 #### organize data IRF ####
+irf_exp <- "2017-07-25-KS27" # "2017-07-18-KS25"
 irfmodel.data.list <- list()
 
 irfmodel.data.list$irf <- 
-  poster.data.list$`Gamma-IRF-Nuclei` %>%
-  dplyr::filter(time == 120)
+  poster.data.list[[irf_exp]] %>%
+  dplyr::filter(time.2.1 == 120)
+
 irfmodel.data.list$irf <- 
   do.call(
     rbind,
     list(
       irfmodel.data.list$irf,
-      poster.data.list$`Gamma-IRF-Nuclei` %>%
-        dplyr::filter(time == 0) %>%
-        dplyr::mutate(stimulation = 0)
+      poster.data.list[[irf_exp]] %>%
+        dplyr::filter(time.2.1 == 0) %>%
+        dplyr::mutate(stimulation.1.1 = 0)
     )
   ) %>%
+  dplyr::mutate(priming = priming.1.1) %>%
+  dplyr::mutate(time = time.2.1) %>%
+  dplyr::mutate(stimulation = stimulation.1.1) %>%
   dplyr::mutate(response = Intensity_MeanIntensity_Alexa) %>%
   dplyr::mutate(logresponse = log(response))
-irfmodel.data.list$irf <- get_equal_data(irfmodel.data.list$irf)
+
+irfmodel.data.list$irf <- get_equal_data(data = irfmodel.data.list$irf)
 
 irfmodel.data.list$irfsum <- 
   irfmodel.data.list$irf %>% 
@@ -34,11 +40,28 @@ irfmodel.data.list$irfsum <-
   )
 
 #### organise data pSTAT ####
+pstat_exp <-"2016-01-28-KA11-C" #"2016-01-26-KA10-C" ## "2016-01-28-KA11-C"
 irfmodel.data.list$pSTAT <- 
-  poster.data.list$`Gamma-pStat-Nuclei` %>%
-  dplyr::filter(time == 30) %>%
+  poster.data.list[[pstat_exp]] %>%
+  dplyr::filter(time.1.1 == 30) 
+
+irfmodel.data.list$pSTAT <- 
+  do.call(
+    rbind,
+    list(
+      irfmodel.data.list$pSTAT,
+      poster.data.list[[pstat_exp]] %>%
+        dplyr::filter(time.1.1 == 0) %>%
+        dplyr::mutate(stimulation.1.1 = 0)
+    )
+  ) %>%
+  dplyr::mutate(priming = priming.1.1) %>%
+  dplyr::mutate(time = time.1.1) %>%
+  dplyr::mutate(stimulation = stimulation.1.1) %>%
   dplyr::mutate(response = Intensity_MeanIntensity_Alexa) %>%
   dplyr::mutate(logresponse = log(response))
+
+irfmodel.data.list$pSTAT <- get_equal_data(data = irfmodel.data.list$pSTAT)
 
 irfmodel.data.list$pSTATsum <- 
   irfmodel.data.list$pSTAT %>% 
@@ -50,7 +73,6 @@ irfmodel.data.list$pSTATsum <-
   dplyr::mutate(
     logresponse = logresponse.mean
   )
-irfmodel.data.list$pSTAT <- get_equal_data(irfmodel.data.list$pSTAT)
 #### organize data all ####
 data.raw.sum <-
   irfmodel.data.list$pSTATsum %>% 
@@ -62,4 +84,3 @@ data.raw.sum <-
                 type  = "data") %>%
   dplyr::select(stimulation, pstat, pstat.sd, irf, irf.sd, type) %>%
   data.frame()
-
