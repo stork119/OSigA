@@ -15,8 +15,8 @@ plot_trajectories <- function(path,
               dplyr::distinct(var))$var){
     var.list[[paste("y",as.character(var), sep = "")]] <- var
   }
-  var.list$p16p17 <- c(16,17)
-  var.list$stat_cyto <- c(1,2,3)
+  # var.list$p16p17 <- c(16,17)
+  # var.list$stat_cyto <- c(1,2,3)
   
   gplot.trajectory.list <- list()
   plot.args.tmp <- plot.args

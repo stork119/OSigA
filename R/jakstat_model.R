@@ -22,8 +22,8 @@ if( Sys.info()[["sysname"]] == "Linux"){
 Sys.setenv("PKG_CXXFLAGS" = PKG_CXXFLAGS)
 Sys.setenv("PKG_LIBS" = PKG_LIBS)
 
-source_cpp_filename <- "C++/test/jakstat/jakstatrcpp_means.cc"
+source_cpp_filename <- "C++/pthread_solver/model_rcpp.cc"
 sourceCpp(file = source_cpp_filename, rebuild = TRUE, showOutput = TRUE)
 
-source_cpp_filename <- "C++/test/jakstat/jakstatrcpp_extrinsic.cc"
-sourceCpp(file = source_cpp_filename, rebuild = TRUE, showOutput = TRUE)
+# source_cpp_filename <- "C++/test/jakstat/jakstatrcpp_extrinsic.cc"
+# sourceCpp(file = source_cpp_filename, rebuild = TRUE, showOutput = TRUE)

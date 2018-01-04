@@ -11,7 +11,7 @@ get_equal_data  <- function(
   ...){
   
   d.distinct <- data %>%
-    distinct(priming,
+    dplyr::distinct(priming,
              stimulation,
              time) 
   d.i <- d.distinct[1,]

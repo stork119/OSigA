@@ -2,6 +2,7 @@
 ### Unscented transformation model
 ### running model
 ### ###
+##
 
 #### fun_parameters_penalty ####
 fun_parameters_penalty_sigmapoints <- function(par, 
@@ -41,7 +42,8 @@ PrepareModelArguments.ut.multiple <-
            p1p6_constant = 1.635657e-07,
            ...) {
     
-    flog.debug("model_ut.R PrepareModelArguments.ut.multiple", name="logger.optimisation")
+    flog.debug("model_ut.R PrepareModelArguments.ut.multiple", 
+               name = "logger.optimisation")
     
     parameters.model <- rep(0, times = length(which(parameters.conditions$parameters != 0)))
     parameters.priming.model <- rep(0, times = length(which(parameters.conditions$parameters.priming != 0)))
@@ -68,15 +70,29 @@ AggreagateSimulationData <- function(
   res,
   tmesh,
   tmesh.list.tmp,priming, 
-  stm
+  stm,
+  # model.observable.mean = 14,
+  # model.observable.sd   = 31,
+  # model.variables.num   = 17, 
+  model.observable.mean = 4,
+  model.observable.sd   = 12,
+  model.variables.num   = 8 
   ){
   for(tmesh.i in tmesh.list.tmp){
     data.model <- rbind(data.model,
-                        data.table(time = c(tmesh[tmesh.i]),
-                                   m = res$output[[tmesh.i]][14],
-                                   sd =  c(ifelse(length(res$output[[tmesh.i]]) > 17, res$output[[tmesh.i]][31], 0)),
-                                   priming = priming, 
-                                   stimulation = stm)
+                        data.table(
+                          time = 
+                            c(tmesh[tmesh.i]),
+                          m    = 
+                            res$output[[tmesh.i]][model.observable.mean],
+                          sd   = 
+                            c(ifelse(
+                              length(res$output[[tmesh.i]]) > model.variables.num,
+                              res$output[[tmesh.i]][model.observable.sd],
+                              0)),
+                          priming = priming, 
+                          stimulation = stm
+                        )
     )
     
     data.trajectory <- rbind(data.trajectory,
@@ -106,10 +122,17 @@ simulate_model_ut <- function(
   tmesh.list.tmp = NULL,
   stimulation.list,
   background,
+  model_type = 0,
+  t0 = 0.0,
+  t1 = 1.0,
+  tmult = 1.0,
+  tnout = 100,
+  t_stm_start = 0,
+  t_stm_end = 5,
   time_interval = 100,
   time_computation = 1000*60*5,
   model.computations = list(raw = TRUE, priming = TRUE),
-  stm,
+  #stm,
   ...
   ){
 #  print(model.computations)
@@ -131,16 +154,27 @@ simulate_model_ut <- function(
     stimulation = numeric()
   )
   for(stm in stimulation.list){
+    # print(stm)
     if(model.computations$raw){
+      # print(parameters.model)
+      # print(variables)
       res <- do.call(
         fun_model_ode,
         list(parameters = parameters.model, 
              variables = variables, 
              stm = stm, 
              tmesh = tmesh, 
+             model_type = model_type,
+             t0 = t0,
+             t1 = t1,
+             tmult = tmult,
+             tnout = tnout,
+             t_stm_start = t_stm_start,
+             t_stm_end = t_stm_end,
              time_interval = time_interval, 
              time_computation = time_computation)
       )
+      # print(res$success)
       if(res$success){
         res$aggregate <- AggreagateSimulationData(
           data.model = data.model,
@@ -159,13 +193,21 @@ simulate_model_ut <- function(
     if(model.computations$priming){
       res.priming <- do.call(
         fun_model_ode,
+        
         list(parameters = parameters.priming.model, 
              variables = variables.priming, 
              stm = stm, 
              tmesh = tmesh, 
+             model_type = model_type,
+             t0 = t0,
+             t1 = t1,
+             tmult = tmult,
+             tnout = tnout,
+             t_stm_start = t_stm_start,
+             t_stm_end = t_stm_end,
              time_interval = time_interval, 
              time_computation = time_computation))
-        
+      # print(res$success)
       if(res.priming$success){
         res$aggregate <- AggreagateSimulationData(
           data.model = data.model,
@@ -223,8 +265,9 @@ run_model_ut <- function(
     parameters.base = parameters.base,
     variables = variables,
     variables.priming = variables.priming,
-    fun_modify_input = fun_modify_input,
-    ...)
+    fun_modify_input = fun_modify_input
+    #)
+    ,...)
   
   sigmapoints$weights <- 
     GetSigmapointsWeigths(alpha = sigmapoints$conditions$alpha, 
@@ -235,7 +278,7 @@ run_model_ut <- function(
   data.model.list <- list()
   data.trajectory.list <- list()
   for(argument.i in 1:length(arguments.list)){
-    
+    # print(argument.i)
     parameters <- arguments.list[[argument.i]]$parameters
     parameters.priming <- arguments.list[[argument.i]]$parameters.priming
     variables  <- arguments.list[[argument.i]]$variables
@@ -251,8 +294,9 @@ run_model_ut <- function(
                                  tmesh = tmesh,
                                  tmesh.list = tmesh.list,
                                  stimulation.list = stimulation.list,
-                                 background = background,
-                                 ...))
+                                 background = background
+                                 #fun_model_ode =fun_model_ode))
+                                 ,...))
     if(model.simulation$error){
       return(list(error = TRUE))
     } 
