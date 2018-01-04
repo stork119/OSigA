@@ -69,7 +69,7 @@ plot_boxplot_group <- function(data,
                              y = y,
                              group = boxplot_group)
   ) + 
-    do.call(plot_fun, args = list()) +
+    do.call(plot_fun, args = list(position = position_dodge())) +
     ylim(ylim_min, ylim_max) +
     xlab(xlab) +
     ylab(ylab) + 

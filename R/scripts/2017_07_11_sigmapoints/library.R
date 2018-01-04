@@ -3,7 +3,8 @@
 ### ###
 
 #### analyse_model_ut ####
-analyse_model_ut <- function(variables.model,
+analyse_model_ut <- function(fun_model_ode,
+                              variables.model,
                              variables.priming.model,
                              save = TRUE,
                              plot = TRUE,
@@ -45,8 +46,13 @@ analyse_model_ut <- function(variables.model,
     background = background,
     par.optimised = par.optimised,
     sigmapoints = sigmapoints,
-    #parameters.conditions = parameters.conditions,fun_modify_input = fun_modify_input,fun_modify_parameters= fun_modify_parameters)
-    ...)
+    parameters.conditions = parameters.conditions,
+    fun_modify_input = fun_modify_input,
+    fun_modify_parameters = fun_modify_parameters,
+    fun_model_ode =fun_model_ode)
+  #  ...)
+  print(model$error)
+  
   data.model <- model$data.model
   data.trajectory <- model$data.trajectory
   
@@ -68,6 +74,37 @@ analyse_model_ut <- function(variables.model,
       fun_parameters_penalty(par = parameters.df$par[par.optimised],
     #                         parameters.conditions = parameters.conditions)
                               ...)
+  }
+  
+  if(save){
+    
+    write.table(x = parameters.df, 
+                file = paste(path, "parameters-conditions.csv", sep ="/"),
+                sep = ",",
+                row.names = FALSE,
+                col.names = TRUE)
+    
+    write.table(x = matrix(variables.model, ncol = 1), 
+                file = paste(path, "variables.csv", sep ="/"),
+                sep = ",",
+                row.names = FALSE,
+                col.names = FALSE)
+    write.table(x = matrix(variables.priming.model, ncol = 1), 
+                file = paste(path, "variables-priming.csv", sep ="/"),
+                sep = ",",
+                row.names = FALSE,
+                col.names = FALSE)
+    
+    write.table(x = matrix(optimisation.opt, nrow = 1), 
+                file = paste(path, "optimisation.csv", sep ="/"),
+                sep = ",",
+                row.names = FALSE)
+    
+    write.table(x = data.model,
+                file = paste(path, "data_model.csv", sep ="/"),
+                sep = ",",
+                row.names = FALSE,
+                col.names = TRUE)
   }
   
   print(optimisation.opt)
@@ -167,8 +204,7 @@ analyse_model_ut <- function(variables.model,
                                                  data.trajectory = data.trajectory %>% filter(sigmapoint == 1, var <= 34),
                                                  plot.args = plot.args,
                                                  plot.args.ggsave = plot.args.ggsave,
-
-                                                                                                  save = save)
+                                                 save = save)
       do.call(what = ggsave,
               args = append(plot.args.ggsave,
                             list(filename = paste(path, "models_compare_log_noise.pdf", sep = "/"),
@@ -185,36 +221,6 @@ analyse_model_ut <- function(variables.model,
       print("model_compare_raw saved")
     }
     
-  }
-  if(save){
-    
-    write.table(x = parameters.df, 
-                file = paste(path, "parameters-conditions.csv", sep ="/"),
-                sep = ",",
-                row.names = FALSE,
-                col.names = TRUE)
-    
-    write.table(x = matrix(variables.model, ncol = 1), 
-                file = paste(path, "variables.csv", sep ="/"),
-                sep = ",",
-                row.names = FALSE,
-                col.names = FALSE)
-    write.table(x = matrix(variables.priming.model, ncol = 1), 
-                file = paste(path, "variables-priming.csv", sep ="/"),
-                sep = ",",
-                row.names = FALSE,
-                col.names = FALSE)
-    
-    write.table(x = matrix(optimisation.opt, nrow = 1), 
-                file = paste(path, "optimisation.csv", sep ="/"),
-                sep = ",",
-                row.names = FALSE)
-    
-    write.table(x = data.model,
-                file = paste(path, "data_model.csv", sep ="/"),
-                sep = ",",
-                row.names = FALSE,
-                col.names = TRUE)
   }
   return(append(results,
                 list( analyse_name = analyse_name,
