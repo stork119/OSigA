@@ -25,12 +25,14 @@ GetParametersRanges.irf1 <-
     hn.min = c(-4),
     hn.max = c(4),
     hn.base = c(2),
+    ranges.max = 1,
+    ranges.min = 1,
     ...
   ){
     # hn_pstat theta1 theta2 theta3 scale_pstat sd_pstat
     ranges <- list()  
-    ranges$max <- c(hn.max, theta.max, scale.max, sd.max)
-    ranges$min <- c(hn.min, theta.min, scale.min, sd.min)
+    ranges$max <- ranges.max*c(hn.max, theta.max, scale.max, sd.max)
+    ranges$min <- ranges.min*c(hn.min, theta.min, scale.min, sd.min)
     ranges$factor <- c(hn.factor, theta.factor, scale.factor, sd.factor)
     ranges$base <- c(hn.base, theta.base, scale.base, sd.base)
     ranges$opt <- which(ranges$min < ranges$max)
@@ -201,4 +203,29 @@ model_fun_mean.irf1 <-
     return(data.model.irf1)
   }
 
-#### ####
+#### model_simulate_optimisation.irf1 ####
+model_fun_simulations.irf1 <- 
+  function(data.sample.ps1,
+           simulations = 1000,
+           ...){
+    data.sample.irf1 <- 
+      simulateMeanModel.irf(
+      data.sample = data.sample.ps1,
+      nsimulations = nsimulations,
+      #ranges = ranges, par = par)
+      ...) %>% 
+      dplyr::mutate(
+        irf = response.irf1.mean,
+        irf.model  = response.irf1.mean,
+        irf.sd = response.irf1.sd,
+        irf.model.sd = response.irf1.sd,
+        type = "model"
+      ) %>%
+      dplyr::select(irf, 
+                    irf.sd, 
+                    irf.model.sd, 
+                    irf.model, 
+                    stimulation,  
+                    type)
+    return(data.sample.irf1)
+  }

@@ -20,7 +20,10 @@ optimise.fun <- function(par,
   data.model <- model_fun(
     stimulations = stimulations,
     params = params,
+    par = par,
     #data.model.ps1 = data.model.ps1)
+    #ranges = ranges.irf1, data.sample.ps1 = data.sample.sdnonconst.ps1)
+    #
     ...
   )
   likelihood.list <- foreach( data.i = 1:length(data.raw.list) ) %do% {

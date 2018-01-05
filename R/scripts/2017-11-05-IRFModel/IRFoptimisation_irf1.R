@@ -16,15 +16,45 @@ data.model.ps1 <- model_fun_stm_params.ps1(
 #### optimisation running ####
 stopfitness <- -10000
 fun.optimisation = cma_es
-maxit <- 1000
+maxit <- 10000
 stimulations.pSTAT <- irfmodel.data.list$pSTAT %>% dplyr::distinct(stimulation) 
 stimulations.irf <- irfmodel.data.list$irf %>% dplyr::distinct(stimulation)
 stimulations  <- sort((stimulations.pSTAT %>% dplyr::inner_join(stimulations.irf))$stimulation)
 
 data.model.colnames <- c("irf")
 data.raw.list <-
-  list(irfmodel.data.list$irfsum %>% dplyr::filter(stimulation %in% stimulations))
+  list(irfmodel.data.list$irfsum %>% dplyr::filter(stimulation %in% stimulations))\
+ranges.irf1 <- GetParametersRanges.irf1(scale.max = -4, sd.max = -4, ranges.max = 2, ranges.min = 2)
 
+
+optimisation.res.irf1.simulations <- do.call(
+  fun.optimisation,
+  list(par = par.irf1.simulations,
+       fn = optimise.fun,
+       control = list(maxit = maxit,
+                      stopfitness = stopfitness,
+                      diag.sigma  = TRUE,
+                      #keep.best  = TRUE,
+                      diag.eigen  = TRUE,
+                      diag.pop    = TRUE,
+                      diag.value  = TRUE),
+       lower = ranges.irf1$min[ranges.irf1$opt],
+       upper = ranges.irf1$max[ranges.irf1$opt],
+       data.raw.list = data.raw.list,
+       stimulations = stimulations,
+       ranges.base = ranges.irf1$base,
+       ranges.factor = ranges.irf1$factor,
+       ranges.opt = ranges.irf1$opt,
+       model_fun = model_fun_simulations.irf1,
+       data.model.colnames = data.model.colnames,
+       data.model.ps1 = data.model.ps1,
+       ranges = ranges.irf1,
+       data.sample.ps1 = data.sample.sdnonconst.ps1)
+)
+par.irf1.simulations <- optimisation.res.irf1.simulations$par
+
+
+#### ####
 ranges.irf1 <- GetParametersRanges.irf1(scale.max = -4, sd.max = -4)
 par.irf1 <- ranges.irf1$par #
 optimisation.res.irf1 <- do.call(

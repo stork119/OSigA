@@ -159,8 +159,8 @@ data.sample.sdnonconst.ps1 <- data.sample.sdnonconst.ps1 %>%
 
 data.sample.sdnonconst.irf1 <- 
   simulateMeanModel.irf(
-    ranges = ranges.irf1.stochastic,
-    par = 0,
+    ranges = ranges.irf1,
+    par = par.irf1.simulations,
     data.sample = data.sample.sdnonconst.ps1,
     nsimulations = nsimulations,
     no_cores = 6)
