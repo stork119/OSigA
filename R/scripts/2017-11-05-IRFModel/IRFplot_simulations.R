@@ -60,7 +60,7 @@ plotSimulationsErrorbarsFun <- function(data.exp,
 
 
 stimulations <- sort(stimulations)
-#### plotLogSD ####
+#### plotLogSD  ####
 plotLogSD <- function(
   data.exp,
   data.sample,
@@ -90,13 +90,13 @@ g.list <- list()
 g.list[["simulations"]] <- list()
 g.list[["errobars"]] <- list()
 g.list[["variances"]] <- list()
-#### ps1 simulations ####
+#### ps1 simulations sdconst ####
 data.sample.scaled.ps1 <- simulateModel.ps1(ranges = ranges.ps1,
                                      par = par.ps1, 
                                      stimulations = stimulations, 
                                      nsimulations = nsimulations,
                                      scaled = TRUE,
-                                     sd.const = FALSE, 
+                                     sd.const = TRUE, 
                                      data.exp = irfmodel.data.list$pSTATsum)
 
 data.sample.scaled.ps1 <- data.sample.scaled.ps1 %>%
@@ -110,7 +110,7 @@ plots.args.list <- list(data.exp = irfmodel.data.list$pSTAT %>%
                           dplyr::select(stimulation, response) %>%
                           dplyr::mutate(type = "model"),
                         stimulations = stimulations,
-                        plot.title = "",
+                        plot.title = "ps1",
                         plot.grob.title = "ps1 simulation",
                         plot.grob.nrow = 2,
                         plot.grob.ncol = 3)
@@ -119,12 +119,41 @@ g.list[["errobars"]][["ps1"]] <-  do.call(plotSimulationsErrorbarsFun, plots.arg
 g.list[["variances"]][["ps1"]] <-  do.call(plotLogSD, plots.args.list)
 
 
+#### ps1 simulations sdconst ####
+data.sample.sdnonconst.ps1 <- simulateModel.ps1(ranges = ranges.ps1,
+                                            par = par.ps1, 
+                                            stimulations = stimulations, 
+                                            nsimulations = nsimulations,
+                                            scaled = TRUE,
+                                            sd.const = FALSE, 
+                                            data.exp = irfmodel.data.list$pSTATsum)
+
+data.sample.sdnonconst.ps1 <- data.sample.sdnonconst.ps1 %>%
+  dplyr::mutate(response = response.pstat)
+
+plots.args.list <- list(data.exp = irfmodel.data.list$pSTAT %>% 
+                          dplyr::select(stimulation, response) %>%
+                          dplyr::mutate(type = "data"),
+                        data.sample = data.sample.sdnonconst.ps1 %>% 
+                          dplyr::mutate(response = response.pstat)  %>%
+                          dplyr::select(stimulation, response) %>%
+                          dplyr::mutate(type = "model"),
+                        stimulations = stimulations,
+                        plot.title = "ps1 -sdnonconst",
+                        plot.grob.title = "ps1 simulation",
+                        plot.grob.nrow = 2,
+                        plot.grob.ncol = 3)
+g.list[["simulations"]][["ps1-sdnonconst"]] <- do.call(plotSimulationsFun, plots.args.list)
+g.list[["errobars"]][["ps1-sdnonconst"]] <-  do.call(plotSimulationsErrorbarsFun, plots.args.list)
+g.list[["variances"]][["ps1-sdnonconst"]] <-  do.call(plotLogSD, plots.args.list)
+
+
 #### irf1 model ####
 data.sample.irf1 <- 
   simulateMeanModel.irf(
-    ranges = ranges.irf1.stochastic,
-    par = 0,
-    data.sample = data.sample.ps1,
+    ranges = ranges.irf1,
+    par = par.irf1,
+    data.sample = data.sample.scaled.ps1,
     nsimulations = nsimulations,
     no_cores = 6)
 
@@ -136,7 +165,7 @@ plots.args.list <- list(data.exp = irfmodel.data.list$irf %>%
                               dplyr::select(stimulation, response) %>%
                               dplyr::mutate(type = "model"),
                             stimulations = stimulations,
-                            plot.title = "",
+                            plot.title = "irf1 simulations",
                             plot.grob.title = "irf1 simulation",
                             plot.grob.nrow = 2,
                             plot.grob.ncol = 3)
@@ -160,6 +189,69 @@ data.sample.sdnonconst.ps1 <- data.sample.sdnonconst.ps1 %>%
 data.sample.sdnonconst.irf1 <- 
   simulateMeanModel.irf(
     ranges = ranges.irf1,
+    par = par.irf1,
+    data.sample = data.sample.sdnonconst.ps1,
+    nsimulations = nsimulations,
+    no_cores = 6)
+
+plots.args.list <- list(data.exp = irfmodel.data.list$irf %>% 
+                          dplyr::select(stimulation, response) %>%
+                          dplyr::mutate(type = "data"),
+                        data.sample = data.sample.sdnonconst.irf1 %>% 
+                          dplyr::mutate(response = exp(response.irf1.mean)) %>%
+                          dplyr::select(stimulation, response) %>%
+                          dplyr::mutate(type = "model"),
+                        stimulations = stimulations,
+                        plot.title = "irf1 simulations -sdnonconst",
+                        plot.grob.title = "irf1 simulations",
+                        plot.grob.nrow = 2,
+                        plot.grob.ncol = 3)
+
+g.list[["simulations"]][["irf1-sdnoncaled"]] <- do.call(plotSimulationsFun, plots.args.list)
+g.list[["errobars"]][["irf1-sdnoncaled"]] <-  do.call(plotSimulationsErrorbarsFun, plots.args.list)
+g.list[["variances"]][["irf1-sdnoncaled"]] <-  do.call(plotLogSD, plots.args.list)
+
+#### irf1 kl model ####
+data.sample.irf1 <- 
+  simulateMeanModel.irf(
+    ranges = ranges.irf1,
+    par = par.irf1.simulations,
+    data.sample = data.sample.scaled.ps1,
+    nsimulations = nsimulations,
+    no_cores = 6)
+
+plots.args.list <- list(data.exp = irfmodel.data.list$irf %>% 
+                          dplyr::select(stimulation, response) %>%
+                          dplyr::mutate(type = "data"),
+                        data.sample = data.sample.irf1 %>% 
+                          dplyr::mutate(response = exp(response.irf1.mean)) %>%
+                          dplyr::select(stimulation, response) %>%
+                          dplyr::mutate(type = "model"),
+                        stimulations = stimulations,
+                        plot.title = "KL irf1 simulation",
+                        plot.grob.title = "KL irf1 simulation",
+                        plot.grob.nrow = 2,
+                        plot.grob.ncol = 3)
+
+g.list[["simulations"]][["irf1-kl"]] <- do.call(plotSimulationsFun, plots.args.list)
+g.list[["errobars"]][["irf1-kl"]] <-  do.call(plotSimulationsErrorbarsFun, plots.args.list)
+g.list[["variances"]][["irf1-kl"]] <-  do.call(plotLogSD, plots.args.list)
+
+#### irf kl sd non const ####
+data.sample.sdnonconst.ps1 <- simulateModel.ps1(ranges = ranges.ps1,
+                                                par = par.ps1, 
+                                                stimulations = stimulations, 
+                                                nsimulations = nsimulations,
+                                                scaled = FALSE,
+                                                sd.const = FALSE, 
+                                                data.exp = irfmodel.data.list$pSTATsum)
+
+data.sample.sdnonconst.ps1 <- data.sample.sdnonconst.ps1 %>%
+  dplyr::mutate(response = response.pstat)
+
+data.sample.sdnonconst.irf1 <- 
+  simulateMeanModel.irf(
+    ranges = ranges.irf1,
     par = par.irf1.simulations,
     data.sample = data.sample.sdnonconst.ps1,
     nsimulations = nsimulations,
@@ -173,17 +265,18 @@ plots.args.list <- list(data.exp = irfmodel.data.list$irf %>%
                           dplyr::select(stimulation, response) %>%
                           dplyr::mutate(type = "model"),
                         stimulations = stimulations,
-                        plot.title = "",
-                        plot.grob.title = "irf1 simulation",
+                        plot.title = "KL irf1 simulations -sdnonconst",
+                        plot.grob.title = "KL irf1 simulations -sdnonconst",
                         plot.grob.nrow = 2,
                         plot.grob.ncol = 3)
 
-g.list[["simulations"]][["irf1-sdnoncaled"]] <- do.call(plotSimulationsFun, plots.args.list)
-g.list[["errobars"]][["irf1-sdnoncaled"]] <-  do.call(plotSimulationsErrorbarsFun, plots.args.list)
-g.list[["variances"]][["irf1-sdnoncaled"]] <-  do.call(plotLogSD, plots.args.list)
+g.list[["simulations"]][["irf1-kl-sdnoncaled"]] <- do.call(plotSimulationsFun, plots.args.list)
+g.list[["errobars"]][["irf1-kl-sdnoncaled"]] <-  do.call(plotSimulationsErrorbarsFun, plots.args.list)
+g.list[["variances"]][["irf1-kl-sdnoncaled"]] <-  do.call(plotLogSD, plots.args.list)
 
 
-#### irf1 model ####
+
+#### irf1 model stochastic ####
 data.sample.irf1.stochastic <- 
   simulateModel.irf(
     ranges = ranges.irf1.stochastic,
