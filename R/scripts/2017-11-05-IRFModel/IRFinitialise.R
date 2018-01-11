@@ -27,5 +27,6 @@ source("R/scripts/2017-11-05-IRFModel/IRFmodel_irf1.R")
 source("R/scripts/2017-11-05-IRFModel/IRFmodel_ps1.R")
 source("R/scripts/2017-11-05-IRFModel/IRFoptimise_fun.R")
 source("R/scripts/2017-11-05-IRFModel/IRFsave.R")
+source("R/scripts/2017-11-05-IRFModel/IRFlibraries.R")
 
 setwd(dir = "knt/Documents/modelling/")
