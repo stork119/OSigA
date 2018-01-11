@@ -16,4 +16,4 @@ par.ps1 <- irfmodel.results.ps1[[1]]$par
 
 irfmodel.results.irf1 <- readRDS(file = 
                                    paste(irfmodel.path.list$output.path, "IRFmodel-irf.RDS", sep = "/"))
-par.irf1 <- irfmodel.results.irf1$par
+par.irf1 <- irfmodel.results.irf1[[1]]$par

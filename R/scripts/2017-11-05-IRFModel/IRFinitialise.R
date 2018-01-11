@@ -4,8 +4,9 @@
 # setwd("../../../")
 # source("R/optimisation/initialise_optimisation.R")
 #source("R/scripts/2017-11-05-IRFModel/IRFlibrary.R")
-source("R/libraries/library_data_manipulation.R")
+source("R/scripts/2017-11-05-IRFModel/IRFlibraries.R")
 source("R/graphics/libraries.R")
+source("R/libraries/library_data_manipulation.R")
 
 #### read input ####
 poster.path.list <- list()
@@ -20,6 +21,7 @@ irfmodel.path.list$output.dir <- "resources/output/IRFmodel"
 irfmodel.path.list$rds.path <- "/home/knt/Documents/modelling/resources/input/poster/data_ffc_filtered.RDS"
 poster.data.list <- readRDS(file = irfmodel.path.list$rds.path)
 
+source("R/scripts/2017-11-05-IRFModel/IRFlibraries.R")
 source("R/scripts/2017-11-05-IRFModel/IRFdata.R")
 source("R/scripts/2017-11-05-IRFModel/IRFmodel_irf1.R")
 source("R/scripts/2017-11-05-IRFModel/IRFmodel_ps1.R")

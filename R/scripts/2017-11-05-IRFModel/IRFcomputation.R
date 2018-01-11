@@ -3,4 +3,4 @@
 ### ###
 
 
-irfmodel.path.list$optimisation.id <- "2018-01-04-pSTAT"
+irfmodel.path.list$optimisation.id <- "2018-01-09-pSTAT"

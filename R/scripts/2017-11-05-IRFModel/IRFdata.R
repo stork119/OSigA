@@ -84,3 +84,8 @@ data.raw.sum <-
                 type  = "data") %>%
   dplyr::select(stimulation, pstat, pstat.sd, irf, irf.sd, type) %>%
   data.frame()
+
+#### stimulation ####
+stimulations.pSTAT <- irfmodel.data.list$pSTAT %>% dplyr::distinct(stimulation) 
+stimulations.irf <- irfmodel.data.list$irf %>% dplyr::distinct(stimulation)
+stimulations  <- sort((stimulations.pSTAT %>% dplyr::inner_join(stimulations.irf))$stimulation)

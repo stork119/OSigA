@@ -6,6 +6,7 @@
 saveResults <- function(
   model.type = "irf", #"pstat"
   irfmodel.path.list,
+  output.path = NULL,
   optimisation.res,
   likelihood, 
   g.list = NULL,
@@ -18,17 +19,16 @@ saveResults <- function(
   maxit,
   ...
 ){
-  irfmodel.path.list$output.path <-
-    paste(irfmodel.path.list$output.dir,
-          irfmodel.path.list$optimisation.id, sep = "/")
-  
-  dir.create(irfmodel.path.list$output.path, 
+  if(is.null(output.path)){
+    output.path <- irfmodel.path.list$output.path
+  }
+  dir.create(output.path, 
              recursive = TRUE)
   
   if(!is.null(g.list)){
     do.call(what = ggsave,
             args = append(plot.args.ggsave,
-                          list(filename = paste(irfmodel.path.list$output.path, 
+                          list(filename = paste(output.path, 
                                                 paste("IRFmodel-", 
                                                       model.type,
                                                       ".pdf", 
@@ -54,12 +54,12 @@ saveResults <- function(
   )
   
   saveRDS(
-    file = paste(irfmodel.path.list$output.path, 
+    file = paste(output.path, 
                  paste("IRFmodel-", 
                        model.type,
                        ".RDS", 
                        sep = ""),
                  sep = "/"),
     object = results)   
-  return(irfmodel.path.list)
+  return()
 }

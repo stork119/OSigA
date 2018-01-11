@@ -23,7 +23,7 @@ packages.list <- c(
   #### optimisation algorithm ####
   # "adagio",
   "cmaes",
-  # "lhs",
+   "lhs",
   
   #### ####
   # "stringr",

@@ -10,23 +10,24 @@ GetParametersRanges.irf1 <-
     ymin =  min(irfmodel.data.list$irfsum$logresponse),
     ymax =  max(irfmodel.data.list$irfsum$logresponse),
     scale.factor = ymax - ymin,
-    scale.min = c(-4),
-    scale.max = c(4),
+    scale.min = c(-1),
+    scale.max = c(1),
     scale.base = c(2),
     sd.factor = mean(data.raw.sum$irf.sd[!is.na(data.raw.sum$irf.sd)]),
-    sd.min = c(-4),
-    sd.max = c(4),
+    sd.min = c(-1),
+    sd.max = c(1),
     sd.base = c(2),
     theta.factor = c(1,1,1,1),
-    theta.min = c(-4,-4,-4, -4),
-    theta.max = c(4,4,4, 4),
+    theta.min = c(-1,-1,-1, -1),
+    theta.max = c(1,1,1, 1),
     theta.base = c(2,2,2,2),
     hn.factor = c(1),
-    hn.min = c(-4),
-    hn.max = c(4),
+    hn.min = c(-1),
+    hn.max = c(1),
     hn.base = c(2),
-    ranges.max = 1,
-    ranges.min = 1,
+    ranges.max = 8,
+    ranges.min = 8,
+    par = NULL,
     ...
   ){
     # hn_pstat theta1 theta2 theta3 scale_pstat sd_pstat
@@ -37,6 +38,9 @@ GetParametersRanges.irf1 <-
     ranges$base <- c(hn.base, theta.base, scale.base, sd.base)
     ranges$opt <- which(ranges$min < ranges$max)
     ranges$par <- 0*ranges$opt
+    if(!is.null(par)){
+      ranges$par <- par
+    }
     return(ranges)
   }
 #### GetParametersList.irf1 ####
@@ -83,7 +87,6 @@ simulateMeanModel.irf <- function(
   par = ranges$par,
   data.sample,
   nsimulations = 1000,
-  no_cores = 6,
   ...
 ){
   params <- ranges$factor
@@ -112,20 +115,21 @@ simulateMeanModel.irf <- function(
 #### simulateModel.irf ####
 simulateModel.irf <- function(
   ranges,
-  par = ranges$par,
+  par,
   data.sample,
   nsimulations = 1000,
   no_cores = 6,
   ...
 ){
   data.model <- simulateMeanModel.irf(ranges = ranges,
-                                      par = ranges$par,
+                                      par = par,
                                       data.sample = data.sample,
                                       nsimulations = nsimulations,
                                       no_cores = no_cores,
+                                      #),
                                       ...)
-  registerDoParallel(no_cores)
-  sample.list <- foreach(i = 1:nrow(data.model)) %dopar% {
+  # registerDoParallel(no_cores)
+  sample.list <- foreach(i = 1:nrow(data.model)) %do% {
     return(
       data.frame(
         response.irf = 
@@ -137,7 +141,7 @@ simulateModel.irf <- function(
       )
     )
   }
-  stopImplicitCluster()
+  # stopImplicitCluster()
   data.sample.new <- do.call(rbind, sample.list) %>%
     data.table()
   return(data.sample.new)
@@ -156,11 +160,12 @@ optimise.fun.stochastic.irf1 <- function(
     data.sample.irf1 <-  
       simulateModel.irf(
         par = par,
+        #ranges = ranges.irf1.stochastic, data.sample = data.sample.ps1, nsimulations = nsimulations, no_cores = 16)
         ...)
     
     stimulation.list <- (data.sample.irf1 %>% dplyr::distinct(stimulation))$stimulation
-    registerDoParallel(no_cores)
-    kl.list <- foreach(stm = stimulation.list) %dopar% {
+    # registerDoParallel(no_cores)
+    kl.list <- foreach(stm = stimulation.list) %do% {
       kl.div <- KL.divergence(
         X = (irfmodel.data.list$irf %>% 
                dplyr::filter(stimulation == stm))$logresponse,
@@ -169,7 +174,7 @@ optimise.fun.stochastic.irf1 <- function(
         k = k)[k]
       return(kl.div)
     }
-    stopImplicitCluster()
+    # stopImplicitCluster()
     
     kl <- do.call(sum, kl.list)
     return(kl)

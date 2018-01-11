@@ -277,13 +277,23 @@ g.list[["variances"]][["irf1-kl-sdnoncaled"]] <-  do.call(plotLogSD, plots.args.
 
 
 #### irf1 model stochastic ####
+i <- 4
+par.irf1.stochastic <- optimisation.res.irf1.stochastic.list[[i]]$par
+ranges.irf1.stochastic <- GetParametersRanges.irf1(scale.max = -4,
+                                                   sd.max = -4, 
+                                                   sd.factor = sd.list[[i]],
+                                                   par = par.irf1.simulations,
+                                                   ranges.max = 2, ranges.min = 2)
 data.sample.irf1.stochastic <- 
   simulateModel.irf(
     ranges = ranges.irf1.stochastic,
     par = par.irf1.stochastic,
     data.sample = data.sample.ps1,
     nsimulations = nsimulations,
-    no_cores = 16)
+    no_cores = 16) %>% 
+  dplyr::mutate(response.irf = exp(response.irf))
+
+#KL.divergence((data.exp %>% dplyr::filter(stimulation == 1))$response, (data.sample %>% dplyr::filter(stimulation == 1))$response, k = 10)
 
 plots.args.list <- list(data.exp = irfmodel.data.list$irf %>% 
                                dplyr::select(stimulation, response) %>%
