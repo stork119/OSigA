@@ -55,8 +55,19 @@ data.sample.sdnonconst.ps1 <- data.sample.sdnonconst.ps1 %>%
 #                                      par = par.ps1, 
 #                                      stimulations = stimulations, 
 #                                      nsimulations = nsimulations)
+epsilon <- 0.0005
 sd.mean <- mean(data.raw.sum$irf.sd[!is.na(data.raw.sum$irf.sd)])
-sd.list <- sd.mean*(2^seq(from = -8, to = 8, by = 0.5))
+# 
+# sd.list.new <- sd.mean*(2^seq(from = -8, to = -1, by = 0.1))
+# sd.list.new.df <- sapply(sd.list.new, function(sd.factor) { abs(sd.factor - sd.list) < epsilon})
+# sd.list.new <- sd.list.new[!sapply(1:ncol(sd.list.new.df), function(col.id){sum(sd.list.new.df[,col.id]) > 0 })]
+# 
+#   
+# df.exp.ids.new <- expand.grid(sd.id  = length(sd.list) + 1:length(sd.list.new), 
+#                           par.id = 1:nrow(lhs.res),
+#                           computation = TRUE)
+# df.exp.ids <- rbind(df.exp.ids, df.exp.ids.new)
+# sd.list <- c(sd.list,sd.list.new)
 
 fun.optimisation = "cma_es"
 maxit <- 1000
@@ -74,42 +85,73 @@ ranges.irf1.stochastic <- GetParametersRanges.irf1(scale.max = -4,
                                                    ranges.max = 2, 
                                                    ranges.min = 2)
 
-lhs.res <- randomLHS(10, length(ranges.irf1.stochastic$par))
-lhs.res <- ranges.max*(2*rbind(matrix(0.5 + ranges.irf1.stochastic$par, nrow = 1), lhs.res) - 1)
+new.opt.arguments <- FALSE
+if(new.opt.arguments){
 
-write.table(x = lhs.res,
-            file = paste(irfmodel.path.list$output.path, "parameters_list.csv", sep = "/"),
-            sep = ",",
-            row.names = FALSE,
-            col.names = FALSE)
-
-write.table(x = sd.list,
-            file = paste(irfmodel.path.list$output.path, "sd_list.csv", sep = "/"),
-            sep = ",",
-            row.names = FALSE,
-            col.names = FALSE)
-
-df.exp.ids <- expand.grid(sd.id  = 1:length(sd.list), 
-                          par.id = 1:nrow(lhs.res) )
-
-write.table(x = df.exp.ids,
-            file = paste(irfmodel.path.list$output.path, "df_ids.csv", sep = "/"),
-            sep = ",",
-            row.names = FALSE,
-            col.names = FALSE)
-
+  lhs.res <- randomLHS(10, length(ranges.irf1.stochastic$par))
+  lhs.res <- ranges.max*(2*rbind(matrix(0.5 + ranges.irf1.stochastic$par, nrow = 1), lhs.res) - 1)
+  
+  write.table(x = lhs.res,
+              file = paste(irfmodel.path.list$output.path, "parameters_list.csv", sep = "/"),
+              sep = ",",
+              row.names = FALSE,
+              col.names = TRUE)
+  
+  write.table(x = sd.list,
+              file = paste(irfmodel.path.list$output.path, "sd_list.csv", sep = "/"),
+              sep = ",",
+              row.names = FALSE,
+              col.names = TRUE)
+  
+  df.exp.ids <- expand.grid(sd.id  = 1:length(sd.list), 
+                            par.id = 1:nrow(lhs.res) )
+  
+  write.table(x = df.exp.ids,
+              file = paste(irfmodel.path.list$output.path, "df_ids.csv", sep = "/"),
+              sep = ",",
+              row.names = FALSE,
+              col.names = TRUE)
+  
+} else {
+  lhs.res <- read.table(file = paste(irfmodel.path.list$output.path, "parameters_list.csv", sep = "/"),
+                        sep = ",",
+                        header = TRUE)
+  sd.list <- as.vector(matrix(as.matrix(read.table(file = paste(irfmodel.path.list$output.path, "sd_list.csv", sep = "/"),
+                        sep = ",",
+                        header = FALSE)),
+                    nrow = 1))
+  
+  df.exp.ids <- read.table(file =paste(irfmodel.path.list$output.path, "df_ids.csv", sep = "/"),
+                           sep = ",",
+                           header = TRUE)
+  }
 #### computations  ####
+df.exp.ids$computation <- TRUE
+df.exp.ids[df.exp.ids$sd.id %in% which(sd.list > sd.mean), ]$computation <- FALSE
+
+
+path.list <- list.dirs(path = irfmodel.path.list$output.path, full.names = FALSE)
+path.list <- as.numeric(path.list)
+path.list <- path.list[!is.na(path.list)]
+df.exp.ids[as.numeric(path.list),]$computation <- FALSE
+df.exp.ids$id <- 1:nrow(df.exp.ids)
+
+
+df.exp.ids <- df.exp.ids %>% dplyr::filter(computation)
+#df.exp.ids <- df.exp.ids %>% dplyr::filter(par.id < 5)
+
 registerDoParallel(no_cores)
-par.irf1.stochastic.list <- foreach(id = 1:nrow(df.exp.ids)) %dopar% {
+par.irf1.stochastic.list <- foreach(id = df.exp.ids$id) %dopar% {
+  
+  id_ <- id
+  df.exp.ids.tmp <- df.exp.ids %>% dplyr::filter(id == id_)
+  par.lhs <- as.numeric(lhs.res[df.exp.ids.tmp$par.id,])
+  sd.factor <- as.numeric(sd.list[df.exp.ids.tmp$sd.id])
   
   output.path <- paste(irfmodel.path.list$output.path, 
                        id, 
                        sep = "/")
-  dir.create(output.path, recursive = TRUE)
-  
-  par.lhs <- lhs.res[df.exp.ids[id,]$par.id,]
-  sd.factor <- sd.list[df.exp.ids[id,]$sd.id]
-  
+
   ranges.irf1.stochastic <- GetParametersRanges.irf1(scale.max = -1,
                                                      sd.max = -1, 
                                                      sd.factor = sd.factor,
@@ -171,6 +213,8 @@ par.irf1.stochastic.list <- foreach(id = 1:nrow(df.exp.ids)) %dopar% {
   
   model.type <- paste("irf-stochastic", id, sep = "_")
   
+  dir.create(output.path, recursive = TRUE)
+  
   saveResults(
     output.path = output.path,
     model.type =  model.type,
@@ -209,3 +253,152 @@ par.irf1.stochastic.list <- foreach(id = 1:nrow(df.exp.ids)) %dopar% {
   return(par.irf1.stochastic)
 }
 stopImplicitCluster()
+
+
+
+#### summary ####
+
+path.list <- list.dirs(path = irfmodel.path.list$output.path, full.names = FALSE)
+
+df.list <- foreach(id = path.list) %do% {
+  if(id == ""){
+    return()
+  }
+  path <- paste(irfmodel.path.list$output.path,
+                id,
+                paste("IRFmodel-irf-stochastic_",
+                      id,
+                      ".RDS",
+                      sep = ""),
+                sep = "/")
+  if(!file.exists(path)){
+    return()
+  }
+  irfmodel.results <- readRDS(file = path)  
+  
+  par <- irfmodel.results[[1]]$par
+  ranges <- irfmodel.results[[1]]$ranges
+  params <- ranges$factor
+  params[ranges$opt] <- ranges$factor[ranges$opt]*ranges$base[ranges$opt]^par
+  params.list <- GetParametersList.irf1(params = params)
+  
+  df <- data.table(id = id, 
+                   sd.factor =  params.list$sd,
+                   likelihood = irfmodel.results[[1]]$likelihood) %>% 
+    cbind((data.frame(ids = paste("p", ranges$opt, sep = ""), par = par) %>% reshape2::dcast( formula = . ~ ids) %>% 
+             dplyr::select(-.)))
+  # data.sample.irf1.stochastic <- 
+  #   simulateModel.irf(
+  #     ranges = ranges.irf1.stochastic,
+  #     par = par.irf1.stochastic,
+  #     data.sample = data.sample.sdnonconst.ps1,
+  #     nsimulations = nsimulations,
+  #     no_cores = 1) %>% 
+  #   dplyr::mutate(response.irf = exp(response.irf))
+  # 
+  # plots.args.list <- list(data.exp = irfmodel.data.list$irf %>% 
+  #                           dplyr::select(stimulation, response) %>%
+  #                           dplyr::mutate(type = "data"),
+  #                         data.sample = data.sample.irf1.stochastic %>% 
+  #                           dplyr::mutate(response =  response.irf) %>%
+  #                           dplyr::select(stimulation, response) %>%
+  #                           dplyr::mutate(type = "model"),
+  #                         stimulations = stimulations,
+  #                         plot.title = paste("IRF1 stochastic", id, sd.factor),
+  #                         plot.grob.title = paste("IRF1 stochastic", id, sd.factor),
+  #                         plot.grob.nrow = 2,
+  #                         plot.grob.ncol = 3)
+  # g.list <- list()
+  # g.list[["simulations"]] <- do.call(plotSimulationsFun, plots.args.list)
+  # g.list[["errobars"]]   <-  do.call(plotSimulationsErrorbarsFun, plots.args.list)
+  # g.list[["variances"]] <-  do.call(plotLogSD, plots.args.list)
+  return(df)
+}
+
+df <- do.call(rbind, df.list)
+
+df.summarise <- df %>% 
+  dplyr::group_by(sd.factor) %>% 
+  dplyr::summarise(likelihood = min(likelihood)) %>% 
+  dplyr::arrange(sd.factor) %>% 
+  dplyr::mutate(noise_percentage = (sd.factor/sd.mean)*100) %>%
+  dplyr::filter(noise_percentage <= 100)
+  
+#### ####
+g.list <- list()
+g.list[["likelihood-vs-noise"]] <-
+  ggplot(df.summarise, aes(x = log(sd.factor), y = likelihood)) +
+  geom_point() +
+  geom_vline(xintercept = log(sd.mean)) +
+  do.call(theme_jetka, args = plot.args) +
+  xlab("SD of IRF noise") +
+  ylab("Model likelihood") +
+  ggtitle("Model likelihood vs IRF noise")
+  
+
+g.list[["likelihood-vs-noise-percentage"]] <-
+  ggplot(df.summarise, aes(x = noise_percentage, y = likelihood)) +
+  geom_point() +
+  #geom_vline(xintercept = 100) +
+  do.call(theme_jetka, args = plot.args) +
+  xlab("log(noise percentage)") +
+  ylab("Model likelihood") +
+  ggtitle("Model likelihood vs IRF noise")
+
+do.call(what = pdf,
+        args = append(
+          plot.args.ggsave,
+          list(file = paste(irfmodel.path.list$output.path, 
+                            paste("IRFmodel-", 
+                                  "sd_analysis",
+                                  ".pdf", 
+                                  sep = ""),
+                            sep = "/"))))
+
+l <- sapply(g.list,
+            function(x){
+              print(x)
+              return()
+            })
+dev.off()
+
+
+#### ####
+df.best <- df %>% dplyr::left_join(df.summarise, by = "sd.factor") %>% dplyr::filter(likelihood.x == likelihood.y)
+par.id.list <- paste("p", ranges.irf1.stochastic$opt, sep = "")
+g.list.parameters <-foreach(par.id = par.id.list) %do% {
+    ggplot(df.best,
+           aes_string(y = par.id,
+                      x = "log(sd.factor)")) + 
+      geom_point()+
+    do.call(theme_jetka, args = plot.args) +
+    xlab("SD of IRF noise") +
+    ylab("Parameters value") +
+    ggtitle(par.id)
+}
+
+
+do.call(what = pdf,
+        args = append(
+          plot.args.ggsave,
+          list(file = paste(irfmodel.path.list$output.path, 
+                            paste("IRFmodel-", 
+                                  "parameters",
+                                  ".pdf", 
+                                  sep = ""),
+                            sep = "/"))))
+
+l <- sapply(g.list.parameters,
+            function(x){
+              print(x)
+              return()
+            })
+dev.off()
+
+write.table(x = df.best %>% dplyr::arrange(sd.factor), 
+            file =  paste(irfmodel.path.list$output.path, 
+                          "df_summarise.csv",
+                          sep = "/"), 
+            col.names = TRUE,
+            row.names = FALSE,
+            sep = ",")
