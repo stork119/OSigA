@@ -17,7 +17,8 @@ getPathsList <- function(date = "2017-12-18",
 
   poster.path.list <- list()
   poster.path.list$input.dir  <-  paste("resources/input/poster/")
-  poster.path.list$input.rds.dir <- paste(poster.path.list$input.dir, date, "rds/", sep = "/")
+  poster.path.list$input.date.dir <- paste(poster.path.list$input.dir, date,  sep = "/")
+  poster.path.list$input.rds.dir <- paste(poster.path.list$input.date.dir, "rds/", sep = "/")
   poster.path.list$rds.path <- paste(poster.path.list$input.rds.dir,
                                      paste("data_",
                                            normalisation, 

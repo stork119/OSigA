@@ -139,11 +139,11 @@ colors.list <- as.character(
 g <- ggplot(
   data = data.stm,
   mapping = aes_string(
-              x = paste("factor(", col_stimulation, ")"),
-              y = col_response,
-              group = paste("interaction(", "priming",",",col_stimulation, ")"),
-              #size  = "lwd", 
-              fill  = paste("factor(", col_stimulation, ")"))) +
+    x = paste("factor(", col_stimulation, ")"),
+    y = col_response,
+    group = paste("interaction(", "priming",",",col_stimulation, ")"),
+    #size  = "lwd", 
+    fill  = paste("factor(", col_stimulation, ")"))) +
   geom_boxplot() +
   ylim(c(0,600)) +
   theme_jetka() +
