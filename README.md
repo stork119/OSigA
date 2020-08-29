@@ -1,5 +1,4 @@
-# OSigA
-Detecting origins of interferon signalling sensitivity using mathematical modeling
+# Detecting origins of interferon signalling sensitivity using mathematical modeling
 
 Mathematical methods created in the project were presented on EMBO Young Investigation Program PhD course, 20-25 XI 2017, Heidelberg, Germany
 
